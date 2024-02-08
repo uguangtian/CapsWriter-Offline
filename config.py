@@ -46,7 +46,7 @@ class ClientConfig:
 
     file_seg_duration = 25           # 转录文件时分段长度
     file_seg_overlap = 2             # 转录文件时分段重叠
-
+    translate  = True                # 自动翻译为英文
 
 class ModelPaths:
     model_dir = Path() / 'models'

@@ -12,6 +12,22 @@ from util.client_strip_punc import strip_punc
 from util.client_write_md import write_md
 from util.client_type_result import type_result
 
+from transformers import pipeline, AutoModelWithLMHead, AutoTokenizer
+import warnings
+warnings.filterwarnings ('ignore')
+
+#翻译
+if Config.translate:
+    modelName = ".\models\Helsinki-NLP--opus-mt-zh-en"
+    console.print('正在加载翻译模型......')
+    # 加载模型
+    model = AutoModelWithLMHead.from_pretrained(modelName, local_files_only=True)
+    # 加载分词器
+    tokenizer = AutoTokenizer.from_pretrained(modelName, local_files_only=True)
+    # 创建翻译管道
+    translation = pipeline('translation_zh_to_en', model=model, tokenizer=tokenizer)
+    console.print('翻译模型加载完成')
+
 
 async def recv_result():
     if not await check_websocket():
@@ -35,8 +51,9 @@ async def recv_result():
             # 热词替换
             text = hot_sub(text)
 
-            # 打字
-            await type_result(text)
+            # 翻译
+            if Config.translate:
+                trans_text = translation(text)[0]['translation_text']
 
             if Config.save_audio:
                 # 重命名录音文件
@@ -48,7 +65,16 @@ async def recv_result():
             # 控制台输出
             console.print(f'    转录时延：{delay:.2f}s')
             console.print(f'    识别结果：[green]{text}')
+            if Config.translate:
+                console.print(f'    翻译结果：[green]{trans_text}')
             console.line()
+
+            # 打字
+            if Config.translate:
+                await type_result(trans_text)
+            else:
+                await type_result(text)
+
 
     except websockets.ConnectionClosedError:
         console.print('[red]连接断开\n')
