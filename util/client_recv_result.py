@@ -17,16 +17,15 @@ import warnings
 warnings.filterwarnings ('ignore')
 
 #翻译
-if Config.translate:
-    modelName = ".\models\Helsinki-NLP--opus-mt-zh-en"
-    console.print('正在加载翻译模型......')
-    # 加载模型
-    model = AutoModelWithLMHead.from_pretrained(modelName, local_files_only=True)
-    # 加载分词器
-    tokenizer = AutoTokenizer.from_pretrained(modelName, local_files_only=True)
-    # 创建翻译管道
-    translation = pipeline('translation_zh_to_en', model=model, tokenizer=tokenizer)
-    console.print('翻译模型加载完成')
+modelName = ".\models\Helsinki-NLP--opus-mt-zh-en"
+console.print('正在加载翻译模型......')
+# 加载模型
+model = AutoModelWithLMHead.from_pretrained(modelName, local_files_only=True)
+# 加载分词器
+tokenizer = AutoTokenizer.from_pretrained(modelName, local_files_only=True)
+# 创建翻译管道
+translation = pipeline('translation_zh_to_en', model=model, tokenizer=tokenizer)
+console.print('翻译模型加载完成')
 
 
 async def recv_result():
@@ -52,7 +51,9 @@ async def recv_result():
             text = hot_sub(text)
 
             # 翻译
-            if Config.translate:
+            if keyboard.is_pressed(Config.trans_shortcut):
+                translate = True
+            if translate:
                 trans_text = translation(text)[0]['translation_text']
 
             if Config.save_audio:
@@ -65,13 +66,14 @@ async def recv_result():
             # 控制台输出
             console.print(f'    转录时延：{delay:.2f}s')
             console.print(f'    识别结果：[green]{text}')
-            if Config.translate:
+            if translate:
                 console.print(f'    翻译结果：[green]{trans_text}')
             console.line()
 
             # 打字
-            if Config.translate:
+            if translate:
                 await type_result(trans_text)
+                translate = False
             else:
                 await type_result(text)
 

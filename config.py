@@ -18,6 +18,7 @@ class ClientConfig:
     port = '6016'               # Server 端口
 
     shortcut     = 'caps lock'  # 控制录音的快捷键，默认是 CapsLock
+    trans_shortcut     = 'left shift'  # 控制翻译的快捷键，默认是 Left Shift，按住Left Shift再按 CapsLock进行翻译
     hold_mode    = True         # 长按模式，按下录音，松开停止，像对讲机一样用。
                                 # 改为 False，则关闭长按模式，也就是单击模式
                                 #       即：单击录音，再次单击停止
@@ -46,7 +47,6 @@ class ClientConfig:
 
     file_seg_duration = 25           # 转录文件时分段长度
     file_seg_overlap = 2             # 转录文件时分段重叠
-    translate  = True                # 自动翻译为英文
 
 class ModelPaths:
     model_dir = Path() / 'models'

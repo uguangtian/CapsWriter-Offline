@@ -19,6 +19,22 @@ CoordMode("ToolTip", "Screen")
     return
 }
 
+~Shift & CapsLock::{
+    if hwnd := GetCaretPosEx(&x, &y, &w, &h){
+        ; 能够获取到文本光标时，提示信息在光标位置，且x坐标向右偏移5
+        x := x + 5
+    }
+    else{
+        ; 获取不到文本光标时，提示信息在当前窗口的位置
+        WinGetPos &X, &Y, &W, &H, "A"
+        x := X + W * 0.25
+        y := Y + H * 0.7
+    }
+    ToolTip("✦VoiceTrans‧‧‧", x, y) ; 提示信息内容
+    KeyWait("CapsLock")
+    ToolTip()
+    return
+}
 
 GetCaretPosEx(&x?, &y?, &w?, &h?) {
     x := h := w := h := 0
