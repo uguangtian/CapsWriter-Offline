@@ -51,6 +51,7 @@ async def recv_result():
             text = hot_sub(text)
 
             # 翻译
+            translate = False
             if keyboard.is_pressed(Config.trans_shortcut):
                 translate = True
             if translate:
