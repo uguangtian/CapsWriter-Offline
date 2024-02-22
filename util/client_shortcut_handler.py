@@ -8,7 +8,7 @@ from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from util.client_send_audio import send_audio
 from util.my_status import Status
-
+from pycaw.pycaw import AudioUtilities
 
 task = asyncio.Future()
 status = Status('开始录音', spinner='point')
@@ -29,6 +29,19 @@ def shortcut_correct(e: keyboard.KeyboardEvent):
     if key_expect != key_actual: return False
     return True
 
+def mute_all_sessions():
+    sessions = AudioUtilities.GetAllSessions()
+    for session in sessions:
+        volume = session.SimpleAudioVolume
+        if session.Process and session.Process.name() != "python.exe":  # Skip the current Python process
+            volume.SetMute(1, None)
+
+def unmute_all_sessions():
+    sessions = AudioUtilities.GetAllSessions()
+    for session in sessions:
+        volume = session.SimpleAudioVolume
+        if session.Process and session.Process.name() != "python.exe":  # Skip the current Python process
+            volume.SetMute(0, None)
 
 def launch_task():
     global task
@@ -41,6 +54,10 @@ def launch_task():
         Cosmic.queue_in.put({'type': 'begin', 'time': t1, 'data': None}),
         Cosmic.loop
     )
+
+    # 录音时暂停其他音频播放
+    if Config.mute_other_audio:
+        mute_all_sessions()
 
     # 通知录音线程可以向队列放数据了
     Cosmic.on = t1
@@ -63,6 +80,9 @@ def cancel_task():
     # 取消协程任务
     task.cancel()
 
+    # 恢复音频播放
+    if Config.mute_other_audio:
+        unmute_all_sessions()
 
 def finish_task():
     global task
@@ -81,6 +101,10 @@ def finish_task():
         ),
         Cosmic.loop
     )
+
+    # 恢复音频播放
+    if Config.mute_other_audio:
+        unmute_all_sessions()
 
 
 # =================单击模式======================

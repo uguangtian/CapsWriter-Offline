@@ -59,9 +59,11 @@
 5. 已包含所有 Python 环境和 models 模型，解压即用。
 6. 支持转录功能，将文件拖动到 start_client_gui.exe
 7. 按下 Capslock 键会在光标处提示 [✦ 语音输入中‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)
-8. CapsTranser-Offline 分支新增 支持自动翻译为英文，离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ， 默认启用，若不需要翻译，请修改`config.py` `translate = False`
+8. 支持自动翻译为英文，离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ， 默认加载翻译模型，组合键`按住Left Shift再按 CapsLock进行翻译`，以适应同时需要输入中文和英文翻译的场景。
 
-   下载地址：
+9. 支持录音时静音其他音频播放，避免音乐干扰语音输入，默认启用，若不需要，请修改 `config.ini` 中 `mute_other_audio = False` 。
+
+下载地址：
 
 - 123 盘：https://www.123pan.com/s/qBxUVv-H4Zq3.html 提取码:h8vb)
 - GitHub Release: [Releases · H1DDENADM1N/CapsWriter-Offline](https://github.com/H1DDENADM1N/CapsWriter-Offline/releases)
