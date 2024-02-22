@@ -54,14 +54,11 @@
 
 1. 基于 [PySide6](https://pypi.org/project/PySide6/) 的 GUI，默认使用 [Qt-Material](https://github.com/UN-GCPDS/qt-material) dark_yellow 主题；基于 [PyStand](https://github.com/skywind3000/PyStand) 绿化便携 `start.exe`。
 2. 支持最小化到系统托盘。
-3. Server 和 Client 以 tab 集成在一个 gui，无任务栏占用。
-4. 双击 start.exe 运行，可自行设置开机自启动。
-5. 已包含所有 Python 环境和 models 模型，解压即用。
-6. 支持转录功能，将文件拖动到 start_client_gui.exe
-7. 按下 Capslock 键会在光标处提示 [✦ 语音输入中‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)
-8. 支持自动翻译为英文，离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ， 默认加载翻译模型，组合键`按住Left Shift再按 CapsLock进行翻译`，以适应同时需要输入中文和英文翻译的场景。
-
-9. 支持录音时静音其他音频播放，避免音乐干扰语音输入，默认启用，若不需要，请修改 `config.ini` 中 `mute_other_audio = False` 。
+3. 已包含所有 Python 环境和 models 模型，解压即用。
+4. 支持转录功能，将文件拖动到 start_client_gui.exe
+5. 按下 Capslock 键会在光标处提示 [✦ 语音输入中‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)
+6. 支持自动翻译为英文，离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ， 默认加载翻译模型，组合键`按住Left Shift再按 CapsLock进行翻译`，以适应同时需要输入中文和英文翻译的场景。按下 Shift 和 Capslock 键会在光标处提示 [✦VoiceTrans‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)
+7. 支持录音时静音其他音频播放，避免音乐干扰语音输入，默认启用，若不需要，请修改 `config.ini` 中 `mute_other_audio = False` 。
 
 下载地址：
 
