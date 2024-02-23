@@ -2,6 +2,7 @@ from config import ClientConfig as Config
 from util import hot_sub_en
 from util import hot_sub_zh
 from util import hot_sub_rule
+from util import hot_sub_year
 
 
 def hot_sub(text: str) -> str:
@@ -12,4 +13,6 @@ def hot_sub(text: str) -> str:
         text = hot_sub_en.热词替换(text)
     if Config.hot_rule:
         text = hot_sub_rule.热词替换(text)
+    if Config.Arabic_year:
+        text = hot_sub_year.热词替换(text)
     return text

@@ -48,6 +48,7 @@ class ClientConfig:
     file_seg_duration = 25           # 转录文件时分段长度
     file_seg_overlap = 2             # 转录文件时分段重叠
     mute_other_audio = True              # 录音时暂停其他音频播放
+    Arabic_year = True                 # 将****年 大写汉字替换为阿拉伯数字****年，例如一八四八年 替换为1848年
 
 class ModelPaths:
     model_dir = Path() / 'models'
