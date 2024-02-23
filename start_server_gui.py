@@ -8,6 +8,14 @@ from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
 from config import ServerConfig as Config
 
+def check_process(name):
+    # 使用wmic命令查找进程
+    command = ['wmic', 'process', 'get', 'name']
+    # 执行命令并捕获输出
+    output = subprocess.check_output(command).decode('utf-8')
+    # 检查进程名称是否在输出中
+    return name in output
+
 class GUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -116,6 +124,8 @@ class GUI(QMainWindow):
             self.text_box_server.append(line)
 
 if __name__ == '__main__':
+    if Config.Only_run_once and check_process('pythonw_CapsWriter_Server.exe'):
+            raise Exception("已经有一个服务端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Server.exe 进程已在运行。如果你确定需要启动多个服务端同时运行，请先修改 config.py  class ServerConfig:  Only_run_once = False 。）")
     app = QApplication([])
     apply_stylesheet(app, theme='dark_amber.xml')
     gui = GUI()
