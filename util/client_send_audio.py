@@ -17,8 +17,12 @@ async def send_message(message):
     # 发送数据
     if Cosmic.websocket is None or Cosmic.websocket.closed:
         if message['is_final']:
-            Cosmic.audio_files.pop(message['task_id'])
-            console.print('    服务端未连接，无法发送\n')
+            task_id = message['task_id']
+            if task_id in Cosmic.audio_files:
+                Cosmic.audio_files.pop(task_id)
+                console.print('    服务端未连接，无法发送\n')
+            else:
+                console.print(f'    无法找到任务ID：{task_id}，无法移除\n')
     else:
         try:
             await Cosmic.websocket.send(json.dumps(message))
