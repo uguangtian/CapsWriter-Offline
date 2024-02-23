@@ -69,7 +69,7 @@ async def main_mic():
         empty_current_working_set()
 
     # 接收结果
-    print('连接服务端...  （服务端载入模块时长约 50 秒，请耐心等待）')
+    print(f'连接服务端...  （服务端载入模块时长约 50 秒，请耐心等待。若好几分钟了还无响应 -> 服务端软件 start_server_gui.exe 启动了吗？ 服务端地址当前设置 {Config.addr}:{Config.port} 是正确的吗？）')
     while True:
         await recv_result()
 
