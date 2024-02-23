@@ -12,6 +12,7 @@ class ServerConfig:
     format_spell = True  # 输出时是否调整中英之间的空格
     Shrink_automatically_to_Tray = True     # 启动后不显示主窗口，自动缩小至托盘
     Only_run_once = True # 只允许运行一次，禁止多开
+    In_the_meantime_start_the_client = True # 启动服务端的同时启动客户端
 
 # 客户端配置
 class ClientConfig:
