@@ -107,7 +107,7 @@ class GUI(QMainWindow):
 
 
     def enqueue_output(self, out, queue):
-        for line in iter(out.readline, b''):
+        for line in iter(out.readline, ''):
             queue.put(line)
 
     def update_text_box(self):
