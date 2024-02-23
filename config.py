@@ -10,7 +10,7 @@ class ServerConfig:
     format_num = True  # 输出时是否将中文数字转为阿拉伯数字
     format_punc = True  # 输出时是否启用标点符号引擎
     format_spell = True  # 输出时是否调整中英之间的空格
-
+    Shrink_automatically_to_Tray = True     # 启动后不显示主窗口，自动缩小至托盘
 
 # 客户端配置
 class ClientConfig:
@@ -49,6 +49,7 @@ class ClientConfig:
     file_seg_overlap = 2             # 转录文件时分段重叠
     mute_other_audio = True              # 录音时暂停其他音频播放
     Arabic_year = True                 # 将****年 大写汉字替换为阿拉伯数字****年，例如一八四八年 替换为1848年
+    Shrink_automatically_to_Tray = False     # 启动后不显示主窗口，自动缩小至托盘
 
 class ModelPaths:
     model_dir = Path() / 'models'

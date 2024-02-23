@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTray
 from PySide6.QtGui import (QIcon, QAction)
 from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
+from config import ServerConfig as Config
 
 class GUI(QMainWindow):
     def __init__(self):
@@ -118,5 +119,6 @@ if __name__ == '__main__':
     app = QApplication([])
     apply_stylesheet(app, theme='dark_amber.xml')
     gui = GUI()
-    gui.show()
+    if not Config.Shrink_automatically_to_Tray:
+        gui.show()
     sys.exit(app.exec())
