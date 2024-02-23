@@ -58,7 +58,9 @@
 4. 支持转录功能，将文件拖动到 start_client_gui.exe
 5. 按下 Capslock 键会在光标处提示 [✦ 语音输入中‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)
 6. 支持自动翻译为英文，离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ， 默认加载翻译模型，组合键`按住Left Shift再按 CapsLock进行翻译`，以适应同时需要输入中文和英文翻译的场景。按下 Shift 和 Capslock 键会在光标处提示 [✦VoiceTrans‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)
-7. 支持录音时静音其他音频播放，避免音乐干扰语音输入，默认启用，若不需要，请修改 `config.ini` 中 `mute_other_audio = False` 。
+7. 支持录音时静音其他音频播放，避免音乐干扰语音输入，默认启用，若不需要，请修改 `config.py` 中 `mute_other_audio = False` 。
+8. 默认将\***\*年 大写汉字替换为阿拉伯数字\*\***年，例如一八四八年 替换为 1848 年。若不需要，请修改 `config.py` 中 `Arabic_year = False` 。
+9. 默认 Server 启动后不显示主窗口，自动缩小至托盘；Client 显示主窗口。修改 `config.py` 中 `Shrink_automatically_to_Tray`。
 
 下载地址：
 
