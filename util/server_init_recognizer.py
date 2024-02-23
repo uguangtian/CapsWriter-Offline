@@ -31,7 +31,7 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     console.print('[green4]模块加载完成', end='\n\n')
 
     # 载入语音模型
-    console.print('[yellow]语音模型载入中', end='\r'); t1 = time.time()
+    console.print('[yellow]语音模型载入中，载入时长约 20 秒，请耐心等待...', end='\r'); t1 = time.time()
     recognizer = sherpa_onnx.OfflineRecognizer.from_paraformer(
         **{key: value for key, value in ParaformerArgs.__dict__.items() if not key.startswith('_')}
     )
@@ -40,7 +40,7 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     # 载入标点模型
     punc_model = None
     if Config.format_punc:
-        console.print('[yellow]标点模型载入中', end='\r')
+        console.print('[yellow]标点模型载入中，载入时长约 50 秒，请耐心等待...', end='\r')
         punc_model = CT_Transformer(ModelPaths.punc_model_dir, quantize=True)
         console.print(f'[green4]标点模型载入完成', end='\n\n')
 

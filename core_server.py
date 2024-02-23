@@ -30,6 +30,7 @@ async def main():
     Cosmic.sockets_id = Manager().list()
 
     # 负责识别的子进程
+    console.print('载入模块中，载入时长约 50 秒，请耐心等待...')
     recognize_process = Process(target=init_recognizer,
                                 args=(Cosmic.queue_in,
                                       Cosmic.queue_out,
