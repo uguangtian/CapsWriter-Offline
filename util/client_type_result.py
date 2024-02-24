@@ -1,6 +1,6 @@
 from config import ClientConfig as Config
 import keyboard
-import pyperclip
+import clipman
 import platform
 import asyncio
 
@@ -12,15 +12,18 @@ async def type_result(text):
 
         # 保存剪切板
         try:
-            temp = pyperclip.paste().decode('utf-8')
-        except:
-            temp = ''
+            # 初始化剪贴板模块
+            clipman.init()
+            temp = clipman.get()
+        except clipman.exceptions.ClipmanBaseException as e:
+            temp = e
+            print(e)
 
         # 复制结果
-        pyperclip.copy(text)
+        clipman.set(text)
 
         # 粘贴结果
-        if platform.system() == 'Darwin':
+        if platform.system() == 'Darwin': # Mac
             keyboard.press(55)
             keyboard.press(9)
             keyboard.release(55)
@@ -31,7 +34,7 @@ async def type_result(text):
         # 还原剪贴板
         if Config.restore_clip:
             await asyncio.sleep(0.1)
-            pyperclip.copy(temp)
+            clipman.set(temp)
 
     # 模拟打印
     else:
