@@ -33,15 +33,13 @@ def mute_all_sessions():
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = session.SimpleAudioVolume
-        if session.Process and session.Process.name() != "python.exe":  # Skip the current Python process
-            volume.SetMute(1, None)
+        volume.SetMute(1, None)
 
 def unmute_all_sessions():
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = session.SimpleAudioVolume
-        if session.Process and session.Process.name() != "python.exe":  # Skip the current Python process
-            volume.SetMute(0, None)
+        volume.SetMute(0, None)
 
 def launch_task():
     global task
@@ -55,7 +53,7 @@ def launch_task():
         Cosmic.loop
     )
 
-    # 录音时暂停其他音频播放
+    # 录音时静音其他音频播放
     if Config.mute_other_audio:
         mute_all_sessions()
 
@@ -80,7 +78,7 @@ def cancel_task():
     # 取消协程任务
     task.cancel()
 
-    # 恢复音频播放
+    # 取消音频静音
     if Config.mute_other_audio:
         unmute_all_sessions()
 
@@ -102,7 +100,7 @@ def finish_task():
         Cosmic.loop
     )
 
-    # 恢复音频播放
+    # 取消音频静音
     if Config.mute_other_audio:
         unmute_all_sessions()
 
