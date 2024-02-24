@@ -29,6 +29,7 @@ async def type_result(text):
             keyboard.release(55)
             keyboard.release(9)
         else:
+            keyboard.release(Config.trans_shortcut)
             keyboard.send('ctrl + v')
 
         # 还原剪贴板
