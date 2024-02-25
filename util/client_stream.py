@@ -53,8 +53,9 @@ def stream_open():
     channels = 1
     try:
         device = sd.query_devices(kind='input')
+        device_name = device["name"].replace("\xae", "")
         channels = min(2, device['max_input_channels'])
-        console.print(f'使用默认音频设备：[italic]{device["name"]}，声道数：{channels}', end='\n\n')
+        console.print(f'使用默认音频设备：[italic]{device_name}，声道数：{channels}', end='\n\n')
     except UnicodeDecodeError:
         console.print("由于编码问题，暂时无法获得麦克风设备名字", end='\n\n', style='bright_red')
     except sd.PortAudioError:
