@@ -2,15 +2,17 @@
 
 ![start_server_or_client_in_tray](assets/start_server_or_client_in_tray.gif)
 
-这是 [CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline) 的图形界面包分支 ，一个 Windows 端的离线的语音输入、中译英、字幕转录工具。
+这是 [CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline) 的**图形界面包**分支 ，一个 Windows 端的离线的语音输入、**离线中译英**、**在线多译多**、字幕转录工具。
 
-## 😎 三个功能：
+## 😎 四个功能：
 
 1. 按下键盘上的大写锁定键 `CapsLock` ，录音开始，当松开大写锁定键时，就会识别你的录音，并将识别结果立刻输入
 
-2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果翻译为英文
+2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果离线翻译为英文
 
-3. 将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
+3. 按下键盘上的 `Right Shift` 再按 `CapsLock` 可以将识别结果在线翻译为多国语言，默认设置翻译为日文
+
+4. 将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
 
 # ✨ 特性
 
@@ -20,33 +22,35 @@
 
 3. 防干扰功能：默认录音时静音其他音频播放，避免音乐干扰语音输入，通过 `config.py` 中 `mute_other_audio` 配置
 
-4. 翻译功能：离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ，组合键 按住 `Left Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
+4. 离线翻译功能：离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ，组合键 按住 `Left Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
 
-5. 转录功能：将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
+5. 在线翻译功能：基于 [DeepLX](https://github.com/OwO-Network/DeepLX) 可以将识别结果离线翻译为多国语言，默认翻译为日文。过于频繁的请求可能导致 IP 被封。组合键 按住 `Right Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Right Shift` 键。通过 `config.py` 中 `trans_online_shortcut` 和 `trans_online_target_languages` 配置
 
-6. 热词功能：可以在 `hot-en.txt hot-zh.txt hot-rule.txt` 中添加三种热词，客户端动态载入
+6. 转录功能：将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
 
-7. 日记功能：默认每次录音识别后，识别结果记录在 `年份/月份/日期.md` ，录音文件保存在 `年份/月份/assets`
+7. 热词功能：可以在 `hot-en.txt hot-zh.txt hot-rule.txt` 中添加三种热词，客户端动态载入
 
-8. 关键词日记：识别结果若以关键词开头，会被记录在 `年份/月份/关键词-日期.md`，关键词在 `keywords.txt` 中定义
+8. 日记功能：默认每次录音识别后，识别结果记录在 `年份/月份/日期.md` ，录音文件保存在 `年份/月份/assets`
 
-9. 服务端、客户端分离，可以服务多台客户端
+9. 关键词日记：识别结果若以关键词开头，会被记录在 `年份/月份/关键词-日期.md`，关键词在 `keywords.txt` 中定义
 
-10. 编辑 `config.py` ，可以配置服务端地址、快捷键、录音开关……
+10. 服务端、客户端分离，可以服务多台客户端
 
-11. 支持最小化到系统托盘
+11. 编辑 `config.py` ，可以配置服务端地址、快捷键、录音开关……
 
-12. 已包含所有 Python 环境和 models 模型，解压即用
+12. 支持最小化到系统托盘
 
-13. 输入状态提示功能：按下 `Capslock` 键会在光标处提示 [✦ 语音输入中‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)；按下 `Shift` 和 `Capslock` 键会在光标处提示 [✦VoiceTrans‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)。注意此功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.py` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
+13. 已包含所有 Python 环境和 models 模型，解压即用
 
-14. 阿拉伯数字化年份功能：默认将\***\*年 大写汉字替换为阿拉伯数字\*\***年，例如一八四八年 替换为 1848 年。通过 `config.py` 中 `Arabic_year` 配置
+14. 输入状态提示功能：按下 `Capslock` 键会在光标处提示 [✦ 语音输入中‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)；按下 `Shift` 和 `Capslock` 键会在光标处提示 [✦VoiceTrans‧‧‧](https://github.com/HaujetZhao/CapsWriter-Offline/issues/52#issuecomment-1905758203)。注意此功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.py` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
 
-15. 启动后自动缩小至托盘功能：默认 服务端 `start_server_gui.exe` 启动后不显示主窗口，自动缩小至托盘；客户端 `start_client_gui.exe` 显示主窗口。通过 `config.py` 中 `Shrink_automatically_to_Tray` 配置
+15. 阿拉伯数字化年份功能：默认将\***\*年 大写汉字替换为阿拉伯数字\*\***年，例如一八四八年 替换为 1848 年。通过 `config.py` 中 `Arabic_year` 配置
 
-16. 禁止多开功能：默认禁止多开，通过 `config.py` 中 `Only_run_once` 配置
+16. 启动后自动缩小至托盘功能：默认 服务端 `start_server_gui.exe` 启动后不显示主窗口，自动缩小至托盘；客户端 `start_client_gui.exe` 显示主窗口。通过 `config.py` 中 `Shrink_automatically_to_Tray` 配置
 
-17. 一件启动功能：默认服务端 `start_server_gui.exe` 启动后，自动启动客户端 `start_client_gui.exe`，通过 `config.py` 中 `In_the_meantime_start_the_client` 配置
+17. 禁止多开功能：默认禁止多开，通过 `config.py` 中 `Only_run_once` 配置
+
+18. 一件启动功能：默认服务端 `start_server_gui.exe` 启动后，自动启动客户端 `start_client_gui.exe`，通过 `config.py` 中 `In_the_meantime_start_the_client` 配置
 
 # ⬇️ 下载地址
 
@@ -69,6 +73,8 @@
 5. 使用翻译功能输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
 
 6. 输入状态提示功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.py` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
+
+7. 在线翻译基于 [DeepLX](https://github.com/OwO-Network/DeepLX) ，过于频繁的请求可能导致 IP 被封，如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
 
 # 🤓 源码运行
 

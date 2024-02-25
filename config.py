@@ -20,7 +20,12 @@ class ClientConfig:
     port = '6016'               # Server 端口
 
     shortcut     = 'caps lock'  # 控制录音的快捷键，默认是 CapsLock
-    trans_shortcut     = 'left shift'  # 控制翻译的快捷键，默认是 Left Shift，按住Left Shift再按 CapsLock进行翻译
+    trans_shortcut          = 'left shift'          # 控制离线翻译的快捷键，默认是 Left Shift，按住Left Shift再按 CapsLock进行离线翻译
+    trans_online_shortcut   = 'right shift'         # 控制在线翻译的快捷键，默认是 Right Shift，按住Right Shift再按 CapsLock进行在线翻译
+                                                    # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
+                                                    # 如果出现429错误，则表示你的IP被DeepL暂时屏蔽了，请不要在短时间内频繁请求。
+    trans_online_target_languages = 'JA'            # 在线翻译目标语言
+                                                    # 常用的 EN JA RU ，更多选择参考 https://github.com/missuo/bob-plugin-deeplx/blob/main/src/lang.js
     hold_mode    = True         # 长按模式，按下录音，松开停止，像对讲机一样用。
                                 # 改为 False，则关闭长按模式，也就是单击模式
                                 #       即：单击录音，再次单击停止

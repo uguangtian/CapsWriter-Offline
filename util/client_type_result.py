@@ -29,7 +29,10 @@ async def type_result(text):
             keyboard.release(55)
             keyboard.release(9)
         else:
-            keyboard.release(Config.trans_shortcut)
+            if keyboard.is_pressed(Config.trans_shortcut):
+                keyboard.release(Config.trans_shortcut)
+            if keyboard.is_pressed(Config.trans_online_shortcut):
+                keyboard.release(Config.trans_online_shortcut)
             keyboard.send('ctrl + v')
 
         # 还原剪贴板

@@ -8,3 +8,4 @@ pypinyin
 watchdog
 typer
 srt
+httpx
