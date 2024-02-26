@@ -24,7 +24,7 @@
 
 4. 离线翻译功能：离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ，组合键 按住 `Left Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
 
-5. 在线翻译功能：基于 [DeepLX](https://github.com/OwO-Network/DeepLX) 可以将识别结果离线翻译为多国语言，默认翻译为日文。过于频繁的请求可能导致 IP 被封。组合键 按住 `Right Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Right Shift` 键。通过 `config.py` 中 `trans_online_shortcut` 和 `trans_online_target_languages` 配置
+5. 在线翻译功能：基于 [DeepLX](https://github.com/OwO-Network/DeepLX) 可以将识别结果在线翻译为多国语言，默认翻译为日文。过于频繁的请求可能导致 IP 被封。组合键 按住 `Right Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Right Shift` 键。通过 `config.py` 中 `trans_online_shortcut` 和 `trans_online_target_languages` 配置
 
 6. 转录功能：将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
 
