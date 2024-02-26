@@ -50,7 +50,7 @@
 
 17. 禁止多开功能：默认禁止多开，通过 `config.py` 中 `Only_run_once` 配置
 
-18. 一件启动功能：默认服务端 `start_server_gui.exe` 启动后，自动启动客户端 `start_client_gui.exe`，通过 `config.py` 中 `In_the_meantime_start_the_client` 配置
+18. 一键启动功能：默认服务端 `start_server_gui.exe` 启动后，自动 **🛡️ 以管理员权限** 启动客户端 `start_client_gui_admin.exe`，通过 `config.py` 中 `In_the_meantime_start_the_client` 和 `In_the_meantime_start_the_client_as_admin` 配置
 
 # ⬇️ 下载地址
 

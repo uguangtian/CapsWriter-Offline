@@ -127,8 +127,13 @@ if __name__ == '__main__':
     if Config.Only_run_once and check_process('pythonw_CapsWriter_Server.exe'):
         raise Exception("已经有一个服务端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Server.exe 进程已在运行。如果你确定需要启动多个服务端同时运行，请先修改 config.py  class ServerConfig:  Only_run_once = False 。）")
     if Config.In_the_meantime_start_the_client and not check_process('start_client_gui.exe'):
-        # 设置了启动服务端的同时启动客户端且服务端未在运行，启动服务端...
-        subprocess.Popen(['start_client_gui.exe'])
+        # 设置了启动服务端的同时启动客户端且客户端未在运行
+        if Config.In_the_meantime_start_the_client_as_admin:
+            # 以用管理员权限启动...
+            subprocess.Popen(['start_client_gui_admin.exe'])
+        else:
+            # 以用户权限启动服务端...
+            subprocess.Popen(['start_client_gui.exe'])
     app = QApplication([])
     apply_stylesheet(app, theme='dark_amber.xml')
     gui = GUI()
