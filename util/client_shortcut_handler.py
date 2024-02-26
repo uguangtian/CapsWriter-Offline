@@ -8,6 +8,7 @@ from threading import Event
 from concurrent.futures import ThreadPoolExecutor
 from util.client_send_audio import send_audio
 from util.my_status import Status
+from util.client_pause_other_audio import pause_other_audio, audio_playering_app_name
 from pycaw.pycaw import AudioUtilities
 
 task = asyncio.Future()
@@ -16,7 +17,7 @@ pool = ThreadPoolExecutor()
 pressed = False
 released = True
 event = Event()
-
+unpause_needed = False
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
@@ -57,6 +58,12 @@ def launch_task():
     if Config.mute_other_audio:
         mute_all_sessions()
 
+    # 录音时暂停其他音频播放 且 有音频正在播放
+    global unpause_needed
+    if Config.pause_other_audio and audio_playering_app_name() != None:
+        pause_other_audio()
+        unpause_needed = True
+    
     # 通知录音线程可以向队列放数据了
     Cosmic.on = t1
 
@@ -82,6 +89,12 @@ def cancel_task():
     if Config.mute_other_audio:
         unmute_all_sessions()
 
+    # 取消音频暂停
+    global unpause_needed
+    if Config.pause_other_audio and unpause_needed:
+        keyboard.send('play/pause')
+        unpause_needed = False
+
 def finish_task():
     global task
 
@@ -104,6 +117,11 @@ def finish_task():
     if Config.mute_other_audio:
         unmute_all_sessions()
 
+    # 取消音频暂停
+    global unpause_needed
+    if Config.pause_other_audio and unpause_needed:
+        keyboard.send('play/pause')
+        unpause_needed = False
 
 # =================单击模式======================
 
