@@ -84,7 +84,9 @@
 
 3. 按住 `CapsLock` 键，录音开始，松开 `CapsLock` 键，录音结束，识别结果立马被输入（录音时长短于 0.3 秒不算）
 
-4. 按住 `Left Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
+4. 按住 `Left Shift` 再按 `CapsLock` 进行离线翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
+
+5. 按住 `Right Shift` 再按 `CapsLock` 进行在线翻译，方便同时需要输入中文和英文翻译的场景。注意输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Right Shift` 键
 
 ---
 
