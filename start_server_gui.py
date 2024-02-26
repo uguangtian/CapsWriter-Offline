@@ -12,7 +12,7 @@ def check_process(name):
     # 使用wmic命令查找进程
     command = ['wmic', 'process', 'get', 'name']
     # 执行命令并捕获输出
-    output = subprocess.check_output(command).decode('utf-8')
+    output = subprocess.check_output(command).decode('utf-8', errors='replace')
     # 检查进程名称是否在输出中
     return name in output
 
