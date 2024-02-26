@@ -78,7 +78,7 @@
 
 8. 当某程序以管理员权限运行，可能会出现有识别结果但是却无法在那个程序输入文字的状况，例如：`Listary` 、`PixPin` 等。这是因为 `start_client_gui.exe` 默认以用户权限运行客户端，运行在用户权限的程序无法控制管理员权限的程序。你可以关闭用户权限运行的客户端，尝试使用 `start_client_gui_admin.exe` 以管理员权限运行客户端
 
-9. 添加开机自启动的方法：新建 `start_server_gui.exe` 和 `start_client_gui.exe` 的快捷方式（如果你希望开机自启动时与管理员权限运行客户端，创建 `start_client_gui_admin.exe` 的快捷方式），将他们的快捷方式放到 `shell:startup` 目录下即可
+9. 添加开机自启动的方法：新建 `start_server_gui.exe` 和 `start_client_gui.exe` 的快捷方式（如果你希望开机自启动时以管理员权限运行客户端，创建 `start_client_gui_admin.exe` 的快捷方式），将他们的快捷方式放到 `shell:startup` 目录下即可
 
 # 🤓 源码运行
 
