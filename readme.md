@@ -70,11 +70,15 @@
 
 4. 默认的快捷键是 `caps lock`，你可以打开 `core_client.py` 进行修改
 
-5. 使用翻译功能输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 键
+5. 使用翻译功能输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 或 `Right Shift` 键
 
 6. 输入状态提示功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.py` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
 
 7. 在线翻译基于 [DeepLX](https://github.com/OwO-Network/DeepLX) ，过于频繁的请求可能导致 IP 被封，如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
+
+8. 当某程序以管理员权限运行，可能会出现有识别结果但是却无法在那个程序输入文字的状况，例如：`Listary` 、`PixPin` 等。这是因为 `start_client_gui.exe` 默认以用户权限运行客户端，运行在用户权限的程序无法控制管理员权限的程序。你可以关闭用户权限运行的客户端，尝试使用 `start_client_gui_admin.exe` 以管理员权限运行客户端
+
+9. 添加开机自启动的方法：新建 `start_server_gui.exe` 和 `start_client_gui.exe` 的快捷方式（如果你希望开机自启动时与管理员权限运行客户端，创建 `start_client_gui_admin.exe` 的快捷方式），将他们的快捷方式放到 `shell:startup` 目录下即可
 
 # 🤓 源码运行
 

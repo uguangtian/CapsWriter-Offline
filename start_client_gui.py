@@ -125,6 +125,20 @@ class GUI(QMainWindow):
             self.text_box_client.append(line)
 
 
+def start_client_gui():
+    if Config.Only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
+            raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
+    proc = subprocess.Popen(['.\\hint_while_recording.exe'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    app = QApplication([])
+    apply_stylesheet(app, theme='dark_teal.xml')
+    gui = GUI()
+    if not Config.Shrink_automatically_to_Tray:
+        gui.show()
+    sys.exit(app.exec()) 
+
+
+
+
 if __name__ == '__main__':
     if sys.argv[1:]:
         # 如果参数传入文件，那就转录文件
@@ -135,12 +149,4 @@ if __name__ == '__main__':
         subprocess.run([python_exe_path, script_path] + args)
     else:
         # GUI
-        if Config.Only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
-            raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
-        proc = subprocess.Popen(['.\\hint_while_recording.exe'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        app = QApplication([])
-        apply_stylesheet(app, theme='dark_teal.xml')
-        gui = GUI()
-        if not Config.Shrink_automatically_to_Tray:
-            gui.show()
-        sys.exit(app.exec()) 
+        start_client_gui()
