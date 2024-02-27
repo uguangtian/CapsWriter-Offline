@@ -1,4 +1,4 @@
-# 😘 CapsWriter-Offline 图形界面包分支 （ 仅 🪟Windows 端）
+# 😘 CapsWriter-Offline 图形界面包分支 （ 仅 🪟Windows 10 + ）
 
 ![start_server_or_client_in_tray](assets/start_server_or_client_in_tray.gif)
 
@@ -13,6 +13,15 @@
 3. 按下键盘上的 `Right Shift` 再按 `CapsLock` 可以将识别结果在线翻译为多国语言，默认设置翻译为日文
 
 4. 将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
+
+# 📙 目录
+
+- [✨ 特性](#-特性)
+- [⬇️ 下载地址](#-下载地址)
+- [❗ 注意事项](#-注意事项)
+- [🤓 源码运行](#-源码运行)
+- [🔧 修改配置](#-修改配置)
+- [🪳 提交 Bug ](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues)
 
 # ✨ 特性
 
@@ -62,23 +71,35 @@
 
 # ❗ 注意事项
 
-1. 存在杀毒误报，建议关闭杀毒软件和防火墙，再解压
+1.  存在杀毒误报，建议关闭杀毒软件和防火墙，再解压
 
-2. 建议先不要修改默认配置，测试能否正常运行
+2.  建议先不要修改默认配置，测试能否正常运行
 
-3. 音视频文件转录功能依赖于 `FFmpeg`，打包版本已内置 `FFmpeg`
+3.  音视频文件转录功能依赖于 `FFmpeg`，打包版本已内置 `FFmpeg`
 
-4. 默认的快捷键是 `caps lock`，你可以打开 `core_client.py` 进行修改
+4.  默认的快捷键是 `caps lock`，你可以打开 `core_client.py` 进行修改
 
-5. 使用翻译功能输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 或 `Right Shift` 键
+5.  使用翻译功能输入结束时，先松开 `CapsLock` 键，待输入完成，再松开 `Left Shift` 或 `Right Shift` 键
 
-6. 输入状态提示功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.py` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
+6.  输入状态提示功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.py` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
 
-7. 在线翻译基于 [DeepLX](https://github.com/OwO-Network/DeepLX) ，过于频繁的请求可能导致 IP 被封，如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
+7.  在线翻译基于 [DeepLX](https://github.com/OwO-Network/DeepLX) ，过于频繁的请求可能导致 IP 被封，如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
 
-8. 当某程序以管理员权限运行，可能会出现有识别结果但是却无法在那个程序输入文字的状况，例如：`Listary` 、`PixPin` 等。这是因为 `start_client_gui.exe` 默认以用户权限运行客户端，运行在用户权限的程序无法控制管理员权限的程序。你可以关闭用户权限运行的客户端，尝试使用 `start_client_gui_admin.exe` 以管理员权限运行客户端
+8.  当某程序以管理员权限运行，可能会出现有识别结果但是却无法在那个程序输入文字的状况，例如：`Listary` 、`PixPin` 等。这是因为 `start_client_gui.exe` 默认以用户权限运行客户端，运行在用户权限的程序无法控制管理员权限的程序。你可以关闭用户权限运行的客户端，尝试使用 `start_client_gui_admin.exe` 以管理员权限运行客户端
 
-9. 添加开机自启动的方法：新建 `start_server_gui.exe` 和 `start_client_gui.exe` 的快捷方式（如果你希望开机自启动时以管理员权限运行客户端，创建 `start_client_gui_admin.exe` 的快捷方式），将他们的快捷方式放到 `shell:startup` 目录下即可
+9.  添加开机自启动的方法：
+
+    9.1 如果你未更改默认配置（ `In_the_meantime_start_the_client = True` 表示一键启动功能 生效，服务端会自动启动客户端），只用新建 `start_server_gui.exe` 的快捷方式，将服务端的快捷方式放到 `shell:startup` 目录下即可在开机时自动启动服务端和客户端。服务端会自动启动客户端。不要添加客户端的快捷方式。
+
+    9.1.1 如果你未更改默认配置（ `In_the_meantime_start_the_client_as_admin = True` ），启动服务端会自动以管理员权限启动客户端。
+
+    9.1.2 如果你更改了默认配置（ `In_the_meantime_start_the_client_as_admin = False` ），启动服务端会自动以用户权限启动客户端。
+
+    9.2 如果你更改了默认配置（ `In_the_meantime_start_the_client = False` 表示一键启动功能 禁用，启动服务端不会启动客户端），新建 `start_server_gui.exe` 的快捷方式，将服务端的快捷方式放到 `shell:startup` 目录下只会在开机时自动启动服务端。客户端不会被启动。
+
+    9.3 如果你更改了默认配置（ `In_the_meantime_start_the_client = False` ），新建 `start_client_gui.exe` 的快捷方式，将客户端的快捷方式放到 `shell:startup` 目录下只会在开机时自动启动客户端。服务端不会被启动。不要再添加客户端 `start_client_gui_admin.exe` 的快捷方式。
+
+    9.4 如果你更改了默认配置（ `In_the_meantime_start_the_client = False` ），新建 `start_client_gui_admin.exe` 的快捷方式，将客户端的快捷方式放到 `shell:startup` 目录下只会在开机时自动以管理员权限启动客户端。服务端不会被启动。不要再添加客户端 `start_client_gui.exe` 的快捷方式。
 
 # 🤓 源码运行
 
