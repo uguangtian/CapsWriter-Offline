@@ -13,7 +13,7 @@ class ServerConfig:
     Shrink_automatically_to_Tray = True     # 启动后不显示主窗口，自动缩小至托盘
     Only_run_once = True # 只允许运行一次，禁止多开
     In_the_meantime_start_the_client = True # 启动服务端的同时启动客户端
-    In_the_meantime_start_the_client_as_admin = True    # 启动服务端的同时你管理员权限启动客户端
+    In_the_meantime_start_the_client_as_admin = True    # 启动服务端的同时以管理员权限启动客户端
                                                         # 当某程序以管理员权限运行
                                                         # 可能会出现有识别结果但是却无法在那个程序输入文字的状况
                                                         # 例如：Listary、PixPin等

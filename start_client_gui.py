@@ -67,17 +67,51 @@ class GUI(QMainWindow):
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon("assets/client-icon.ico"))
-        show_action = QAction("Show", self)
-        quit_action = QAction("Quit", self)
+        edit_hot_en_action = QAction("Edit hot-en.txt", self)
+        edit_hot_rule_action = QAction("Edit hot-rule.txt", self)
+        edit_hot_zh_action = QAction("Edit hot-zh.txt", self)
+        edit_keyword_action = QAction("Edit keywords.txt", self)
+        github_website_action = QAction("🌐 GitHub Website", self)
+        show_action = QAction("🪟 Show", self)
+        quit_action = QAction("❌ Quit", self)
+
+        edit_hot_en_action.triggered.connect(self.edit_hot_en)
+        edit_hot_rule_action.triggered.connect(self.edit_hot_rule)
+        edit_hot_zh_action.triggered.connect(self.edit_hot_zh)
+        edit_keyword_action.triggered.connect(self.edit_keyword)
+        github_website_action.triggered.connect(self.open_github_website)
         show_action.triggered.connect(self.show)
         quit_action.triggered.connect(self.quit_app)
+
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
+
         tray_menu = QMenu()
+        edit_menu = QMenu("📝 Edit Hot Rules", tray_menu)
+
+        edit_menu.addAction(edit_hot_en_action)
+        edit_menu.addAction(edit_hot_rule_action)
+        edit_menu.addAction(edit_hot_zh_action)
+        edit_menu.addAction(edit_keyword_action)
+
+        tray_menu.addMenu(edit_menu)
+        tray_menu.addAction(github_website_action)
+        tray_menu.addSeparator()
         tray_menu.addAction(show_action)
         tray_menu.addAction(quit_action)
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
+    def edit_hot_en(self):
+        os.startfile('hot-en.txt')
+    def edit_hot_rule(self):
+        os.startfile('hot-rule.txt')
+    def edit_hot_zh(self):
+        os.startfile('hot-zh.txt')
+    def edit_keyword(self):
+        os.startfile('keywords.txt')
+    
+    def open_github_website(self):
+        os.system(f'start https://github.com/H1DDENADM1N/CapsWriter-Offline')
     def closeEvent(self, event):
         # Minimize to system tray instead of closing the window when the user clicks the close button
         self.hide()  # Hide the window
@@ -129,7 +163,7 @@ class GUI(QMainWindow):
 def start_client_gui():
     if Config.Only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
             raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
-    proc = subprocess.Popen(['.\\hint_while_recording.exe'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.Popen(['hint_while_recording.exe'])
     app = QApplication([])
     apply_stylesheet(app, theme='dark_teal.xml')
     gui = GUI()
