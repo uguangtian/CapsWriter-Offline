@@ -3,7 +3,7 @@ import sys
 import subprocess
 from queue import Queue
 import threading
-from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget)
 from PySide6.QtGui import (QIcon, QAction)
 from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
@@ -29,7 +29,10 @@ class GUI(QMainWindow):
         self.resize(425, 425)
         self.setWindowTitle('CapsWriter-Offline-Client')
         self.setWindowIcon(QIcon("assets/client-icon.ico"))
+        self.setWindowOpacity(0.9)
+
         self.create_text_box()
+        self.create_monitor_checkbox() # Create monitor checkbox
         self.create_clear_button()  # Create clear button
         self.create_systray_icon()
         self.hide()
@@ -49,10 +52,13 @@ class GUI(QMainWindow):
         
         # Create a vertical layout
         layout = QVBoxLayout()
+        layout2 = QHBoxLayout()
         
         # Add text box and button to the layout
         layout.addWidget(self.text_box_client)
-        layout.addWidget(self.clear_button)
+        layout2.addWidget(self.monitor_checkbox)
+        layout2.addWidget(self.clear_button)
+        layout.addLayout(layout2)
         
         # Create a central widget
         central_widget = QWidget()
@@ -65,6 +71,23 @@ class GUI(QMainWindow):
         # Clear the content of the client text box
         self.text_box_client.clear()
     
+    def create_monitor_checkbox(self):
+        # 创建一个QCheckBox控件
+        self.monitor_checkbox = QCheckBox("🧐 Display Output")
+        self.monitor_checkbox.setToolTip("Monitor Client Output / Use As Notepad")
+        # 设置默认状态
+        self.monitor_checkbox.setChecked(True)
+        # 当状态改变时，调用self.on_monitor_toggled函数
+        self.monitor_checkbox.stateChanged.connect(self.on_monitor_toggled)
+
+    def on_monitor_toggled(self, state):
+        # 检查复选框的选中状态
+        if state == 2:  # 2 表示选中状态
+            self.update_timer.start(100)
+        else:
+            self.update_timer.stop()
+
+
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon("assets/client-icon.ico"))
