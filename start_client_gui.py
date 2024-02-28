@@ -8,6 +8,7 @@ from PySide6.QtGui import (QIcon, QAction)
 from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
 from config import ClientConfig as Config
+from util.check_process import check_process
 
 def check_process(name):
     # 使用wmic命令查找进程
