@@ -102,6 +102,11 @@ class GUI(QMainWindow):
             self.hide() # Press ESC to hide main window
     def start_script(self):
         # Start core_server.py and redirect output to the server queue
+        
+        # While Debug error    for line in iter(out.readline, ''):
+        # Use this line to replace the original code
+        # self.core_server_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Server.exe', 'core_server.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
+        
         self.core_server_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Server.exe', 'core_server.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         threading.Thread(target=self.enqueue_output, args=(self.core_server_process.stdout, self.output_queue_server), daemon=True).start()
 

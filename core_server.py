@@ -13,7 +13,9 @@ from util.server_ws_send import ws_send
 from util.server_init_recognizer import init_recognizer
 from util.empty_working_set import empty_current_working_set
 
-BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)    # 确保 os.getcwd() 位置正确，用相对路径加载模型
+# 确保 os.getcwd() 位置正确，用相对路径加载模型
+BASE_DIR = os.getcwd(); os.chdir(BASE_DIR)
+# BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)
 
 async def main():
 
