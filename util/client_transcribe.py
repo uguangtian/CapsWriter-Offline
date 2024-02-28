@@ -51,7 +51,7 @@ async def transcribe_send(file: Path):
         "-ar", "16000",
         "-",
     ]
-    process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    process = subprocess.Popen(ffmpeg_cmd, creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     console.print(f'    正在提取音频', end='\r')
     data = process.stdout.read()
     audio_duration = len(data) / 4 / 16000

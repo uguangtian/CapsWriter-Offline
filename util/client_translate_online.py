@@ -6,7 +6,7 @@ from config import ClientConfig as Config
 info = subprocess.STARTUPINFO()
 info.dwFlags = subprocess.STARTF_USESHOWWINDOW
 info.wShowWindow = subprocess.SW_HIDE
-deeplx_translate_server_proc = subprocess.Popen(['.\\deeplx_windows_amd64.exe'], startupinfo=info) # https://github.com/OwO-Network/DeepLX/releases
+deeplx_translate_server_proc = subprocess.Popen(['.\\deeplx_windows_amd64.exe'], creationflags=subprocess.CREATE_NO_WINDOW, startupinfo=info) # https://github.com/OwO-Network/DeepLX/releases
 
 def translate_online(text):
     deeplx_api = "http://127.0.0.1:1188/translate"

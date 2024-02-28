@@ -130,7 +130,7 @@ class GUI(QMainWindow):
         QApplication.quit()
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
-        proc = subprocess.Popen('taskkill /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /IM deeplx_windows_amd64.exe /F', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+        proc = subprocess.Popen('taskkill /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /IM deeplx_windows_amd64.exe /F', creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
 
 
     def on_tray_icon_activated(self, reason):
@@ -140,7 +140,7 @@ class GUI(QMainWindow):
 
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
-        self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         threading.Thread(target=self.enqueue_output, args=(self.core_client_process.stdout, self.output_queue_client), daemon=True).start()
 
         # Update text box
@@ -163,7 +163,7 @@ class GUI(QMainWindow):
 def start_client_gui():
     if Config.Only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
             raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
-    subprocess.Popen(['hint_while_recording.exe'])
+    subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
     app = QApplication([])
     apply_stylesheet(app, theme='dark_teal.xml')
     gui = GUI()
