@@ -28,7 +28,8 @@ from util.client_adjust_srt import adjust_srt
 from util.empty_working_set import empty_current_working_set
 
 # 确保根目录位置正确，用相对路径加载模型
-BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)
+BASE_DIR = os.getcwd(); os.chdir(BASE_DIR)
+# BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)
 
 # 确保终端能使用 ANSI 控制字符
 colorama.init()
