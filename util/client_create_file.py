@@ -1,13 +1,13 @@
 import wave 
 import shutil 
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import Popen, PIPE, DEVNULL, CREATE_NO_WINDOW
 from typing import Union, Tuple
 from pathlib import Path
 import time
 from os import makedirs
 from wave import Wave_write
 import tempfile
-
+from config import ClientConfig as Config
 
 def create_file(channels: int, time_start: float) -> Tuple[Path, Union[Popen, Wave_write]]:
 
@@ -20,21 +20,22 @@ def create_file(channels: int, time_start: float) -> Tuple[Path, Union[Popen, Wa
     file_path = tempfile.mktemp(prefix=f'({time_ymdhms})', dir=folder_path)
     file_path = Path(file_path)
 
-    # if shutil.which('ffmpeg'):
-    #     # 用户已安装 ffmpeg，则输出到 mp3 文件
-    #     file_path = file_path.with_suffix('.mp3')
-    #     # 构造ffmpeg命令行
-    #     ffmpeg_command = [
-    #         'ffmpeg', '-y', 
-    #         '-f', 'f32le', '-ar', '48000', '-ac', f'{channels}', '-i', '-',
-    #         '-b:a', '192k', file_path,
-    #     ]
-    #     # 执行ffmpeg命令行，得到 Popen
-    #     file = Popen(ffmpeg_command, stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
-    # else:                       # 用户未安装 ffmpeg，则输出为 wav 格式
-    file_path = file_path.with_suffix('.wav')
-    file = wave.open(str(file_path), 'w')
-    file.setnchannels(channels)
-    file.setsampwidth(2)
-    file.setframerate(48000)
+    if shutil.which('ffmpeg') and Config.reduce_audio_files:
+        # 用户已安装 ffmpeg，且设置使用减小音频文件，则输出到 mp3 文件
+        file_path = file_path.with_suffix('.mp3')
+        # 构造ffmpeg命令行
+        ffmpeg_command = [
+            'ffmpeg', '-y',
+            '-f', 'f32le', '-ar', '48000', '-ac', f'{channels}', '-i', '-',
+            '-af', 'silenceremove=start_periods=1:start_duration=0.1:start_threshold=-55dB:detection=peak',
+            '-b:a', '192k', file_path,
+        ]
+        # 执行ffmpeg命令行，得到 Popen
+        file = Popen(ffmpeg_command, creationflags=CREATE_NO_WINDOW, stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
+    else:                       # 用户未安装 ffmpeg，则输出为 wav 格式
+        file_path = file_path.with_suffix('.wav')
+        file = wave.open(str(file_path), 'w')
+        file.setnchannels(channels)
+        file.setsampwidth(2)
+        file.setframerate(48000)
     return file_path, file
