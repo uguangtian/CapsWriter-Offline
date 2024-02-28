@@ -1,5 +1,6 @@
 
 from util.client_cosmic import console, Cosmic
+from config import ClientConfig as Config
 import numpy as np 
 import sounddevice as sd
 import asyncio
@@ -61,16 +62,27 @@ def stream_open():
     except sd.PortAudioError:
         console.print("没有找到麦克风设备", end='\n\n', style='bright_red')
         input('按回车键退出'); sys.exit()
-
-    stream = sd.InputStream(
-        samplerate=48000,
-        blocksize=int(0.05 * 48000),  # 0.05 seconds
-        device=None,
-        dtype="float32",
-        channels=channels,
-        callback=record_callback,
-        finished_callback=stream_reopen,
-    ); stream.start()
+        
+    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+        stream = sd.InputStream(
+            samplerate=48000,
+            blocksize=int(0.05 * 48000),  # 0.05 seconds
+            device=None,
+            dtype="float32",
+            channels=channels,
+            callback=record_callback,
+            # finished_callback=stream_reopen,
+        ); # stream.start()
+    else:
+        stream = sd.InputStream(
+            samplerate=48000,
+            blocksize=int(0.05 * 48000),  # 0.05 seconds
+            device=None,
+            dtype="float32",
+            channels=channels,
+            callback=record_callback,
+            finished_callback=stream_reopen,
+        ); stream.start()
 
     return stream
 

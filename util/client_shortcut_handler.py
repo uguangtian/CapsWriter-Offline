@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from util.client_send_audio import send_audio
 from util.my_status import Status
 from util.client_pause_other_audio import pause_other_audio, audio_playering_app_name
+from util.client_stream import stream_open, stream_close, stream_reopen
 from pycaw.pycaw import AudioUtilities
 
 task = asyncio.Future()
@@ -43,8 +44,10 @@ def unmute_all_sessions():
         volume.SetMute(0, None)
 
 def launch_task():
-    global task
-
+    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+        # 重启音频流
+        stream_reopen()
+        Cosmic.stream.start()
     # 记录开始时间
     t1 = time.time()
 
@@ -71,6 +74,7 @@ def launch_task():
     status.start()
 
     # 启动识别任务
+    global task
     task = asyncio.run_coroutine_threadsafe(
         send_audio(),
         Cosmic.loop,
@@ -94,6 +98,10 @@ def cancel_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send('play/pause')
         unpause_needed = False
+    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+        # 结束音频流
+        Cosmic.stream.stop()
+        Cosmic.stream.close()
 
 def finish_task():
     global task
@@ -122,6 +130,10 @@ def finish_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send('play/pause')
         unpause_needed = False
+    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+        # 结束音频流
+        Cosmic.stream.stop()
+        Cosmic.stream.close()
 
 # =================单击模式======================
 
@@ -186,6 +198,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
     if e.event_type == 'down' and not Cosmic.on:
         # 记录开始时间
         launch_task()
+
     elif e.event_type == 'up':
         # 记录持续时间，并标识录音线程停止向队列放数据
         duration = time.time() - Cosmic.on
@@ -200,7 +213,6 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if Config.restore_key:
                 time.sleep(0.01)
                 keyboard.send(Config.shortcut)
-
 
 
 
