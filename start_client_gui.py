@@ -138,6 +138,10 @@ class GUI(QMainWindow):
         if reason == QSystemTrayIcon.DoubleClick:
             self.showNormal()  # Show the main window
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.hide() # Press ESC to hide main window
+
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
         self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)

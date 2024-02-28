@@ -102,7 +102,10 @@ class GUI(QMainWindow):
         # Called when the system tray icon is activated
         if reason == QSystemTrayIcon.DoubleClick:
             self.showNormal()  # Show the main window
-
+            
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.hide() # Press ESC to hide main window
     def start_script(self):
         # Start core_server.py and redirect output to the server queue
         self.core_server_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Server.exe', 'core_server.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
