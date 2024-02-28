@@ -53,7 +53,7 @@ def stream_open():
     channels = 1
     try:
         device = sd.query_devices(kind='input')
-        device_name = device["name"].replace("\xae", "")
+        device_name = device["name"].replace("®", " R ").replace('™', ' TM ').encode('gbk', errors='replace').decode('gbk', errors='replace')
         channels = min(2, device['max_input_channels'])
         console.print(f'使用默认音频设备：[italic]{device_name}，声道数：{channels}', end='\n\n')
     except UnicodeDecodeError:
