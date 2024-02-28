@@ -47,6 +47,7 @@ class ClientConfig:
 
     save_audio = True           # 是否保存录音文件
     audio_name_len = 20         # 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过200
+    reduce_audio_files = True # 如果用户已安装 ffmpeg ，调用 ffmpeg 录音时输出 mp3 格式的音频文件，大大减小文件体积，减少磁盘占用
 
     trash_punc = '，。,.'        # 识别结果要消除的末尾标点
 
@@ -68,7 +69,6 @@ class ClientConfig:
     Arabic_year = True                 # 将****年 大写汉字替换为阿拉伯数字****年，例如一八四八年 替换为1848年
     Shrink_automatically_to_Tray = False     # 启动后不显示主窗口，自动缩小至托盘
     Only_run_once = True # 只允许运行一次，禁止多开
-    reduce_audio_files = True # 如果用户已安装 ffmpeg ，调用 ffmpeg 录音时输出 mp3 格式的音频文件，大大减小文件体积，减少磁盘占用
 
 class ModelPaths:
     model_dir = Path() / 'models'
