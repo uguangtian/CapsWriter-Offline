@@ -80,7 +80,7 @@ class GUI(QMainWindow):
         edit_hot_zh_action.triggered.connect(self.edit_hot_zh)
         edit_keyword_action.triggered.connect(self.edit_keyword)
         github_website_action.triggered.connect(self.open_github_website)
-        show_action.triggered.connect(self.show)
+        show_action.triggered.connect(self.showNormal)
         quit_action.triggered.connect(self.quit_app)
 
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
@@ -136,7 +136,7 @@ class GUI(QMainWindow):
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
         if reason == QSystemTrayIcon.DoubleClick:
-            self.show()  # Show the main window
+            self.showNormal()  # Show the main window
 
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
