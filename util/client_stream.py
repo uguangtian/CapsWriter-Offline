@@ -63,7 +63,7 @@ def stream_open():
         console.print("没有找到麦克风设备", end='\n\n', style='bright_red')
         input('按回车键退出'); sys.exit()
         
-    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+    if Config.Only_enable_microphones_when_pressed_record_shortcut:
         stream = sd.InputStream(
             samplerate=48000,
             blocksize=int(0.05 * 48000),  # 0.05 seconds

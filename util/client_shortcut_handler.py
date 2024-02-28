@@ -44,7 +44,7 @@ def unmute_all_sessions():
         volume.SetMute(0, None)
 
 def launch_task():
-    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+    if Config.Only_enable_microphones_when_pressed_record_shortcut:
         # 重启音频流
         stream_reopen()
         Cosmic.stream.start()
@@ -98,7 +98,7 @@ def cancel_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send('play/pause')
         unpause_needed = False
-    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+    if Config.Only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()
@@ -130,7 +130,7 @@ def finish_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send('play/pause')
         unpause_needed = False
-    if Config.Only_enable_microphones_when_pressed_trans_shortcut:
+    if Config.Only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()

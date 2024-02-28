@@ -69,7 +69,7 @@ class ClientConfig:
     Arabic_year = True                 # 将****年 大写汉字替换为阿拉伯数字****年，例如一八四八年 替换为1848年
     Shrink_automatically_to_Tray = False     # 启动后不显示主窗口，自动缩小至托盘
     Only_run_once = True # 只允许运行一次，禁止多开
-    Only_enable_microphones_when_pressed_trans_shortcut = True  # 只在按下录音快捷键时启用麦克风
+    Only_enable_microphones_when_pressed_record_shortcut = True  # 只在按下录音快捷键时启用麦克风
                                                                 # 建议启用，有些蓝牙耳机录音时无法播放
                                                                 # 而且启用后，切换默认麦克风也不用重启客户端
                                                                 # 比如从蓝牙耳机换回笔记本电脑默认麦克风
