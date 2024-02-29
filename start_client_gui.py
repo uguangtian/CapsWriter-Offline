@@ -38,24 +38,24 @@ class GUI(QMainWindow):
 
 
         # Create a vertical layout
-        layout = QVBoxLayout()
-        layout.setSpacing(0)  # 设置控件间距为0像素
-        layout.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
-        layout2 = QHBoxLayout()
-        layout2.setSpacing(0)  # 设置控件间距为0像素
-        layout2.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
+        self.layout = QVBoxLayout()
+        self.layout.setSpacing(0)  # 设置控件间距为0像素
+        self.layout.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
+        self.layout2 = QHBoxLayout()
+        self.layout2.setSpacing(0)  # 设置控件间距为0像素
+        self.layout2.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
         
         # Add text box and button to the layout
-        layout.addWidget(self.text_box_client)
-        layout2.addWidget(self.monitor_checkbox)
-        layout2.addWidget(self.stay_on_top_checkbox)
-        layout2.addWidget(self.clear_button)
-        layout.addLayout(layout2)
+        self.layout.addWidget(self.text_box_client)
+        self.layout2.addWidget(self.monitor_checkbox)
+        self.layout2.addWidget(self.stay_on_top_checkbox)
+        self.layout2.addWidget(self.clear_button)
+        self.layout.addLayout(self.layout2)
 
 
         # Create a central widget
         central_widget = QWidget()
-        central_widget.setLayout(layout)
+        central_widget.setLayout(self.layout)
         # Set the central widget
         self.setCentralWidget(central_widget)
 
@@ -209,6 +209,21 @@ class GUI(QMainWindow):
         while not self.output_queue_client.empty():
             line = self.output_queue_client.get()
             self.text_box_client.append(line)
+
+
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        for i in range(self.layout2.count()):
+            widget = self.layout2.itemAt(i).widget()
+            if widget is not None:
+                widget.setVisible(True)
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        for i in range(self.layout2.count()):
+            widget = self.layout2.itemAt(i).widget()
+            if widget is not None:
+                widget.setVisible(False)
 
     def wheelEvent(self, event: QWheelEvent):
         # 设置初始缩放因子
