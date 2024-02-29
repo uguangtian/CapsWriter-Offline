@@ -9,6 +9,7 @@ from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
 from config import ClientConfig as Config
 from util.check_process import check_process
+from util.cloud_clipboard_show_qrcode import CloudClipboardShowQRCode
 
 class GUI(QMainWindow):
     def __init__(self):
@@ -27,6 +28,7 @@ class GUI(QMainWindow):
         self.create_monitor_checkbox() # Create monitor checkbox
         self.create_stay_on_top_checkbox()
         self.create_wordcount_label()
+        self.create_cloudypaste_button()  # Create cloudy paste button
         self.create_clear_button()  # Create clear button
         self.create_systray_icon()
 
@@ -44,6 +46,7 @@ class GUI(QMainWindow):
         self.layout2.addWidget(self.monitor_checkbox)
         self.layout2.addWidget(self.stay_on_top_checkbox)
         self.layout2.addWidget(self.text_box_wordCountLabel)
+        self.layout2.addWidget(self.cloudypaste_button)
         self.layout2.addWidget(self.clear_button)
         self.layout.addLayout(self.layout2)
 
@@ -79,11 +82,16 @@ class GUI(QMainWindow):
         self.text_box_client.textChanged.connect(self.update_word_count_toggled)
         self.text_box_client.selectionChanged.connect(self.update_word_count_toggled)
 
+    def create_cloudypaste_button(self):
+        self.cloudypaste_button = QPushButton("CloudyPaste", self)
+        self.cloudypaste_button.clicked.connect(self.cloudy_paste)
+
     def create_clear_button(self):
         # Create a button
         self.clear_button = QPushButton("Clear", self)
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
+
 
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
@@ -122,11 +130,13 @@ class GUI(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
+    def cloudy_paste(self):
+        text = self.text_box_client.toPlainText()
+        CloudClipboardShowQRCode(text)
 
     def clear_text_box(self):
         # Clear the content of the client text box
         self.text_box_client.clear()
-    
 
     def on_monitor_toggled(self, state):
         # 检查复选框的选中状态
