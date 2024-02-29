@@ -77,6 +77,7 @@ class GUI(QMainWindow):
         self.text_box_wordCountLabel = QLabel("0", self)
         self.text_box_wordCountLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.text_box_client.textChanged.connect(self.update_word_count_toggled)
+        self.text_box_client.selectionChanged.connect(self.update_word_count_toggled)
 
     def create_clear_button(self):
         # Create a button
@@ -143,7 +144,7 @@ class GUI(QMainWindow):
         self.show()  # 重新显示窗口以应用更改
 
     def update_word_count_toggled(self):
-        self.text_box_wordCountLabel.setText(f"{len(self.text_box_client.toPlainText())}")
+        self.text_box_wordCountLabel.setText(f"{len(self.text_box_client.textCursor().selectedText())} / {len(self.text_box_client.toPlainText())}")
 
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
