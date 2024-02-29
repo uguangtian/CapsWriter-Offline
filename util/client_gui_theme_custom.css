@@ -15,3 +15,8 @@ QTextEdit {{
     border: none;
     padding: 0px;
 }}
+
+QLabel {{
+    color: {QTMATERIAL_PRIMARYCOLOR};
+    font-size: 14px;
+}}

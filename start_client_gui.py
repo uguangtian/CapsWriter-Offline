@@ -3,7 +3,7 @@ import sys
 import subprocess
 from queue import Queue
 import threading
-from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget, QLabel)
 from PySide6.QtGui import (QIcon, QAction, QWheelEvent)
 from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
@@ -33,6 +33,8 @@ class GUI(QMainWindow):
 
         self.create_text_box()
         self.create_monitor_checkbox() # Create monitor checkbox
+        self.create_stay_on_top_checkbox()
+        self.create_wordcount_label()
         self.create_clear_button()  # Create clear button
         self.create_systray_icon()
 
@@ -49,6 +51,7 @@ class GUI(QMainWindow):
         self.layout.addWidget(self.text_box_client)
         self.layout2.addWidget(self.monitor_checkbox)
         self.layout2.addWidget(self.stay_on_top_checkbox)
+        self.layout2.addWidget(self.text_box_wordCountLabel)
         self.layout2.addWidget(self.clear_button)
         self.layout.addLayout(self.layout2)
 
@@ -72,10 +75,16 @@ class GUI(QMainWindow):
         self.monitor_checkbox.stateChanged.connect(self.on_monitor_toggled)
         # 设置默认状态
         self.monitor_checkbox.setChecked(True)
-        
+
+    def create_stay_on_top_checkbox(self):
         self.stay_on_top_checkbox = QCheckBox('Stay On Top')
         self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
         self.stay_on_top_checkbox.setChecked(True)
+
+    def create_wordcount_label(self):
+        self.text_box_wordCountLabel = QLabel("0", self)
+        self.text_box_wordCountLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.text_box_client.textChanged.connect(self.update_word_count_toggled)
 
     def create_clear_button(self):
         # Create a button
@@ -140,6 +149,9 @@ class GUI(QMainWindow):
         else:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.show()  # 重新显示窗口以应用更改
+
+    def update_word_count_toggled(self):
+        self.text_box_wordCountLabel.setText(f"{len(self.text_box_client.toPlainText())}")
 
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
