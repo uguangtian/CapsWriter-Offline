@@ -4,7 +4,7 @@ import subprocess
 from queue import Queue
 import threading
 from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget)
-from PySide6.QtGui import (QIcon, QAction)
+from PySide6.QtGui import (QIcon, QAction, QWheelEvent)
 from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
 from config import ClientConfig as Config
@@ -35,58 +35,53 @@ class GUI(QMainWindow):
         self.create_monitor_checkbox() # Create monitor checkbox
         self.create_clear_button()  # Create clear button
         self.create_systray_icon()
-        self.hide()
+
+
+        # Create a vertical layout
+        layout = QVBoxLayout()
+        layout.setSpacing(0)  # 设置控件间距为0像素
+        layout.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
+        layout2 = QHBoxLayout()
+        layout2.setSpacing(0)  # 设置控件间距为0像素
+        layout2.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
+        
+        # Add text box and button to the layout
+        layout.addWidget(self.text_box_client)
+        layout2.addWidget(self.monitor_checkbox)
+        layout2.addWidget(self.stay_on_top_checkbox)
+        layout2.addWidget(self.clear_button)
+        layout.addLayout(layout2)
+
+
+        # Create a central widget
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        # Set the central widget
+        self.setCentralWidget(central_widget)
 
     def create_text_box(self):
         self.text_box_client = QTextEdit()
         self.text_box_client.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.text_box_client.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setCentralWidget(self.text_box_client)
+
+    def create_monitor_checkbox(self):
+        # 创建一个QCheckBox控件
+        self.monitor_checkbox = QCheckBox("Display Output")
+        self.monitor_checkbox.setToolTip("Monitor Client Output / Use As Notepad")
+        # 当状态改变时，调用self.on_monitor_toggled函数
+        self.monitor_checkbox.stateChanged.connect(self.on_monitor_toggled)
+        # 设置默认状态
+        self.monitor_checkbox.setChecked(True)
+        
+        self.stay_on_top_checkbox = QCheckBox('Stay On Top')
+        self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
+        self.stay_on_top_checkbox.setChecked(True)
 
     def create_clear_button(self):
         # Create a button
-        self.clear_button = QPushButton("Clear Client Text", self)
-        
+        self.clear_button = QPushButton("Clear", self)
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
-        
-        # Create a vertical layout
-        layout = QVBoxLayout()
-        layout2 = QHBoxLayout()
-        
-        # Add text box and button to the layout
-        layout.addWidget(self.text_box_client)
-        layout2.addWidget(self.monitor_checkbox)
-        layout2.addWidget(self.clear_button)
-        layout.addLayout(layout2)
-        
-        # Create a central widget
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        
-        # Set the central widget
-        self.setCentralWidget(central_widget)
-
-    def clear_text_box(self):
-        # Clear the content of the client text box
-        self.text_box_client.clear()
-    
-    def create_monitor_checkbox(self):
-        # 创建一个QCheckBox控件
-        self.monitor_checkbox = QCheckBox("🧐 Display Output")
-        self.monitor_checkbox.setToolTip("Monitor Client Output / Use As Notepad")
-        # 设置默认状态
-        self.monitor_checkbox.setChecked(True)
-        # 当状态改变时，调用self.on_monitor_toggled函数
-        self.monitor_checkbox.stateChanged.connect(self.on_monitor_toggled)
-
-    def on_monitor_toggled(self, state):
-        # 检查复选框的选中状态
-        if state == 2:  # 2 表示选中状态
-            self.update_timer.start(100)
-        else:
-            self.update_timer.stop()
-
 
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
@@ -125,6 +120,27 @@ class GUI(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
+
+    def clear_text_box(self):
+        # Clear the content of the client text box
+        self.text_box_client.clear()
+    
+
+    def on_monitor_toggled(self, state):
+        # 检查复选框的选中状态
+        if state == 2:  # 2 表示选中状态
+            self.update_timer.start(100)
+        else:
+            self.update_timer.stop()
+
+    def window_stay_on_top_toggled(self):
+        # 切换窗口置顶状态
+        if self.windowFlags() & Qt.WindowStaysOnTopHint:
+            self.setWindowFlags(self.windowFlags() ^ Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        self.show()  # 重新显示窗口以应用更改
+
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
     def edit_hot_rule(self):
@@ -133,7 +149,7 @@ class GUI(QMainWindow):
         os.startfile('hot-zh.txt')
     def edit_keyword(self):
         os.startfile('keywords.txt')
-    
+
     def open_github_website(self):
         os.system(f'start https://github.com/H1DDENADM1N/CapsWriter-Offline')
     def closeEvent(self, event):
@@ -194,13 +210,45 @@ class GUI(QMainWindow):
             line = self.output_queue_client.get()
             self.text_box_client.append(line)
 
+    def wheelEvent(self, event: QWheelEvent):
+        # 设置初始缩放因子
+        self.scale_factor = 1.0
+        # 设置缩放因子的最小和最大值
+        self.min_scale = 0.5
+        self.max_scale = 2.0
+        # 检测Ctrl键是否被按下
+        if event.modifiers() == Qt.ControlModifier:
+            # 计算缩放因子
+            # print(event.angleDelta().y())
+            if event.angleDelta().y() > 0:
+                self.scale_factor *= 1.1  # 放大
+            elif event.angleDelta().y() < 0:
+                self.scale_factor *= 0.9  # 缩小
+            # 限制缩放因子的范围
+            self.scale_factor = max(self.min_scale, min(self.max_scale, self.scale_factor))
+            # 应用缩放因子到所有控件
+            self.apply_scale_factor()
+        else:
+            super().wheelEvent(event)
+
+    def apply_scale_factor(self):
+        # 应用缩放因子
+        for widget in [self.text_box_client]:
+            # 检查字体大小是否已设置，如果没有设置，则使用一个默认值
+            current_font = widget.font()
+            if current_font.pointSizeF() < 9:
+                current_font.setPointSizeF(9)  # 设置一个默认字体大小
+            current_font.setPointSizeF(current_font.pointSizeF() * self.scale_factor)
+            widget.setFont(current_font)
+
 
 def start_client_gui():
     if Config.Only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
             raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
-    subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
+    if not check_process('hint_while_recording.exe'):
+        subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
     app = QApplication([])
-    apply_stylesheet(app, theme='dark_teal.xml')
+    apply_stylesheet(app, theme='dark_teal.xml', css_file='util\\client_gui_theme_custom.css')
     gui = GUI()
     if not Config.Shrink_automatically_to_Tray:
         gui.show()
