@@ -52,21 +52,38 @@ class QRCODE(QWidget):
         if event.key() == Qt.Key_Escape:
             self.close()  # Close the window on ESC press
 
+def utf8_byte_count(s):
+    return len(s.encode('utf-8'))
+
+def truncate_utf8(s, max_bytes=1024):
+    byte_count = len(s.encode('utf-8'))
+    
+    if byte_count > max_bytes:
+        # Encoding the string to UTF-8 and then slicing the byte array
+        truncated_bytes = s.encode('utf-8')[:max_bytes]
+        # Decoding the sliced byte array back to string
+        s = truncated_bytes.decode('utf-8', errors='ignore')
+    
+    return s
 
 def CloudClipboardShowQRCode(text):
-    # https://cv.j20.cc/  限制 *请输入5~1000个字符
+    # https://cv.j20.cc/  限制 *请输入5~1000个字符  实测最多1024字节
     text = text.replace('\n', ' ').replace('\t', ' ')
-    if len(text) < 5:
+    byte_count = utf8_byte_count(text)
+
+    # print(byte_count)
+
+    if byte_count < 5:
         text = text.ljust(5, ".")
-    if len(text) > 1000:
-        text = text[:999]
+    if byte_count > 1024:
+        text = truncate_utf8(text)
     url = CloudClipboard().post_data(text)
     qrcode = QRCODE(url, url)
     qrcode.show()
 
 if __name__ == "__main__":
     app = QApplication([])
-    text = 'Hey'
+    text = '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十1234一二三四五六七八九十'
     print(len(text))
     CloudClipboardShowQRCode(text)
     sys.exit(app.exec())
