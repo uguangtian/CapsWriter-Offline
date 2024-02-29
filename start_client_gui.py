@@ -154,7 +154,7 @@ class GUI(QMainWindow):
         self.show()  # 重新显示窗口以应用更改
 
     def update_word_count_toggled(self):
-        self.text_box_wordCountLabel.setText(f"{len(self.text_box_client.textCursor().selectedText())} / {len(self.text_box_client.toPlainText())}")
+        self.text_box_wordCountLabel.setText(f"{len(self.text_box_client.textCursor().selectedText())} / {len(self.text_box_client.toPlainText())} | {len(self.text_box_client.toPlainText().encode('utf-8'))} b")
 
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
