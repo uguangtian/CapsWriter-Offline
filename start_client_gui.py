@@ -3,7 +3,7 @@ import sys
 import subprocess
 from queue import Queue
 import threading
-from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget, QLabel)
+from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSpacerItem, QSizePolicy)
 from PySide6.QtGui import (QIcon, QAction, QWheelEvent)
 from PySide6.QtCore import (Qt, QTimer)
 from qt_material import apply_stylesheet
@@ -43,11 +43,12 @@ class GUI(QMainWindow):
         
         # Add text box and button to the layout
         self.layout.addWidget(self.text_box_client)
-        self.layout2.addWidget(self.monitor_checkbox)
-        self.layout2.addWidget(self.stay_on_top_checkbox)
-        self.layout2.addWidget(self.text_box_wordCountLabel)
-        self.layout2.addWidget(self.cloudypaste_button)
-        self.layout2.addWidget(self.clear_button)
+        self.layout2.addWidget(self.monitor_checkbox, alignment=Qt.AlignLeft)
+        self.layout2.addWidget(self.stay_on_top_checkbox, alignment=Qt.AlignLeft)
+        self.layout2.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.layout2.addWidget(self.text_box_wordCountLabel, alignment=Qt.AlignRight)
+        self.layout2.addWidget(self.cloudypaste_button, alignment=Qt.AlignRight)
+        self.layout2.addWidget(self.clear_button, alignment=Qt.AlignRight)
         self.layout.addLayout(self.layout2)
 
 
@@ -66,6 +67,7 @@ class GUI(QMainWindow):
         # 创建一个QCheckBox控件
         self.monitor_checkbox = QCheckBox("监听")
         self.monitor_checkbox.setToolTip("监听客户端输出 / 不监听，仅用作笔记本")
+        self.monitor_checkbox.setMaximumSize(65, 30)
         # 当状态改变时，调用self.on_monitor_toggled函数
         self.monitor_checkbox.stateChanged.connect(self.on_monitor_toggled)
         # 设置默认状态
@@ -74,6 +76,7 @@ class GUI(QMainWindow):
     def create_stay_on_top_checkbox(self):
         self.stay_on_top_checkbox = QCheckBox('置顶')
         self.stay_on_top_checkbox.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
+        self.stay_on_top_checkbox.setMaximumSize(65, 30)
         self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
         self.stay_on_top_checkbox.setChecked(True)
 
@@ -87,12 +90,14 @@ class GUI(QMainWindow):
     def create_cloudypaste_button(self):
         self.cloudypaste_button = QPushButton("云贴", self)
         self.cloudypaste_button.setToolTip("将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。")
+        self.cloudypaste_button.setMaximumSize(65, 30)
         self.cloudypaste_button.clicked.connect(self.cloudy_paste)
 
     def create_clear_button(self):
         # Create a button
         self.clear_button = QPushButton("清空", self)
         self.clear_button.setToolTip("清空文本框中的全部内容")
+        self.clear_button.setMaximumSize(65, 30)
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
 
@@ -175,7 +180,13 @@ class GUI(QMainWindow):
         self.show()  # 重新显示窗口以应用更改
 
     def update_word_count_toggled(self):
-        self.text_box_wordCountLabel.setText(f"{len(self.text_box_client.textCursor().selectedText())} / {len(self.text_box_client.toPlainText())} | {len(self.text_box_client.toPlainText().encode('utf-8'))} b")
+        select_text_count = len(self.text_box_client.textCursor().selectedText())
+        select_text_bytes = len(self.text_box_client.textCursor().selectedText().encode('utf-8'))
+        total_text_count = len(self.text_box_client.toPlainText())
+        total_text_bytes = len(self.text_box_client.toPlainText().encode('utf-8'))
+        unselect_text_count = total_text_count - select_text_count
+        unselect_text_bytes = total_text_bytes - select_text_bytes
+        self.text_box_wordCountLabel.setText(f"{select_text_count} + {unselect_text_count} = {total_text_count}  |  {select_text_bytes} + {unselect_text_bytes} = {total_text_bytes} b")
 
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
