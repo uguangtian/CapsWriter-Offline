@@ -413,7 +413,10 @@ if __name__ == '__main__':
         script_path = os.path.join(CapsWriter_path, 'core_client.py')
         python_exe_path = os.path.join(CapsWriter_path, 'runtime\\python.exe')
         args = [arg for arg in sys.argv[1:]]
-        subprocess.run([python_exe_path, script_path] + args)
+        command = [python_exe_path, script_path] + args
+        subprocess.Popen(["cmd.exe", "/c"] + command, cwd=CapsWriter_path)
+
+
     else:
         # GUI
         start_client_gui()
