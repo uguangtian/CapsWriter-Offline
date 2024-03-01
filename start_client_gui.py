@@ -100,6 +100,11 @@ class GUI(QMainWindow):
         edit_hot_rule_action = QAction("Edit hot-rule.txt", self)
         edit_hot_zh_action = QAction("Edit hot-zh.txt", self)
         edit_keyword_action = QAction("Edit keywords.txt", self)
+
+        explore_home_folder_action = QAction("📁 Open Home Folder With Explorer", self)
+        vscode_home_folder_action = QAction("🤓 Open Home Folder With VSCode", self)
+        chatglm_website_action = QAction("🤖 ChatGLM Website", self)
+
         github_website_action = QAction("🌐 GitHub Website", self)
         show_action = QAction("🪟 Show", self)
         quit_action = QAction("❌ Quit", self)
@@ -108,6 +113,11 @@ class GUI(QMainWindow):
         edit_hot_rule_action.triggered.connect(self.edit_hot_rule)
         edit_hot_zh_action.triggered.connect(self.edit_hot_zh)
         edit_keyword_action.triggered.connect(self.edit_keyword)
+
+        explore_home_folder_action.triggered.connect(self.explore_home_folder)
+        vscode_home_folder_action.triggered.connect(self.vscode_home_folder)
+        chatglm_website_action.triggered.connect(self.open_chatglm_website)
+
         github_website_action.triggered.connect(self.open_github_website)
         show_action.triggered.connect(self.showNormal)
         quit_action.triggered.connect(self.quit_app)
@@ -116,13 +126,20 @@ class GUI(QMainWindow):
 
         tray_menu = QMenu()
         edit_menu = QMenu("📝 Edit Hot Rules", tray_menu)
+        view_menu = QMenu("👁️ View", tray_menu)
 
         edit_menu.addAction(edit_hot_en_action)
         edit_menu.addAction(edit_hot_rule_action)
         edit_menu.addAction(edit_hot_zh_action)
         edit_menu.addAction(edit_keyword_action)
 
+        view_menu.addAction(explore_home_folder_action)
+        view_menu.addAction(vscode_home_folder_action)
+        view_menu.addAction(chatglm_website_action)
+
         tray_menu.addMenu(edit_menu)
+        tray_menu.addMenu(view_menu)
+
         tray_menu.addAction(github_website_action)
         tray_menu.addSeparator()
         tray_menu.addAction(show_action)
@@ -164,6 +181,16 @@ class GUI(QMainWindow):
         os.startfile('hot-zh.txt')
     def edit_keyword(self):
         os.startfile('keywords.txt')
+
+    def explore_home_folder(self):
+        current_directory = os.getcwd()
+        os.startfile(current_directory)
+    def vscode_home_folder(self):
+        current_directory = os.getcwd()
+        vscode_exe_path = Config.vscode_exe_path
+        subprocess.Popen([vscode_exe_path, current_directory])
+    def open_chatglm_website(self):
+        os.system(f'start https://chatglm.cn/main/alltoolsdetail')
 
     def open_github_website(self):
         os.system(f'start https://github.com/H1DDENADM1N/CapsWriter-Offline')

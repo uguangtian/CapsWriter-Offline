@@ -75,6 +75,14 @@ class ClientConfig:
                                                                 # 比如从蓝牙耳机换回笔记本电脑默认麦克风
                                                                 # 缺点就是输入的时候可能会慢些
                                                                 # 毕竟要先建立与麦克风的连接
+    vscode_exe_path = 'C:\SSS\VSCode\Code - Insiders.exe'   # 设置 VSCode 可执行文件位置
+                                                            # 用于通过客户端托盘图标右键菜单项View 子菜单项
+                                                            # 🤓 Open Home Folder With VSCode 
+                                                            # 使用 VSCode 快速打开 CapsWriter 主目录
+                                                            # 方便调试
+
+
+
 class ModelPaths:
     model_dir = Path() / 'models'
     paraformer_path = Path() / 'models' / 'paraformer-offline-zh' / 'model.int8.onnx'
