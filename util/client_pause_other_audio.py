@@ -4,7 +4,8 @@ from pycaw.pycaw import AudioUtilities
 
 def audio_playering_app_name():
     # 不希望匹配的进程名称列表
-    excluded_processes = ['123pan.exe'] # 123pan.exe 启动后始终在播放音频，不知道为什么。影响判断，把它排除掉
+    excluded_processes = ['123pan.exe', 'msedge.exe']   # 123pan.exe 启动后始终在播放音频，不知道为什么。影响判断，把它排除掉
+                                                        # msedge.exe 暂停播放后,仍然告知系统在播放音乐,影响判断,把它排除掉
     
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
@@ -15,8 +16,8 @@ def audio_playering_app_name():
 
 def pause_other_audio():
     # 不希望匹配的进程名称列表
-    excluded_processes = ['123pan.exe'] # 123pan.exe 启动后始终在播放音频，不知道为什么。影响判断，把它排除掉
-    
+    excluded_processes = ['123pan.exe', 'msedge.exe']   # 123pan.exe 启动后始终在播放音频，不知道为什么。影响判断，把它排除掉
+                                                        # msedge.exe 暂停播放后,仍然告知系统在播放音乐,影响判断,把它排除掉
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         if session.State == 1:  # Audio is currently playering
