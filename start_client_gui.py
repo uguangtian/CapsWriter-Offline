@@ -45,7 +45,7 @@ class GUI(QMainWindow):
         self.layout.addWidget(self.text_box_client)
         self.layout2.addWidget(self.monitor_checkbox, alignment=Qt.AlignLeft)
         self.layout2.addWidget(self.stay_on_top_checkbox, alignment=Qt.AlignLeft)
-        self.layout2.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.layout2.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout2.addWidget(self.text_box_wordCountLabel, alignment=Qt.AlignRight)
         self.layout2.addWidget(self.cloudypaste_button, alignment=Qt.AlignRight)
         self.layout2.addWidget(self.clear_button, alignment=Qt.AlignRight)
