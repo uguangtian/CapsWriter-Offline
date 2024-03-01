@@ -16,6 +16,10 @@ import keyboard
 
 from config import ClientConfig as Config
 from util.client_cosmic import console, Cosmic
+if sys.argv[1:]:
+    Cosmic.transcribe_subtitles = True
+else:
+    Cosmic.transcribe_subtitles = False
 from util.client_stream import stream_open, stream_close
 from util.client_shortcut_handler import bond_shortcut
 from util.client_recv_result import recv_result

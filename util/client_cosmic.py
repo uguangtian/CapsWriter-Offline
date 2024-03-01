@@ -23,3 +23,4 @@ class Cosmic:
     audio_files = {}
     stream: Union[None, sd.InputStream] = None
     kwd_list: List[str] = []
+    transcribe_subtitles = False
