@@ -64,31 +64,35 @@ class GUI(QMainWindow):
 
     def create_monitor_checkbox(self):
         # 创建一个QCheckBox控件
-        self.monitor_checkbox = QCheckBox("Display Output")
-        self.monitor_checkbox.setToolTip("Monitor Client Output / Use As Notepad")
+        self.monitor_checkbox = QCheckBox("监听")
+        self.monitor_checkbox.setToolTip("监听客户端输出 / 不监听，仅用作笔记本")
         # 当状态改变时，调用self.on_monitor_toggled函数
         self.monitor_checkbox.stateChanged.connect(self.on_monitor_toggled)
         # 设置默认状态
         self.monitor_checkbox.setChecked(True)
 
     def create_stay_on_top_checkbox(self):
-        self.stay_on_top_checkbox = QCheckBox('Stay On Top')
+        self.stay_on_top_checkbox = QCheckBox('置顶')
+        self.stay_on_top_checkbox.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
         self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
         self.stay_on_top_checkbox.setChecked(True)
 
     def create_wordcount_label(self):
-        self.text_box_wordCountLabel = QLabel("0", self)
+        self.text_box_wordCountLabel = QLabel("字符数字节数", self)
+        self.text_box_wordCountLabel.setToolTip("光标已选中字符数 / 总字符数 | 总字节数")
         self.text_box_wordCountLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.text_box_client.textChanged.connect(self.update_word_count_toggled)
         self.text_box_client.selectionChanged.connect(self.update_word_count_toggled)
 
     def create_cloudypaste_button(self):
-        self.cloudypaste_button = QPushButton("CloudyPaste", self)
+        self.cloudypaste_button = QPushButton("云贴", self)
+        self.cloudypaste_button.setToolTip("将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。")
         self.cloudypaste_button.clicked.connect(self.cloudy_paste)
 
     def create_clear_button(self):
         # Create a button
-        self.clear_button = QPushButton("Clear", self)
+        self.clear_button = QPushButton("清空", self)
+        self.clear_button.setToolTip("清空文本框中的全部内容")
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
 
