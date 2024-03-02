@@ -4,13 +4,14 @@
 
 > ![alt text](assets/start_server_or_client_in_tray.gif)
 
-## 😎 五个功能：
+## 😎 六个功能：
 
 1. 按下键盘上的大写锁定键 `CapsLock` ，录音开始，当松开大写锁定键时，就会识别你的录音，并将识别结果立刻输入
 2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果离线翻译为英文
 3. 按下键盘上的 `Right Shift` 再按 `CapsLock` 可以将识别结果[在线翻译](https://github.com/OwO-Network/DeepLX)为多国语言，默认设置翻译为日文
 4. 将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
-5. 按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中的前 1024 个字节发布到[云剪贴板](https://cv.j20.cc/) ，并生成获取链接和二维码。
+5. 按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中的前 1024 个字节发布到[云剪贴板](https://cv.j20.cc/) ，并生成获取链接和二维码
+6. 将光标选中了中文离线翻译
 
 # 📙 目录
 
@@ -22,6 +23,10 @@
 - [🪳 提交 Bug ](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues)
 
 # 👀 最新更新
+
+## 将光标选中了中文离线翻译
+
+> ![alt text](assets/将光标选中了中文离线翻译.gif)
 
 ## 新版客户端界面：
 
@@ -73,6 +78,7 @@
 17. 禁止多开功能：默认禁止多开，通过 `config.py` 中 `Only_run_once` 配置
 18. 一键启动功能：默认服务端 `start_server_gui.exe` 启动后，自动 **🛡️ 以管理员权限** 启动客户端 `start_client_gui_admin.exe`，通过 `config.py` 中 `In_the_meantime_start_the_client` 和 `In_the_meantime_start_the_client_as_admin` 配置
 19. 将文本上传至云剪切板，方便向 ios 设备分享。基于 [cv.j20.cc]() ，一个无依赖即用即走的剪切板。实测 5~1024 字节，不足字节补 `.` ，超出字节 `无效` 。
+20. 将光标选中了中文离线翻译功能：按下 `Alt` + `Z` ，可以将光标选中了中文离线翻译为英文。通过 `config.py` 中 `trans_and_replace_selected_shortcut` 配置
 
 # ⬇️ 下载地址
 
