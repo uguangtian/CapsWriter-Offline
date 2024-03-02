@@ -248,8 +248,9 @@ class GUI(QMainWindow):
         # While Debug error    for line in iter(out.readline, ''):
         # Use this line to replace the original code
         # self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
-        
+        self.translate_and_replace_selected_text_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_translate_and_replace_selected_text.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_process, self.output_queue_client), daemon=True).start()
         threading.Thread(target=self.enqueue_output, args=(self.core_client_process.stdout, self.output_queue_client), daemon=True).start()
 
         # Update text box
