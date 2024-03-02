@@ -90,7 +90,7 @@ class GUI(QMainWindow):
         QApplication.quit()
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
-        proc = subprocess.Popen('taskkill /IM pythonw_CapsWriter_Server.exe /F', creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+        proc = subprocess.Popen('taskkill /IM pythonw_CapsWriter_Server.exe /IM deeplx_windows_amd64.exe /F', creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
@@ -99,7 +99,7 @@ class GUI(QMainWindow):
             
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.hide() # Press ESC to hide main window
+            self.hide() # Press ESC to hide main window 
     def start_script(self):
         # Start core_server.py and redirect output to the server queue
         

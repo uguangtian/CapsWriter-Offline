@@ -1,8 +1,10 @@
-# 离线翻译服务
+# 启动离线翻译服务
 
 # 测试
 # websocat ws://localhost:6017/
 # {"text": "你好，世界！"}
+
+# .\runtime\python.exe .\util\client_translate_online.py
 
 
 
@@ -33,7 +35,7 @@ async def translate_text(text):
     return translated_text
 
 # 定义WebSocket处理函数
-async def translate_server(websocket, path):
+async def offline_translate_server(websocket, path):
     async for message in websocket:
         data = json.loads(message)
         text_to_translate = data.get('text', '')
@@ -44,12 +46,12 @@ async def translate_server(websocket, path):
         # 将翻译结果发送回客户端
         await websocket.send(json.dumps({'translated_text': translated_text}))
 
-def offline_translate():
-    start_server = websockets.serve(translate_server, "localhost", Config.offline_translate_port)
+def run_offline_translate_service():
+    start_server = websockets.serve(offline_translate_server, "localhost", Config.offline_translate_port)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 
 if __name__ == "__main__":
     # 启动离线翻译 WebSocket服务器
-    server_process = Process(target=offline_translate)
+    server_process = Process(target=run_offline_translate_service)
     server_process.start()

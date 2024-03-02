@@ -12,7 +12,8 @@ from util.server_ws_recv import ws_recv
 from util.server_ws_send import ws_send
 from util.server_init_recognizer import init_recognizer
 from util.empty_working_set import empty_current_working_set
-from util.server_offline_translate import offline_translate
+from util.server_run_offline_translate_service import run_offline_translate_service
+from util.server_run_online_translate_service import run_online_translate_service
 # 确保 os.getcwd() 位置正确，用相对路径加载模型
 BASE_DIR = os.getcwd(); os.chdir(BASE_DIR)
 # BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)
@@ -43,8 +44,12 @@ async def main():
 
     # 启动离线翻译 WebSocket服务器
     console.print('载入离线翻译模型中，载入时长约 20 秒，请耐心等待...')
-    server_process = Process(target=offline_translate)
-    server_process.start()
+    translate_offline_server_process = Process(target=run_offline_translate_service)
+    translate_offline_server_process.start()
+
+    # 启动在线翻译 DeepLX服务器 
+    console.print('启动在线翻译 DeepLX 服务...')
+    run_online_translate_service()
 
     console.rule('[green3]开始服务')
     console.line()

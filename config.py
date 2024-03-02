@@ -82,7 +82,10 @@ class ClientConfig:
                                                             # 使用 VSCode 快速打开 CapsWriter 主目录
                                                             # 方便调试
 
-
+class DeepLXConfig:
+    online_translate_port = '1188'
+    exe_path = Path() / 'deeplx_windows_amd64.exe'
+    api = "http://127.0.0.1:1188/translate"
 
 class ModelPaths:
     model_dir = Path() / 'models'
