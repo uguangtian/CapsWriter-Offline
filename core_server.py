@@ -26,7 +26,7 @@ async def main():
     console.rule('[bold #d55252]CapsWriter Offline Server'); console.line()
     console.print(f'项目地址：[cyan underline]https://github.com/HaujetZhao/CapsWriter-Offline', end='\n\n')
     console.print(f'当前基文件夹：[cyan underline]{BASE_DIR}', end='\n\n')
-    console.print(f'绑定的服务地址：[cyan underline]{Config.addr}:{Config.port}', end='\n\n')
+    console.print(f'绑定的服务地址：[cyan underline]{Config.addr}:{Config.speech_recognition_port}', end='\n\n')
 
     # 跨进程列表，用于保存 socket 的 id，用于让识别进程查看连接是否中断
     Cosmic.sockets_id = Manager().list()
@@ -56,7 +56,7 @@ async def main():
     # 负责接收客户端数据的 coroutine
     recv = websockets.serve(ws_recv,
                             Config.addr,
-                            Config.port,
+                            Config.speech_recognition_port,
                             subprotocols=["binary"],
                             max_size=None)
 

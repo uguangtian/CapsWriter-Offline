@@ -26,7 +26,7 @@ def shortcut_correct(e: keyboard.KeyboardEvent):
     # 即便设置 right ctrl 触发，在按下 left ctrl 时也会触发
     # 不过，虽然两个按键的 keycode 一样，但事件 e.name 是不一样的
     # 在这里加一个判断，如果 e.name 不是我们期待的按键，就返回
-    key_expect = keyboard.normalize_name(Config.shortcut).replace('left ', '')
+    key_expect = keyboard.normalize_name(Config.speech_recognition_shortcut).replace('left ', '')
     key_actual = e.name.replace('left ', '')
     if key_expect != key_actual: return False
     return True
@@ -44,7 +44,7 @@ def unmute_all_sessions():
         volume.SetMute(0, None)
 
 def launch_task():
-    if Config.Only_enable_microphones_when_pressed_record_shortcut:
+    if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 重启音频流
         stream_reopen()
         Cosmic.stream.start()
@@ -98,7 +98,7 @@ def cancel_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send('play/pause')
         unpause_needed = False
-    if Config.Only_enable_microphones_when_pressed_record_shortcut:
+    if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()
@@ -130,7 +130,7 @@ def finish_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send('play/pause')
         unpause_needed = False
-    if Config.Only_enable_microphones_when_pressed_record_shortcut:
+    if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()
@@ -170,7 +170,7 @@ def manage_task(e: Event):
             cancel_task()
 
         # 长按，发送按键
-        keyboard.send(Config.shortcut)
+        keyboard.send(Config.speech_recognition_shortcut)
 
 
 def click_mode(e: keyboard.KeyboardEvent):
@@ -212,7 +212,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
             if Config.restore_key:
                 time.sleep(0.01)
-                keyboard.send(Config.shortcut)
+                keyboard.send(Config.speech_recognition_shortcut)
 
 
 
@@ -242,8 +242,8 @@ def click_handler(e: keyboard.KeyboardEvent) -> None:
 
 def bond_shortcut():
     if Config.hold_mode:
-        keyboard.hook_key(Config.shortcut, hold_handler, suppress=Config.suppress)
+        keyboard.hook_key(Config.speech_recognition_shortcut, hold_handler, suppress=Config.suppress)
     else:
         # 单击模式，必须得阻塞快捷键
         # 收到长按时，再模拟发送按键
-        keyboard.hook_key(Config.shortcut, click_handler, suppress=True)
+        keyboard.hook_key(Config.speech_recognition_shortcut, click_handler, suppress=True)

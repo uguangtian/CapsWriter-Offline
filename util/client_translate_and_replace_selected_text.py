@@ -54,13 +54,13 @@ async def translate_and_replace_selected_text():
         loop = asyncio.get_event_loop()
 
         # 注册热键
-        keyboard.add_hotkey(Config.trans_and_replace_selected_shortcut, hotkey_callback)
+        keyboard.add_hotkey(Config.translate_and_replace_the_selected_text_shortcut, hotkey_callback)
         
         await asyncio.Event().wait()  # 阻塞当前协程，直到被取消或热键被触发
     except Exception as e:
         console.print(e)
     finally:
-        keyboard.remove_hotkey(Config.trans_and_replace_selected_shortcut)  # 移除热键
+        keyboard.remove_hotkey(Config.translate_and_replace_the_selected_text_shortcut)  # 移除热键
 
 if __name__ == '__main__':
     asyncio.run(translate_and_replace_selected_text())

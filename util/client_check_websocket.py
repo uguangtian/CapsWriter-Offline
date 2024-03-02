@@ -25,14 +25,14 @@ async def check_websocket() -> bool:
         return True
     for _ in range(3):
         with Handler():
-            Cosmic.websocket = await websockets.connect(f"ws://{Config.addr}:{Config.port}", max_size=None)
+            Cosmic.websocket = await websockets.connect(f"ws://{Config.addr}:{Config.speech_recognition_port}", max_size=None)
             return True
     else:
         return False
 
     # for _ in range(3):
     #     try:
-    #         Cosmic.websocket = await websockets.connect(f"ws://{Config.addr}:{Config.port}", max_size=None)
+    #         Cosmic.websocket = await websockets.connect(f"ws://{Config.addr}:{Config.speech_recognition_port}", max_size=None)
     #         return True
     #     except ConnectionRefusedError as e:
     #         continue

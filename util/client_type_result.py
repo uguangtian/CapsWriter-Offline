@@ -29,14 +29,14 @@ async def type_result(text):
             keyboard.release(55)
             keyboard.release(9)
         else:
-            if keyboard.is_pressed(Config.trans_shortcut):
-                keyboard.release(Config.trans_shortcut)
-            if keyboard.is_pressed(Config.trans_online_shortcut):
-                keyboard.release(Config.trans_online_shortcut)
+            if keyboard.is_pressed(Config.offline_translate_shortcut):
+                keyboard.release(Config.offline_translate_shortcut)
+            if keyboard.is_pressed(Config.online_translate_shortcut):
+                keyboard.release(Config.online_translate_shortcut)
             keyboard.send('ctrl + v')
 
         # 还原剪贴板
-        if Config.restore_clip:
+        if Config.restore_clipboard_after_paste:
             await asyncio.sleep(0.1)
             clipman.set(temp)
 

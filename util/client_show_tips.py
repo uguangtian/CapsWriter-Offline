@@ -18,7 +18,7 @@ def show_mic_tips():
 
 1. 运行 Server 端，它会载入语音和标点模型（共占用约 2GB 的内存）
 2. 运行 Client 端，它会打开系统默认麦克风（Ctrl+C 可重载麦克风）
-3. 按住 `{Config.shortcut}` 键，录音开始，松开 `{Config.shortcut}` 键，录音结束，识别结果立刻被输入
+3. 按住 `{Config.speech_recognition_shortcut}` 键，录音开始，松开 `{Config.speech_recognition_shortcut}` 键，录音结束，识别结果立刻被输入
 4. 将音视频文件拖动到 Client 端打开，可以转录生成字幕
 
 
@@ -37,14 +37,14 @@ def show_mic_tips():
 
 1. 当用户安装了 `FFmpeg` 时，会以 `mp3` 格式保存录音；当用户没有装 `FFmpeg` 时，会以 `wav` 格式保存录音
 2. 音视频文件转录功能依赖于 `FFmpeg`
-3. 默认的快捷键是 {Config.shortcut}，你可以打开 `core_client.py` 进行修改
+3. 默认的快捷键是 {Config.speech_recognition_shortcut}，你可以打开 `core_client.py` 进行修改
 4. MacOS 无法监测到 `caps lock` 按键，可改为 `right shift` 按键
     ''')
     console.print(Markdown(markdown), highlight=True)
     console.rule()
     console.print(f'\n当前基文件夹：[cyan underline]{os.getcwd()}')
-    console.print(f'\n服务端地址： [cyan underline]{Config.addr}:{Config.port}')
-    console.print(f'\n当前所用快捷键：[green4]{Config.shortcut}')
+    console.print(f'\n服务端地址： [cyan underline]{Config.addr}:{Config.speech_recognition_port}')
+    console.print(f'\n当前所用快捷键：[green4]{Config.speech_recognition_shortcut}')
 
     console.line()
 
@@ -53,4 +53,4 @@ def show_file_tips():
     markdown = f'\n项目地址：https://github.com/HaujetZhao/CapsWriter-Offline'
     console.print(Markdown(markdown), height=True)
     console.print(f'当前基文件夹：[cyan underline]{os.getcwd()}')
-    console.print(f'服务端地址： [cyan underline]{Config.addr}:{Config.port}')
+    console.print(f'服务端地址： [cyan underline]{Config.addr}:{Config.speech_recognition_port}')

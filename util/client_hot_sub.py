@@ -13,6 +13,6 @@ def hot_sub(text: str) -> str:
         text = hot_sub_en.热词替换(text)
     if Config.hot_rule:
         text = hot_sub_rule.热词替换(text)
-    if Config.Arabic_year:
+    if Config.arabic_year_number:
         text = hot_sub_year.热词替换(text)
     return text

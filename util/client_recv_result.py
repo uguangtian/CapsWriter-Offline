@@ -41,7 +41,7 @@ async def recv_result():
 
             # 离线翻译
             translate = False
-            if keyboard.is_pressed(Config.trans_shortcut):
+            if keyboard.is_pressed(Config.offline_translate_shortcut):
                 translate = True
             if translate and not Cosmic.transcribe_subtitles:
                 trans_text = await translate_offline(text)
@@ -50,7 +50,7 @@ async def recv_result():
 
             # 在线翻译
             online_translate = False
-            if keyboard.is_pressed(Config.trans_online_shortcut):
+            if keyboard.is_pressed(Config.online_translate_shortcut):
                 online_translate = True
             if online_translate and not Cosmic.transcribe_subtitles:
                 online_trans_text = translate_online(text)

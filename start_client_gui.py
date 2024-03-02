@@ -393,14 +393,14 @@ class GUI(QMainWindow):
 
 
 def start_client_gui():
-    if Config.Only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
+    if Config.only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
             raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
     if not check_process('hint_while_recording.exe'):
         subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
     app = QApplication([])
     apply_stylesheet(app, theme='dark_teal.xml', css_file='util\\client_gui_theme_custom.css')
     gui = GUI()
-    if not Config.Shrink_automatically_to_Tray:
+    if not Config.shrink_automatically_to_tray:
         gui.show()
     sys.exit(app.exec()) 
 

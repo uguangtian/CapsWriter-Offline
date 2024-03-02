@@ -14,7 +14,7 @@ def translate_online(text):
     data = {
         "text": text,
         "source_lang": "auto",
-        "target_lang": Config.trans_online_target_languages
+        "target_lang": Config.online_translate_target_languages
     }
 
     post_data = json.dumps(data)

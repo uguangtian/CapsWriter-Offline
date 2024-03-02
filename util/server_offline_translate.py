@@ -12,9 +12,10 @@ from transformers import AutoTokenizer, AutoModelWithLMHead
 import websockets
 from multiprocessing import Process
 from config import ServerConfig as Config
+from config import ModelPaths
 
 #离线翻译
-modelName = ".\models\Helsinki-NLP--opus-mt-zh-en"
+modelName = ModelPaths.opus_mt_dir
 # 加载模型
 model = AutoModelWithLMHead.from_pretrained(modelName, local_files_only=True)
 # 加载分词器
@@ -44,7 +45,7 @@ async def translate_server(websocket, path):
         await websocket.send(json.dumps({'translated_text': translated_text}))
 
 def offline_translate():
-    start_server = websockets.serve(translate_server, "localhost", Config.translate_port)
+    start_server = websockets.serve(translate_server, "localhost", Config.offline_translate_port)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 
