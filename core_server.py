@@ -12,7 +12,7 @@ from util.server_ws_recv import ws_recv
 from util.server_ws_send import ws_send
 from util.server_init_recognizer import init_recognizer
 from util.empty_working_set import empty_current_working_set
-
+from util.server_offline_translate import offline_translate
 # 确保 os.getcwd() 位置正确，用相对路径加载模型
 BASE_DIR = os.getcwd(); os.chdir(BASE_DIR)
 # BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)
@@ -40,6 +40,12 @@ async def main():
                                 daemon=True)
     recognize_process.start()
     Cosmic.queue_out.get()
+
+    # 启动离线翻译 WebSocket服务器
+    console.print('载入离线翻译模型中，载入时长约 20 秒，请耐心等待...')
+    server_process = Process(target=offline_translate)
+    server_process.start()
+
     console.rule('[green3]开始服务')
     console.line()
 

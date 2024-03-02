@@ -6,7 +6,7 @@ from pathlib import Path
 class ServerConfig:
     addr = '0.0.0.0'
     port = '6016'
-
+    translate_port = '6017' # 离线翻译端口
     format_num = True  # 输出时是否将中文数字转为阿拉伯数字
     format_punc = True  # 输出时是否启用标点符号引擎
     format_spell = True  # 输出时是否调整中英之间的空格
@@ -30,6 +30,7 @@ class ClientConfig:
 
     shortcut     = 'caps lock'  # 控制录音的快捷键，默认是 CapsLock
     trans_shortcut          = 'left shift'          # 控制离线翻译的快捷键，默认是 Left Shift，按住Left Shift再按 CapsLock进行离线翻译
+    trans_and_replace_selected_shortcut = 'alt + z' # 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键，光标选择中文文本，按下 alt 和 z 快捷键，替换中文为英文
     trans_online_shortcut   = 'right shift'         # 控制在线翻译的快捷键，默认是 Right Shift，按住Right Shift再按 CapsLock进行在线翻译
                                                     # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
                                                     # 如果出现429错误，则表示你的IP被DeepL暂时屏蔽了，请不要在短时间内频繁请求。

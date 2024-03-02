@@ -5,3 +5,5 @@
 02 用于启动 Sherpa-onnx 的 websocket 服务端，只需要载入一次模型文件，就可用客户端多次转录
 
 03 用于测试 funasr 的标点模型
+
+04 用于测试 Helsinki-NLP--opus-mt-zh-en 离线翻译模型
