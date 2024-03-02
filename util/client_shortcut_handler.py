@@ -44,6 +44,16 @@ def unmute_all_sessions():
         volume.SetMute(0, None)
 
 def launch_task():
+    # 确认是否需要翻译
+    if keyboard.is_pressed(Config.offline_translate_shortcut):
+        Cosmic.offline_translate_needed = True
+    else:
+        Cosmic.offline_translate_needed = False
+    if keyboard.is_pressed(Config.online_translate_shortcut):
+        Cosmic.online_translate_needed = True
+    else:
+        Cosmic.online_translate_needed = False
+
     if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 重启音频流
         stream_reopen()
@@ -67,6 +77,7 @@ def launch_task():
         pause_other_audio()
         unpause_needed = True
     
+
     # 通知录音线程可以向队列放数据了
     Cosmic.on = t1
 

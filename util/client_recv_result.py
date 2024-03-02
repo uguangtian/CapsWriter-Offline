@@ -40,46 +40,41 @@ async def recv_result():
             text = hot_sub(text)
 
             # 离线翻译
-            offline_translate = False
-            if keyboard.is_pressed(Config.offline_translate_shortcut):
-                offline_translate = True
-            if offline_translate and not Cosmic.transcribe_subtitles:
+            offline_translate_done = False
+            if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
                 offline_translated_text = await translate_offline(text)
-            else:
-                offline_translated_text = text # this line should never be invoke
+                offline_translate_done = True
+                Cosmic.offline_translate_needed = False
 
             # 在线翻译
-            online_translate = False
-            if keyboard.is_pressed(Config.online_translate_shortcut):
-                online_translate = True
-            if online_translate and not Cosmic.transcribe_subtitles:
+            online_translate_done = False
+            if Cosmic.online_translate_needed and not Cosmic.transcribe_subtitles:
                 online_translated_text = translate_online(text)
-            else:
-                online_translated_text = text # this line should never be invoke
+                online_translate_done = True
+                Cosmic.online_translate_needed = False
 
             if Config.save_audio:
                 # 重命名录音文件
                 file_audio = rename_audio(message['task_id'], text, message['time_start'])
-
                 # 记录写入 md 文件
                 write_md(text, message['time_start'], file_audio)
 
             # 控制台输出
             console.print(f'    转录时延：{delay:.2f}s')
             console.print(f'    识别结果：[green]{text}')
-            if offline_translate and not Cosmic.transcribe_subtitles:
+            if offline_translate_done:
                 console.print(f'    离线翻译结果：[green]{offline_translated_text}')
-            if online_translate and not Cosmic.transcribe_subtitles:
+            if online_translate_done:
                 console.print(f'    在线翻译结果：[green]{online_translated_text}')
             console.line()
 
             # 打字
-            if offline_translate:
+            if offline_translate_done:
                 await type_result(offline_translated_text)
-                offline_translate = False
-            elif online_translate and not Cosmic.transcribe_subtitles:
+                offline_translate_done = False
+            elif online_translate_done:
                 await type_result(online_translated_text)
-                online_translate = False
+                online_translate_done = False
             else:
                 await type_result(text)
 

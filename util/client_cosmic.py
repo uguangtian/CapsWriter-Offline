@@ -24,3 +24,5 @@ class Cosmic:
     stream: Union[None, sd.InputStream] = None
     kwd_list: List[str] = []
     transcribe_subtitles = False
+    online_translate_needed = False
+    offline_translate_needed = False
