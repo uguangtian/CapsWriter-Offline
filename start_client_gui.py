@@ -3,9 +3,26 @@ import sys
 import subprocess
 from queue import Queue
 import threading
-from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QSystemTrayIcon, QMenu, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSpacerItem, QSizePolicy)
-from PySide6.QtGui import (QIcon, QAction, QWheelEvent)
-from PySide6.QtCore import (Qt, QTimer)
+from PySide6.QtWidgets import (QApplication,
+                               QMainWindow,
+                               QTextEdit,
+                               QSystemTrayIcon,
+                               QMenu,
+                               QPushButton,
+                               QCheckBox, QVBoxLayout,
+                               QHBoxLayout,
+                               QWidget,
+                               QLabel,
+                               QSpacerItem,
+                               QSizePolicy,
+                               QLabel)
+from PySide6.QtGui import (QIcon,
+                           QAction,
+                           QFont,
+                           QWheelEvent)
+from PySide6.QtCore import (Qt,
+                            QPoint,
+                            QTimer)
 from qt_material import apply_stylesheet
 from config import ClientConfig as Config
 from util.check_process import check_process
@@ -26,32 +43,39 @@ class GUI(QMainWindow):
         self.setWindowTitle('CapsWriter-Offline-Client')
         self.setWindowIcon(QIcon("assets/client-icon.ico"))
         self.setWindowOpacity(0.9)
-
-        self.create_text_box()
-        self.create_monitor_checkbox() # Create monitor checkbox
-        self.create_stay_on_top_checkbox()
-        self.create_wordcount_label()
+        self.setWindowFlags(
+            self.windowFlags()
+            | Qt.FramelessWindowHint # 隐藏标题栏
+            | Qt.Tool # 隐藏Windows任务栏上的图标
+            | Qt.WindowStaysOnTopHint  # 置顶
+        )
+        self.create_stay_on_top_button()
         self.create_cloudypaste_button()  # Create cloudy paste button
         self.create_clear_button()  # Create clear button
+        self.create_close_button()
+        self.create_custom_title_bar()
+        self.create_text_box()
+        self.create_monitor_checkbox() # Create monitor checkbox
+        # self.create_stay_on_top_checkbox()
+        self.create_wordcount_label()
         self.create_systray_icon()
 
 
         # Create a vertical layout
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)  # 设置控件间距为0像素
-        self.layout.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
+        self.layout.setContentsMargins(3, 3, 3, 3)  # 设置左、上、右、下的边距
         self.layout2 = QHBoxLayout()
         self.layout2.setSpacing(0)  # 设置控件间距为0像素
         self.layout2.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
         
         # Add text box and button to the layout
+        self.layout.addLayout(self.title_bar)
         self.layout.addWidget(self.text_box_client)
         self.layout2.addWidget(self.monitor_checkbox, alignment=Qt.AlignLeft)
-        self.layout2.addWidget(self.stay_on_top_checkbox, alignment=Qt.AlignLeft)
+        # self.layout2.addWidget(self.stay_on_top_checkbox, alignment=Qt.AlignLeft)
         self.layout2.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout2.addWidget(self.text_box_wordCountLabel, alignment=Qt.AlignRight)
-        self.layout2.addWidget(self.cloudypaste_button, alignment=Qt.AlignRight)
-        self.layout2.addWidget(self.clear_button, alignment=Qt.AlignRight)
         self.layout.addLayout(self.layout2)
 
 
@@ -60,6 +84,33 @@ class GUI(QMainWindow):
         central_widget.setLayout(self.layout)
         # Set the central widget
         self.setCentralWidget(central_widget)
+
+    def create_custom_title_bar(self):
+        # 创建自定义标题栏
+        self.title_bar = QHBoxLayout()
+        self.title_bar.addWidget(self.stay_on_top_button)
+        self.title = QLabel("CapsWriter-Offline-Client")
+        font = QFont()
+        font.setBold(True)
+        self.title.setFont(font)
+        self.title_bar.addWidget(self.title)
+        self.title_bar.addSpacerItem(QSpacerItem(80, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.title_bar.addWidget(self.cloudypaste_button, alignment=Qt.AlignRight)
+        self.title_bar.addWidget(self.clear_button, alignment=Qt.AlignRight)
+        self.title_bar.addWidget(self.close_button)
+
+    def create_stay_on_top_button(self):
+        self.stay_on_top_button = QPushButton('📌')
+        self.stay_on_top_button.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
+        self.stay_on_top_button.setMaximumSize(50, 50)
+        self.stay_on_top_button.clicked.connect(self.window_stay_on_top_toggled)
+
+    def create_close_button(self):
+        self.close_button = QPushButton("✘")
+        self.close_button.setMaximumSize(50, 50)
+        self.close_button.clicked.connect(self.hide)
+
+
 
     def create_text_box(self):
         self.text_box_client = QTextEdit()
@@ -76,16 +127,16 @@ class GUI(QMainWindow):
         # 设置默认状态
         self.monitor_checkbox.setChecked(True)
 
-    def create_stay_on_top_checkbox(self):
-        self.stay_on_top_checkbox = QCheckBox('置顶')
-        self.stay_on_top_checkbox.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
-        self.stay_on_top_checkbox.setMaximumSize(65, 30)
-        self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
-        self.stay_on_top_checkbox.setChecked(True)
+    # def create_stay_on_top_checkbox(self):
+    #     self.stay_on_top_checkbox = QCheckBox('置顶')
+    #     self.stay_on_top_checkbox.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
+    #     self.stay_on_top_checkbox.setMaximumSize(65, 30)
+    #     self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
+    #     self.stay_on_top_checkbox.setChecked(True)
 
     def create_wordcount_label(self):
         self.text_box_wordCountLabel = QLabel("字符数字节数", self)
-        self.text_box_wordCountLabel.setToolTip("光标已选中字符数 / 总字符数 | 总字节数")
+        self.text_box_wordCountLabel.setToolTip("光标已选中字符数 / 总字符数 | 字节数")
         self.text_box_wordCountLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.text_box_client.textChanged.connect(self.update_word_count_toggled)
         self.text_box_client.selectionChanged.connect(self.update_word_count_toggled)
@@ -93,14 +144,14 @@ class GUI(QMainWindow):
     def create_cloudypaste_button(self):
         self.cloudypaste_button = QPushButton("云贴", self)
         self.cloudypaste_button.setToolTip("将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。")
-        self.cloudypaste_button.setMaximumSize(65, 30)
+        self.cloudypaste_button.setMaximumSize(60, 30)
         self.cloudypaste_button.clicked.connect(self.cloudy_paste)
 
     def create_clear_button(self):
         # Create a button
         self.clear_button = QPushButton("清空", self)
         self.clear_button.setToolTip("清空文本框中的全部内容")
-        self.clear_button.setMaximumSize(65, 30)
+        self.clear_button.setMaximumSize(60, 30)
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
 
@@ -166,6 +217,8 @@ class GUI(QMainWindow):
     def clear_text_box(self):
         # Clear the content of the client text box
         self.text_box_client.clear()
+        # Resize Window
+        self.resize(425, 425)
 
     def on_monitor_toggled(self, state):
         # 检查复选框的选中状态
@@ -174,13 +227,26 @@ class GUI(QMainWindow):
         else:
             self.update_timer.stop()
 
+    # def window_stay_on_top_toggled(self):
+    #     # 切换窗口置顶状态
+    #     if self.windowFlags() & Qt.WindowStaysOnTopHint:
+    #         self.setWindowFlags(self.windowFlags() ^ Qt.WindowStaysOnTopHint)
+    #     else:
+    #         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+    #     self.show()  # 重新显示窗口以应用更改
     def window_stay_on_top_toggled(self):
         # 切换窗口置顶状态
         if self.windowFlags() & Qt.WindowStaysOnTopHint:
             self.setWindowFlags(self.windowFlags() ^ Qt.WindowStaysOnTopHint)
+            self.stay_on_top_button.setText(' ')
         else:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.show()  # 重新显示窗口以应用更改
+            global gui
+        window_is_on_top = bool(gui.windowFlags() & Qt.WindowStaysOnTopHint)
+        if window_is_on_top:
+            self.stay_on_top_button.setText('📌')
+        else:
+            self.stay_on_top_button.setText(' ')
 
     def update_word_count_toggled(self):
         select_text_count = len(self.text_box_client.textCursor().selectedText())
@@ -189,7 +255,7 @@ class GUI(QMainWindow):
         total_text_bytes = len(self.text_box_client.toPlainText().encode('utf-8'))
         unselect_text_count = total_text_count - select_text_count
         unselect_text_bytes = total_text_bytes - select_text_bytes
-        self.text_box_wordCountLabel.setText(f"{select_text_count} + {unselect_text_count} = {total_text_count}  |  {select_text_bytes} + {unselect_text_bytes} = {total_text_bytes} b")
+        self.text_box_wordCountLabel.setText(f"{select_text_count} + {unselect_text_count} = {total_text_count} Words |  {select_text_bytes} + {unselect_text_bytes} = {total_text_bytes} Bytes")
 
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
@@ -250,8 +316,9 @@ class GUI(QMainWindow):
         # self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
         self.translate_and_replace_selected_text_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_translate_and_replace_selected_text.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_process, self.output_queue_client), daemon=True).start()
+        threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_process.stdout, self.output_queue_client), daemon=True).start()
         threading.Thread(target=self.enqueue_output, args=(self.core_client_process.stdout, self.output_queue_client), daemon=True).start()
+
 
         # Update text box
         self.update_timer = QTimer()
@@ -260,8 +327,7 @@ class GUI(QMainWindow):
 
 
     def enqueue_output(self, out, queue):
-        for line in iter(out.readline, ''): # While Debug error     UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
-                                            # Change                self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
+        for line in iter(out.readline, ''): 
             line = line.strip()
             queue.put(line)
 
@@ -286,18 +352,32 @@ class GUI(QMainWindow):
                 print("窗口无需恢复停靠")
                 pass
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.old_pos = event.globalPosition().toPoint()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            delta = QPoint(event.globalPosition().toPoint() - self.old_pos)
+            self.move(self.x() + delta.x(), self.y() + delta.y())
+            self.old_pos = event.globalPosition().toPoint()
+
     def enterEvent(self, event):
         super().enterEvent(event)
-        for i in range(self.layout2.count()):
+        for i in range(self.title_bar.count()): # 鼠标进入时显示标题栏
+            widget = self.title_bar.itemAt(i).widget()
+            if widget is not None:
+                widget.setVisible(True)
+        for i in range(self.layout2.count()): # 鼠标进入时显示操作栏
             widget = self.layout2.itemAt(i).widget()
             if widget is not None:
                 widget.setVisible(True)
         x, y, width, height, screenWidth, screenHeight = self.checkWindowInfo()
         if self.isBerthLeft: # 已停靠在左边
-            self.move(0, y-31) # 从左边弹出，31是标题栏高度
+            self.move(0, y) # 从左边弹出，31是标题栏高度
             self.isBerthLeft = False
         elif self.isBerthRight: # 已停靠在右边
-            self.move(screenWidth - width, y-31) # 从右边弹出，31是标题栏高度
+            self.move(screenWidth - width, y) # 从右边弹出，31是标题栏高度
             self.isBerthRight = False
         else:
             # print("窗口未停靠")
@@ -305,7 +385,11 @@ class GUI(QMainWindow):
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
-        for i in range(self.layout2.count()):
+        for i in range(self.title_bar.count()): # 鼠标离开时隐藏标题栏
+            widget = self.title_bar.itemAt(i).widget()
+            if widget is not None:
+                widget.setVisible(False)
+        for i in range(self.layout2.count()): # 鼠标离开时隐藏操作栏
             widget = self.layout2.itemAt(i).widget()
             if widget is not None:
                 widget.setVisible(False)
@@ -340,11 +424,11 @@ class GUI(QMainWindow):
 
 
     def berthToLeft(self, x, y, width, height, screenWidth, screenHeight):
-        self.move(0-width+self.edgeMargin, y-31) # 停靠到左边，31是标题栏高度
+        self.move(0-width+self.edgeMargin, y) # 停靠到左边，31是标题栏高度
         self.isBerthLeft = True
 
     def berthToRight(self, x, y, width, height, screenWidth, screenHeight):
-        self.move(screenWidth-self.edgeMargin, y-31) # 停靠到右边，31是标题栏高度
+        self.move(screenWidth-self.edgeMargin, y) # 停靠到右边，31是标题栏高度
         self.isBerthRight = True
 
     def checkWindowInfo(self):
@@ -399,6 +483,7 @@ def start_client_gui():
         subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
     app = QApplication([])
     apply_stylesheet(app, theme='dark_teal.xml', css_file='util\\client_gui_theme_custom.css')
+    global gui
     gui = GUI()
     if not Config.shrink_automatically_to_tray:
         gui.show()
