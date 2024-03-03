@@ -247,6 +247,7 @@ class GUI(QMainWindow):
             self.stay_on_top_button.setText('📌')
         else:
             self.stay_on_top_button.setText(' ')
+        self.show()  # 重新显示窗口以应用更改
 
     def update_word_count_toggled(self):
         select_text_count = len(self.text_box_client.textCursor().selectedText())
