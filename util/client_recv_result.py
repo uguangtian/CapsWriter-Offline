@@ -65,7 +65,8 @@ async def recv_result():
             if offline_translate_done:
                 console.print(f'    离线翻译结果：[green]{offline_translated_text}')
             if online_translate_done:
-                console.print(f'    在线翻译结果：[green]{online_translated_text}')
+                online_translated_text_gbk = online_translated_text.encode('gbk', errors='replace').decode('gbk', errors='replace')
+                console.print(f'    在线翻译结果：[green]{online_translated_text_gbk}')
             console.line()
 
             # 打字
