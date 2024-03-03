@@ -1,8 +1,8 @@
-# 😘 CapsWriter-Offline 图形界面包分支 （ 仅 <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">Windows 10+ </span> ）
+# 😘 CapsWriter-Offline 图形界面包分支 （ 仅 <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows 10+](https://www.microsoft.com/zh-cn/windows) </span> ）
 
 ![alt text](assets/main.png)
 
-# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">Windows</span> 端离线语音输入、中译英、字幕转录；在线多译多、云剪贴板
+# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入、中译英、字幕转录；在线多译多、云剪贴板
 
 ## 😎 六个功能：
 
