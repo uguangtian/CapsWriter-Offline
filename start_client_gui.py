@@ -100,13 +100,15 @@ class GUI(QMainWindow):
         self.title_bar.addWidget(self.close_button)
 
     def create_stay_on_top_button(self):
-        self.stay_on_top_button = QPushButton('📌')
+        self.stay_on_top_button = QPushButton()
+        pin_char = chr(0xE840)
+        self.stay_on_top_button.setText(pin_char)
         self.stay_on_top_button.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
         self.stay_on_top_button.setMaximumSize(50, 50)
         self.stay_on_top_button.clicked.connect(self.window_stay_on_top_toggled)
 
     def create_close_button(self):
-        self.close_button = QPushButton("✘")
+        self.close_button = QPushButton(chr(0xE8BB))
         self.close_button.setMaximumSize(50, 50)
         self.close_button.clicked.connect(self.hide)
 
@@ -142,16 +144,16 @@ class GUI(QMainWindow):
         self.text_box_client.selectionChanged.connect(self.update_word_count_toggled)
 
     def create_cloudypaste_button(self):
-        self.cloudypaste_button = QPushButton("云贴", self)
+        self.cloudypaste_button = QPushButton(chr(0xE753), self)
         self.cloudypaste_button.setToolTip("将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。")
-        self.cloudypaste_button.setMaximumSize(60, 30)
+        self.cloudypaste_button.setMaximumSize(80, 30)
         self.cloudypaste_button.clicked.connect(self.cloudy_paste)
 
     def create_clear_button(self):
         # Create a button
-        self.clear_button = QPushButton("清空", self)
+        self.clear_button = QPushButton(chr(0xE75C), self)
         self.clear_button.setToolTip("清空文本框中的全部内容")
-        self.clear_button.setMaximumSize(60, 30)
+        self.clear_button.setMaximumSize(80, 30)
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
 
@@ -238,15 +240,16 @@ class GUI(QMainWindow):
         # 切换窗口置顶状态
         if self.windowFlags() & Qt.WindowStaysOnTopHint:
             self.setWindowFlags(self.windowFlags() ^ Qt.WindowStaysOnTopHint)
-            self.stay_on_top_button.setText(' ')
         else:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
             global gui
         window_is_on_top = bool(gui.windowFlags() & Qt.WindowStaysOnTopHint)
         if window_is_on_top:
-            self.stay_on_top_button.setText('📌')
+            pin_char = chr(0xE840)
+            self.stay_on_top_button.setText(pin_char)
         else:
-            self.stay_on_top_button.setText(' ')
+            unpin_char = ' '
+            self.stay_on_top_button.setText(unpin_char)
         self.show()  # 重新显示窗口以应用更改
 
     def update_word_count_toggled(self):

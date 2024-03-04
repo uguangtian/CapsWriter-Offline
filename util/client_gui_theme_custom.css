@@ -1,4 +1,5 @@
 QPushButton {{
+    font-family: "Segoe MDL2 Assets";
     color: {QTMATERIAL_PRIMARYCOLOR};
     text-transform: none;
     height: 25px;
