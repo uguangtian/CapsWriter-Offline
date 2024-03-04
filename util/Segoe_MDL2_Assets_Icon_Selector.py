@@ -65,7 +65,10 @@ class IconBrowser(QMainWindow):
                 button = QPushButton(char)
                 button.setFixedSize(80, 80)
                 button.setFont(font)
-                button.clicked.connect(lambda: self.copy_to_clipboard(unicode_val))
+                # 创建一个额外的函数，将当前循环的unicode_val传递给lambda
+                def create_callback(unicode_val):
+                    return lambda: self.copy_to_clipboard(unicode_val)
+                button.clicked.connect(create_callback(unicode_val))
                 grid_layout.addWidget(button, unicode_val - start, col)
 
         self.setWindowTitle("Segoe MDL2 Assets Icon Selector")
