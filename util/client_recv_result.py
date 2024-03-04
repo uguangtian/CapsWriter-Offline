@@ -1,7 +1,4 @@
-import asyncio
 import json
-
-import keyboard
 import websockets
 from config import ClientConfig as Config
 from util.client_cosmic import Cosmic, console
