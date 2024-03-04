@@ -10,7 +10,7 @@
 
 import asyncio
 import json
-from transformers import AutoTokenizer, AutoModelWithLMHead
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import websockets
 from multiprocessing import Process
 from config import ServerConfig as Config
@@ -19,7 +19,7 @@ from config import ModelPaths
 #离线翻译
 modelName = ModelPaths.opus_mt_dir
 # 加载模型
-model = AutoModelWithLMHead.from_pretrained(modelName, local_files_only=True)
+model = AutoModelForSeq2SeqLM.from_pretrained(modelName, local_files_only=True)
 # 加载分词器
 tokenizer = AutoTokenizer.from_pretrained(modelName, local_files_only=True)
 
