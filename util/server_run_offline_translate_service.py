@@ -28,7 +28,7 @@ async def translate_text(text):
     # 分词
     input_ids = tokenizer.encode(text, return_tensors="pt")
 
-    # 获取翻译结果
+    # 获取离线翻译结果
     outputs = model.generate(input_ids)
     translated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
@@ -43,7 +43,7 @@ async def offline_translate_server(websocket, path):
         # 调用翻译函数
         translated_text = await translate_text(text_to_translate)
 
-        # 将翻译结果发送回客户端
+        # 将离线翻译结果发送回客户端
         await websocket.send(json.dumps({'translated_text': translated_text}))
 
 def run_offline_translate_service():

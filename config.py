@@ -31,13 +31,15 @@ class ClientConfig:
     offline_translate_port_gemma2b = '11434' # Gemma 2B 离线翻译端口
     speech_recognition_shortcut     = 'caps lock'  # 控制录音的快捷键，默认是 CapsLock
     offline_translate_shortcut          = 'left shift'          # 控制离线翻译的快捷键，默认是 Left Shift，按住Left Shift再按 CapsLock进行离线翻译
-    translate_and_replace_the_selected_text_shortcut = 'ctrl + alt + p' # 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键，光标选择中文文本，按下 alt 和 z 快捷键，替换中文为英文
+    offline_translate_and_replace_the_selected_text_shortcut = 'ctrl + alt + p' # 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键，光标选择中文文本，按下 ctrl + alt + p 快捷键，替换中文为英文
                                                                         # 如果未选中任何文字,会将剪贴板的文字翻译为英文，并粘贴
     online_translate_shortcut   = 'right shift'         # 控制在线翻译的快捷键，默认是 Right Shift，按住Right Shift再按 CapsLock进行在线翻译
                                                     # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
                                                     # 如果出现429错误，则表示你的IP被DeepL暂时屏蔽了，请不要在短时间内频繁请求。
     online_translate_target_languages = 'JA'            # 在线翻译目标语言
                                                     # 常用的 EN JA RU ，更多选择参考 https://www.deepl.com/docs-api/translate-text
+    online_translate_and_replace_the_selected_text_shortcut = 'ctrl + alt + [' # 控制在线翻译将光标选中的中文翻译并替换为 在线翻译目标语言 的快捷键，光标选择中文文本，按下 ctrl + alt + [ 快捷键，替换中文为 在线翻译目标语言
+                                                                                # 如果未选中任何文字,会将剪贴板的文字翻译为英文，并粘贴
     hold_mode    = True         # 长按模式，按下录音，松开停止，像对讲机一样用。
                                 # 改为 False，则关闭长按模式，也就是单击模式
                                 #       即：单击录音，再次单击停止

@@ -18,7 +18,7 @@ async def translate_text(text, url=f"ws://localhost:{Config.offline_translate_po
         # 假设字典中有一个'translated_text'键，返回它的值
         return response_data.get('translated_text', 'Translation not available')
 
-# 这个函数将启动翻译任务并返回翻译结果
+# 这个函数将启动翻译任务并返回离线翻译结果
 async def translate_offline(text):
     try:
         # 创建一个任务来运行协程
