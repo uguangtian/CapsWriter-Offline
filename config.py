@@ -40,6 +40,10 @@ class ClientConfig:
                                                     # 常用的 EN JA RU ，更多选择参考 https://www.deepl.com/docs-api/translate-text
     online_translate_and_replace_the_selected_text_shortcut = 'ctrl + alt + [' # 控制在线翻译将光标选中的中文翻译并替换为 在线翻译目标语言 的快捷键，光标选择中文文本，按下 ctrl + alt + [ 快捷键，替换中文为 在线翻译目标语言
                                                                                 # 如果未选中任何文字,会将剪贴板的文字翻译为英文，并粘贴
+    use_search_selected_text_with_everything_function = True # 设置是否启用 使用 everything 搜索选中的文字
+    search_selected_text_with_everything_shortcut = 'ctrl + alt + f'    # 调用 everything 搜索光标选中的字符
+                                                                        # 使用前需先安装 everything，https://www.voidtools.com/zh-cn/downloads/
+    everything_exe_path = 'C:\Program Files\Everything\Everything.exe'  # 设置 everything 可执行文件位置
     hold_mode    = True         # 长按模式，按下录音，松开停止，像对讲机一样用。
                                 # 改为 False，则关闭长按模式，也就是单击模式
                                 #       即：单击录音，再次单击停止

@@ -322,6 +322,9 @@ class GUI(QMainWindow):
         threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_offline_process.stdout, self.output_queue_client), daemon=True).start()
         self.translate_and_replace_selected_text_online_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_translate_and_replace_selected_text_online.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_online_process.stdout, self.output_queue_client), daemon=True).start()
+        if Config.use_search_selected_text_with_everything_function:
+            self.search_selected_text_with_everything = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_search_selected_text_with_everything.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            threading.Thread(target=self.enqueue_output, args=(self.search_selected_text_with_everything.stdout, self.output_queue_client), daemon=True).start()
         self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         threading.Thread(target=self.enqueue_output, args=(self.core_client_process.stdout, self.output_queue_client), daemon=True).start()
 
