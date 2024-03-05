@@ -254,3 +254,22 @@
 ---
 
 # 🤩 都看到这儿了，给个星星好不好？ ⭐
+
+## [Pywin32](https://github.com/mhammond/pywin32) 打包进 Embedded Python 的方法
+
+本机 Python3.11.8 执行
+
+```
+pip install  --target .\site-packages pywin32
+```
+
+编辑 `.\runtime\python311._pth` 增加
+
+```
+../site-packages/win32
+../site-packages/win32/lib
+../site-packages/win32ctypes/pywin32
+../site-packages/win32ctypes
+```
+
+复制 `.\site-packages\pywin32_system32\` 中的 `*.dll` 到 `.\runtime\`
