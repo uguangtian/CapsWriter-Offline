@@ -30,6 +30,9 @@ from config import ClientConfig as Config
 from util.check_process import check_process
 from util.cloud_clipboard_show_qrcode import CloudClipboardShowQRCode
 import win32api
+import win32con
+import win32gui
+import win32print
 import keyboard
 class Hint_While_Recording_At_Cursor_Position(QLabel):
     def __init__(self):
@@ -45,8 +48,10 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
     def update_tooltip_position(self):
         # 使用pywin32获取全局鼠标位置
         x, y = win32api.GetCursorPos()
+        global scale_x, scale_y
+        x, y = x / scale_x, y / scale_y
         # 更新标签的位置和文本
-        self.move(x+20, y+20)
+        self.move(x+(20/scale_x),y+(20/scale_y))
         if keyboard.is_pressed(Config.speech_recognition_shortcut):
             self.setText(chr(0xF8B1))
             self.setVisible(True)
@@ -512,12 +517,13 @@ class GUI(QMainWindow):
 
 
 def start_client_gui():
+    Print_Screen_Scale()
     if Config.only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
             raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
     if not check_process('hint_while_recording.exe'):
         subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
+    app = QApplication(sys.argv)
     if Config.hint_while_recording_at_cursor_position:
-        app = QApplication(sys.argv)
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
     apply_stylesheet(app, theme='dark_teal.xml', css_file='util\\client_gui_theme_custom.css')
@@ -527,7 +533,21 @@ def start_client_gui():
         gui.show()
     sys.exit(app.exec()) 
 
-
+def Print_Screen_Scale():
+    # 获取屏幕的宽度和高度
+    hDC = win32gui.GetDC(0)
+    screen_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
+    screen_height = win32print.GetDeviceCaps(hDC, win32con.DESKTOPVERTRES)
+    print(f"屏幕尺寸: {screen_width}x{screen_height}")
+    # 获取逻辑的宽度和高度
+    logical_width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
+    logical_height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
+    print(f"逻辑尺寸: {logical_width}x{logical_height}")
+    # 计算缩放比例
+    global scale_x, scale_y
+    scale_x = screen_width / logical_width
+    scale_y = screen_height / logical_height
+    print(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
 
 if __name__ == '__main__':
