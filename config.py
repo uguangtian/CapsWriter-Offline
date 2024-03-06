@@ -89,7 +89,7 @@ class ClientConfig:
                                                             # 🤓 Open Home Folder With VSCode 
                                                             # 使用 VSCode 快速打开 CapsWriter 主目录
                                                             # 方便调试
-    hint_while_recording_at_cursor_position = True
+    hint_while_recording_at_cursor_position = True # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
 
 class DeepLXConfig:
     online_translate_port = '1188'
