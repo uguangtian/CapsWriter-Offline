@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (QApplication,
                                QLabel)
 from PySide6.QtGui import (QIcon,
                            QAction,
+                           QPalette,
+                           QColor,
                            QFont,
                            QWheelEvent)
 from PySide6.QtCore import (Qt,
@@ -27,6 +29,30 @@ from qt_material import apply_stylesheet
 from config import ClientConfig as Config
 from util.check_process import check_process
 from util.cloud_clipboard_show_qrcode import CloudClipboardShowQRCode
+import win32api
+import keyboard
+class Hint_While_Recording_At_Cursor_Position(QLabel):
+    def __init__(self):
+        super().__init__()
+        self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setVisible(False)  # 初始时隐藏标签
+
+        # 创建一个定时器来定期更新鼠标位置
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_tooltip_position)
+        self.timer.start(100)  # 每100毫秒更新一次
+
+    def update_tooltip_position(self):
+        # 使用pywin32获取全局鼠标位置
+        x, y = win32api.GetCursorPos()
+        # 更新标签的位置和文本
+        self.move(x+20, y+20)
+        if keyboard.is_pressed(Config.speech_recognition_shortcut):
+            self.setText(chr(0xF8B1))
+            self.setVisible(True)
+        else:
+            self.setVisible(False)
+
 
 class GUI(QMainWindow):
     def __init__(self):
@@ -490,7 +516,10 @@ def start_client_gui():
             raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
     if not check_process('hint_while_recording.exe'):
         subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
-    app = QApplication([])
+    if Config.hint_while_recording_at_cursor_position:
+        app = QApplication(sys.argv)
+        tooltip = Hint_While_Recording_At_Cursor_Position()
+        tooltip.show()
     apply_stylesheet(app, theme='dark_teal.xml', css_file='util\\client_gui_theme_custom.css')
     global gui
     gui = GUI()

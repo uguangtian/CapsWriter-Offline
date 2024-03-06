@@ -18,6 +18,7 @@ QTextEdit {{
 }}
 
 QLabel {{
+    font-family: "Segoe MDL2 Assets";
     color: {QTMATERIAL_PRIMARYCOLOR};
     font-size: 14px;
 }}
