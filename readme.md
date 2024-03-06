@@ -32,6 +32,10 @@
 
 > ![alt text](assets/将光标选中了中文翻译并替换.gif)
 
+## 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
+
+> ![alt text](<assets/使用 everything 搜索光标选中的文字.gif>)
+
 ## 跟随鼠标光标位置的新版输入状态提示功能
 
 > ![alt text](assets/跟随鼠标光标位置的新版输入状态提示功能.gif)
