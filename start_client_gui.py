@@ -291,6 +291,8 @@ class GUI(QMainWindow):
         unselect_text_count = total_text_count - select_text_count
         unselect_text_bytes = total_text_bytes - select_text_bytes
         self.text_box_wordCountLabel.setText(f"{select_text_count} + {unselect_text_count} = {total_text_count} Words |  {select_text_bytes} + {unselect_text_bytes} = {total_text_bytes} Bytes")
+        if total_text_count > 10000: # 字符数过多时自动清空
+            self.text_box_client.clear()
 
     def edit_hot_en(self):
         os.startfile('hot-en.txt')
@@ -374,8 +376,12 @@ class GUI(QMainWindow):
     def update_text_box(self):
         # Update client text box
         while not self.output_queue_client.empty():
-            line = self.output_queue_client.get()
-            self.text_box_client.append(line)
+            try:
+                line = self.output_queue_client.get()
+                self.text_box_client.append(line)
+            except Exception as e:
+                self.text_box_client.append(e)
+                break
 
 
     def checkWindowActive(self):
