@@ -3,7 +3,7 @@ import asyncio
 import websockets
 from config import ClientConfig as Config
 
-async def translate_text(text, url=f"ws://localhost:{Config.offline_translate_port}"):
+async def translate_text(text, url=f"ws://{Config.addr}:{Config.offline_translate_port}"):
     # 设置要发送的数据
     data = {"text": text}
     # 将Python字典转换为JSON格式的字符串
