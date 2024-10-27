@@ -8,7 +8,6 @@ class ServerConfig:
     speech_recognition_port = '6016'
     offline_translate_port = '6017' # 离线翻译端口
     format_num = True  # 输出时是否将中文数字转为阿拉伯数字
-    format_punc = True  # 输出时是否启用标点符号引擎
     format_spell = True  # 输出时是否调整中英之间的空格 
     shrink_automatically_to_tray = True     # 启动后不显示主窗口，自动缩小至托盘
     only_run_once = True # 只允许运行一次，禁止多开
@@ -98,19 +97,22 @@ class DeepLXConfig:
 
 class ModelPaths:
     model_dir = Path() / 'models'
-    paraformer_path = Path() / 'models' / 'paraformer-offline-zh' / 'model.int8.onnx'   # 语音模型
-    tokens_path = Path() / 'models' / 'paraformer-offline-zh' / 'tokens.txt'
-    punc_model_dir = Path() / 'models' / 'punc_ct-transformer_cn-en'    # 标点模型
+    paraformer_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'model.int8.onnx'   # 语音模型
+    tokens_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'tokens.txt'
+    # punc_model_dir = Path() / 'models' / 'punc_ct-transformer_cn-en'    # 标点模型
     opus_mt_dir = Path() / 'models' / 'Helsinki-NLP--opus-mt-zh-en'     # 离线翻译模型
 
 
 class ParaformerArgs:
-    paraformer = f'{ModelPaths.paraformer_path}'
+    model = f'{ModelPaths.paraformer_path}'
     tokens = f'{ModelPaths.tokens_path}'
     num_threads = 6
     sample_rate = 16000
-    feature_dim = 80
-    decoding_method = 'greedy_search'
+    # feature_dim = 80
+    # decoding_method = 'greedy_search'
+    use_itn = True
+    language = "auto"
     debug = False
+    provider = "cpu"
 
 

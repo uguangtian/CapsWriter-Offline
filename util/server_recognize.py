@@ -1,7 +1,7 @@
 import re
 import time
 
-import numpy as np 
+import numpy as np
 
 from util.server_cosmic import console
 from config import ServerConfig as Config
@@ -14,20 +14,17 @@ from rich import inspect
 results = {}
 
 
-def format_text(text, punc_model):
+def format_text(text):
     if Config.format_spell:
-        text = adjust_space(text)       # 调空格
-    if Config.format_punc and punc_model and text:
-        text = punc_model(text)[0]  # 加标点
+        text = adjust_space(text)  # 调空格
     if Config.format_num:
-        text = chinese_to_num(text)     # 转数字
+        text = chinese_to_num(text)  # 转数字
     if Config.format_spell:
-        text = adjust_space(text)       # 调空格
-    return text
+        text = adjust_space(text)  # 调空格
+    return text.encode("gbk", errors="replace").decode("gbk", errors="replace")
 
 
-def recognize(recognizer, punc_model, task: Task):
-
+def recognize(recognizer, task: Task):
     # inspect({key:value for key, value in task.__dict__.items() if not key.startswith('_') and key != 'data'})
     # todo 清空遗存的任务结果
 
@@ -58,7 +55,7 @@ def recognize(recognizer, punc_model, task: Task):
     # 先粗去重，依据：字级时间戳
     m = n = len(stream.result.timestamps)
     for i, timestamp in enumerate(stream.result.timestamps, start=0):
-        if timestamp > task.overlap / 2: 
+        if timestamp > task.overlap / 2:
             m = i
             break
     for i, timestamp in enumerate(stream.result.timestamps, start=1):
@@ -81,8 +78,8 @@ def recognize(recognizer, punc_model, task: Task):
     result.tokens += [token for token in stream.result.tokens[m:n]]
 
     # token 合并为文本
-    text = ' '.join(result.tokens).replace('@@ ', '')
-    text = re.sub('([^a-zA-Z0-9]) (?![a-zA-Z0-9])', r'\1', text)
+    text = " ".join(result.tokens).replace("@@ ", "")
+    text = re.sub("([^a-zA-Z0-9]) (?![a-zA-Z0-9])", r"\1", text)
 
     result.text = text
 
@@ -90,7 +87,7 @@ def recognize(recognizer, punc_model, task: Task):
         return result
 
     # 调整文本格式
-    result.text = format_text(text, punc_model)
+    result.text = format_text(text)
 
     # 若最后一个片段完成识别，从字典摘取任务
     result = results.pop(task.task_id)
