@@ -1,10 +1,12 @@
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
-from PySide6.QtGui import QPixmap, QImage
-import qrcode
-from io import BytesIO
 import sys
 import webbrowser
+from io import BytesIO
+
+import qrcode
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
+
 from util.cloud_clipboard import CloudClipboard
 
 
@@ -52,23 +54,26 @@ class QRCODE(QWidget):
         if event.key() == Qt.Key_Escape:
             self.close()  # Close the window on ESC press
 
+
 def utf8_byte_count(s):
-    return len(s.encode('utf-8'))
+    return len(s.encode("utf-8"))
+
 
 def truncate_utf8(s, max_bytes=1024):
-    byte_count = len(s.encode('utf-8'))
-    
+    byte_count = len(s.encode("utf-8"))
+
     if byte_count > max_bytes:
         # Encoding the string to UTF-8 and then slicing the byte array
-        truncated_bytes = s.encode('utf-8')[:max_bytes]
+        truncated_bytes = s.encode("utf-8")[:max_bytes]
         # Decoding the sliced byte array back to string
-        s = truncated_bytes.decode('utf-8', errors='ignore')
-    
+        s = truncated_bytes.decode("utf-8", errors="ignore")
+
     return s
+
 
 def CloudClipboardShowQRCode(text):
     # https://cv.j20.cc/  限制 *请输入5~1000个字符  实测最多1024字节
-    text = text.replace('\n', ' ').replace('\t', ' ')
+    text = text.replace("\\n", " ").replace("\\t", " ")
     byte_count = utf8_byte_count(text)
 
     # print(byte_count)
@@ -81,10 +86,10 @@ def CloudClipboardShowQRCode(text):
     qrcode = QRCODE(url, url)
     qrcode.show()
 
+
 if __name__ == "__main__":
+    args = sys.argv
+    text = str(args[1:])[2:-2]
     app = QApplication([])
-    text = '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十1234一二三四五六七八九十'
-    print(len(text))
     CloudClipboardShowQRCode(text)
     sys.exit(app.exec())
-

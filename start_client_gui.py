@@ -3,28 +3,24 @@ import sys
 import subprocess
 from queue import Queue
 import threading
-from PySide6.QtWidgets import (QApplication,
-                               QMainWindow,
-                               QTextEdit,
-                               QSystemTrayIcon,
-                               QMenu,
-                               QPushButton,
-                               QCheckBox, QVBoxLayout,
-                               QHBoxLayout,
-                               QWidget,
-                               QLabel,
-                               QSpacerItem,
-                               QSizePolicy,
-                               QLabel)
-from PySide6.QtGui import (QIcon,
-                           QAction,
-                           QPalette,
-                           QColor,
-                           QFont,
-                           QWheelEvent)
-from PySide6.QtCore import (Qt,
-                            QPoint,
-                            QTimer)
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QTextEdit,
+    QSystemTrayIcon,
+    QMenu,
+    QPushButton,
+    QCheckBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QLabel,
+    QSpacerItem,
+    QSizePolicy,
+    QLabel,
+)
+from PySide6.QtGui import QIcon, QAction, QPalette, QColor, QFont, QWheelEvent
+from PySide6.QtCore import Qt, QPoint, QTimer
 from qt_material import apply_stylesheet
 from config import ClientConfig as Config
 from util.check_process import check_process
@@ -34,10 +30,14 @@ import win32con
 import win32gui
 import win32print
 import keyboard
+
+
 class Hint_While_Recording_At_Cursor_Position(QLabel):
     def __init__(self):
         super().__init__()
-        self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        )
         self.setVisible(False)  # 初始时隐藏标签
 
         # 创建一个定时器来定期更新鼠标位置
@@ -51,7 +51,7 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
         global scale_x, scale_y
         x, y = x / scale_x, y / scale_y
         # 更新标签的位置和文本
-        self.move(x+(20/scale_x),y+(20/scale_y))
+        self.move(x + (20 / scale_x), y + (20 / scale_y))
         if keyboard.is_pressed(Config.speech_recognition_shortcut):
             self.setText(chr(0xF8B1))
             self.setVisible(True)
@@ -65,19 +65,19 @@ class GUI(QMainWindow):
         self.init_ui()
         self.output_queue_client = Queue()
         self.start_script()
-        self.edgeMargin = 5 # 侧边停靠残余像素值
+        self.edgeMargin = 5  # 侧边停靠残余像素值
         self.isBerthLeft = False
         self.isBerthRight = False
 
     def init_ui(self):
         self.resize(425, 425)
-        self.setWindowTitle('CapsWriter-Offline-Client')
+        self.setWindowTitle("CapsWriter-Offline-Client")
         self.setWindowIcon(QIcon("assets/client-icon.ico"))
         self.setWindowOpacity(0.9)
         self.setWindowFlags(
             self.windowFlags()
-            | Qt.FramelessWindowHint # 隐藏标题栏
-            | Qt.Tool # 隐藏Windows任务栏上的图标
+            | Qt.FramelessWindowHint  # 隐藏标题栏
+            | Qt.Tool  # 隐藏Windows任务栏上的图标
             | Qt.WindowStaysOnTopHint  # 置顶
         )
         self.create_stay_on_top_button()
@@ -86,11 +86,10 @@ class GUI(QMainWindow):
         self.create_close_button()
         self.create_custom_title_bar()
         self.create_text_box()
-        self.create_monitor_checkbox() # Create monitor checkbox
+        self.create_monitor_checkbox()  # Create monitor checkbox
         # self.create_stay_on_top_checkbox()
         self.create_wordcount_label()
         self.create_systray_icon()
-
 
         # Create a vertical layout
         self.layout = QVBoxLayout()
@@ -99,16 +98,17 @@ class GUI(QMainWindow):
         self.layout2 = QHBoxLayout()
         self.layout2.setSpacing(0)  # 设置控件间距为0像素
         self.layout2.setContentsMargins(0, 0, 0, 0)  # 设置左、上、右、下的边距为0像素
-        
+
         # Add text box and button to the layout
         self.layout.addLayout(self.title_bar)
         self.layout.addWidget(self.text_box_client)
         self.layout2.addWidget(self.monitor_checkbox, alignment=Qt.AlignLeft)
         # self.layout2.addWidget(self.stay_on_top_checkbox, alignment=Qt.AlignLeft)
-        self.layout2.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.layout2.addSpacerItem(
+            QSpacerItem(40, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
         self.layout2.addWidget(self.text_box_wordCountLabel, alignment=Qt.AlignRight)
         self.layout.addLayout(self.layout2)
-
 
         # Create a central widget
         central_widget = QWidget()
@@ -125,7 +125,9 @@ class GUI(QMainWindow):
         font.setBold(True)
         self.title.setFont(font)
         self.title_bar.addWidget(self.title)
-        self.title_bar.addSpacerItem(QSpacerItem(80, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.title_bar.addSpacerItem(
+            QSpacerItem(80, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
         self.title_bar.addWidget(self.cloudypaste_button, alignment=Qt.AlignRight)
         self.title_bar.addWidget(self.clear_button, alignment=Qt.AlignRight)
         self.title_bar.addWidget(self.close_button)
@@ -142,8 +144,6 @@ class GUI(QMainWindow):
         self.close_button = QPushButton(chr(0xE8BB))
         self.close_button.setMaximumSize(50, 50)
         self.close_button.clicked.connect(self.hide)
-
-
 
     def create_text_box(self):
         self.text_box_client = QTextEdit()
@@ -176,7 +176,9 @@ class GUI(QMainWindow):
 
     def create_cloudypaste_button(self):
         self.cloudypaste_button = QPushButton(chr(0xE753), self)
-        self.cloudypaste_button.setToolTip("将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。")
+        self.cloudypaste_button.setToolTip(
+            "将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。"
+        )
         self.cloudypaste_button.setMaximumSize(80, 30)
         self.cloudypaste_button.clicked.connect(self.cloudy_paste)
 
@@ -187,7 +189,6 @@ class GUI(QMainWindow):
         self.clear_button.setMaximumSize(80, 30)
         # Connect click event
         self.clear_button.clicked.connect(lambda: self.clear_text_box())
-
 
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
@@ -245,7 +246,18 @@ class GUI(QMainWindow):
 
     def cloudy_paste(self):
         text = self.text_box_client.toPlainText()
-        CloudClipboardShowQRCode(text)
+        subprocess.Popen(
+            [
+                ".\\runtime\\pythonw.exe",
+                ".\\util\\cloud_clipboard_show_qrcode.py",
+                text,
+            ],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+        )
 
     def clear_text_box(self):
         # Clear the content of the client text box
@@ -279,62 +291,78 @@ class GUI(QMainWindow):
             pin_char = chr(0xE840)
             self.stay_on_top_button.setText(pin_char)
         else:
-            unpin_char = ' '
+            unpin_char = " "
             self.stay_on_top_button.setText(unpin_char)
         self.show()  # 重新显示窗口以应用更改
 
     def update_word_count_toggled(self):
         select_text_count = len(self.text_box_client.textCursor().selectedText())
-        select_text_bytes = len(self.text_box_client.textCursor().selectedText().encode('utf-8'))
+        select_text_bytes = len(
+            self.text_box_client.textCursor().selectedText().encode("utf-8")
+        )
         total_text_count = len(self.text_box_client.toPlainText())
-        total_text_bytes = len(self.text_box_client.toPlainText().encode('utf-8'))
+        total_text_bytes = len(self.text_box_client.toPlainText().encode("utf-8"))
         unselect_text_count = total_text_count - select_text_count
         unselect_text_bytes = total_text_bytes - select_text_bytes
-        self.text_box_wordCountLabel.setText(f"{select_text_count} + {unselect_text_count} = {total_text_count} Words |  {select_text_bytes} + {unselect_text_bytes} = {total_text_bytes} Bytes")
-        if total_text_count > 10000: # 字符数过多时自动清空
+        self.text_box_wordCountLabel.setText(
+            f"{select_text_count} + {unselect_text_count} = {total_text_count} Words |  {select_text_bytes} + {unselect_text_bytes} = {total_text_bytes} Bytes"
+        )
+        if total_text_count > 10000:  # 字符数过多时自动清空
             self.text_box_client.clear()
 
     def edit_hot_en(self):
-        os.startfile('hot-en.txt')
+        os.startfile("hot-en.txt")
+
     def edit_hot_rule(self):
-        os.startfile('hot-rule.txt')
+        os.startfile("hot-rule.txt")
+
     def edit_hot_zh(self):
-        os.startfile('hot-zh.txt')
+        os.startfile("hot-zh.txt")
+
     def edit_keyword(self):
-        os.startfile('keywords.txt')
+        os.startfile("keywords.txt")
 
     def explore_home_folder(self):
         current_directory = os.getcwd()
         os.startfile(current_directory)
+
     def vscode_home_folder(self):
         current_directory = os.getcwd()
         vscode_exe_path = Config.vscode_exe_path
         subprocess.Popen([vscode_exe_path, current_directory])
+
     def open_chatglm_website(self):
-        os.system(f'start https://chatglm.cn/main/alltoolsdetail')
+        os.system(f"start https://chatglm.cn/main/alltoolsdetail")
 
     def open_github_website(self):
-        os.system(f'start https://github.com/H1DDENADM1N/CapsWriter-Offline')
+        os.system(f"start https://github.com/H1DDENADM1N/CapsWriter-Offline")
+
     def closeEvent(self, event):
         # Minimize to system tray instead of closing the window when the user clicks the close button
         self.hide()  # Hide the window
         event.ignore()  # Ignore the close event
-    
+
     def quit_app(self):
         # Terminate core_client.py process
-        if hasattr(self, 'core_client_process') and self.core_client_process:
+        if hasattr(self, "core_client_process") and self.core_client_process:
             self.core_client_process.terminate()
             self.core_client_process.kill()
-        
+
         # Hide the system tray icon
         self.tray_icon.setVisible(False)
-        
+
         # Quit the application
         QApplication.quit()
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
-        proc = subprocess.Popen('taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /F', creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
-
+        proc = subprocess.Popen(
+            "taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /F",
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            text=True,
+        )
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
@@ -343,33 +371,96 @@ class GUI(QMainWindow):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.hide() # Press ESC to hide main window
+            self.hide()  # Press ESC to hide main window
 
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
 
         # While Debug error    for line in iter(out.readline, ''):
         # Use this line to replace the original code
-        # self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
-        self.translate_and_replace_selected_text_offline_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_translate_and_replace_selected_text_offline.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_offline_process.stdout, self.output_queue_client), daemon=True).start()
-        self.translate_and_replace_selected_text_online_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_translate_and_replace_selected_text_online.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        threading.Thread(target=self.enqueue_output, args=(self.translate_and_replace_selected_text_online_process.stdout, self.output_queue_client), daemon=True).start()
+        # self.core_client_process = subprocess.Popen(
+        #     [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
+        #     creationflags=subprocess.CREATE_NO_WINDOW,
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.STDOUT,
+        #     text=True,
+        #     encoding="utf-8",
+        # )
+        self.translate_and_replace_selected_text_offline_process = subprocess.Popen(
+            [
+                ".\\runtime\\pythonw_CapsWriter_Client.exe",
+                ".\\util\\client_translate_and_replace_selected_text_offline.py",
+            ],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        threading.Thread(
+            target=self.enqueue_output,
+            args=(
+                self.translate_and_replace_selected_text_offline_process.stdout,
+                self.output_queue_client,
+            ),
+            daemon=True,
+        ).start()
+        self.translate_and_replace_selected_text_online_process = subprocess.Popen(
+            [
+                ".\\runtime\\pythonw_CapsWriter_Client.exe",
+                ".\\util\\client_translate_and_replace_selected_text_online.py",
+            ],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        threading.Thread(
+            target=self.enqueue_output,
+            args=(
+                self.translate_and_replace_selected_text_online_process.stdout,
+                self.output_queue_client,
+            ),
+            daemon=True,
+        ).start()
         if Config.use_search_selected_text_with_everything_function:
-            self.search_selected_text_with_everything = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', '.\\util\\client_search_selected_text_with_everything.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            threading.Thread(target=self.enqueue_output, args=(self.search_selected_text_with_everything.stdout, self.output_queue_client), daemon=True).start()
-        self.core_client_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Client.exe', 'core_client.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        threading.Thread(target=self.enqueue_output, args=(self.core_client_process.stdout, self.output_queue_client), daemon=True).start()
-
+            self.search_selected_text_with_everything = subprocess.Popen(
+                [
+                    ".\\runtime\\pythonw_CapsWriter_Client.exe",
+                    ".\\util\\client_search_selected_text_with_everything.py",
+                ],
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            threading.Thread(
+                target=self.enqueue_output,
+                args=(
+                    self.search_selected_text_with_everything.stdout,
+                    self.output_queue_client,
+                ),
+                daemon=True,
+            ).start()
+        self.core_client_process = subprocess.Popen(
+            [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        threading.Thread(
+            target=self.enqueue_output,
+            args=(self.core_client_process.stdout, self.output_queue_client),
+            daemon=True,
+        ).start()
 
         # Update text box
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_text_box)
         self.update_timer.start(100)
 
-
     def enqueue_output(self, out, queue):
-        for line in iter(out.readline, ''): 
+        for line in iter(out.readline, ""):
             line = line.strip()
             queue.put(line)
 
@@ -383,16 +474,17 @@ class GUI(QMainWindow):
                 self.text_box_client.append(e)
                 break
 
-
     def checkWindowActive(self):
         # 检查窗口是否处于活跃状态
         if self.isActiveWindow():
             pass
         else:
             x, y, width, height, screenWidth, screenHeight = self.checkWindowInfo()
-            if x == 0: # 窗口非活跃状态，从左边弹出的，恢复继续停靠在左边
+            if x == 0:  # 窗口非活跃状态，从左边弹出的，恢复继续停靠在左边
                 self.berthToLeft(x, y, width, height, screenWidth, screenHeight)
-            elif  x == screenWidth - width: # 窗口非活跃状态，从右边弹出的，恢复继续停靠在右边
+            elif (
+                x == screenWidth - width
+            ):  # 窗口非活跃状态，从右边弹出的，恢复继续停靠在右边
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
                 print("窗口无需恢复停靠")
@@ -410,20 +502,20 @@ class GUI(QMainWindow):
 
     def enterEvent(self, event):
         super().enterEvent(event)
-        for i in range(self.title_bar.count()): # 鼠标进入时显示标题栏
+        for i in range(self.title_bar.count()):  # 鼠标进入时显示标题栏
             widget = self.title_bar.itemAt(i).widget()
             if widget is not None:
                 widget.setVisible(True)
-        for i in range(self.layout2.count()): # 鼠标进入时显示操作栏
+        for i in range(self.layout2.count()):  # 鼠标进入时显示操作栏
             widget = self.layout2.itemAt(i).widget()
             if widget is not None:
                 widget.setVisible(True)
         x, y, width, height, screenWidth, screenHeight = self.checkWindowInfo()
-        if self.isBerthLeft: # 已停靠在左边
-            self.move(0, y) # 从左边弹出，31是标题栏高度
+        if self.isBerthLeft:  # 已停靠在左边
+            self.move(0, y)  # 从左边弹出，31是标题栏高度
             self.isBerthLeft = False
-        elif self.isBerthRight: # 已停靠在右边
-            self.move(screenWidth - width, y) # 从右边弹出，31是标题栏高度
+        elif self.isBerthRight:  # 已停靠在右边
+            self.move(screenWidth - width, y)  # 从右边弹出，31是标题栏高度
             self.isBerthRight = False
         else:
             # print("窗口未停靠")
@@ -431,50 +523,51 @@ class GUI(QMainWindow):
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
-        for i in range(self.title_bar.count()): # 鼠标离开时隐藏标题栏
+        for i in range(self.title_bar.count()):  # 鼠标离开时隐藏标题栏
             widget = self.title_bar.itemAt(i).widget()
             if widget is not None:
                 widget.setVisible(False)
-        for i in range(self.layout2.count()): # 鼠标离开时隐藏操作栏
+        for i in range(self.layout2.count()):  # 鼠标离开时隐藏操作栏
             widget = self.layout2.itemAt(i).widget()
             if widget is not None:
                 widget.setVisible(False)
         x, y, width, height, screenWidth, screenHeight = self.checkWindowInfo()
         # print(f"左右，高低，宽，高，屏宽，屏高: {(x, y, width, height, screenWidth, screenHeight)}")
-        if self.isActiveWindow(): # 窗口活跃状态，用户点击了窗口，则不恢复继续停靠
+        if self.isActiveWindow():  # 窗口活跃状态，用户点击了窗口，则不恢复继续停靠
             # print("窗口活跃状态")
-            if x < 0 - width/2 :
+            if x < 0 - width / 2:
                 # print("活跃状态，但是窗口的一半已超出屏幕左边界，将窗口停靠在左边")
                 self.berthToLeft(x, y, width, height, screenWidth, screenHeight)
-            elif x > screenWidth - width/2:
+            elif x > screenWidth - width / 2:
                 # print("窗口活跃状态，但是窗口的一半已超出屏幕右边界，将窗口停靠在右边")
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
                 # print("窗口活跃状态，无需停靠")
                 pass
-        else: # 窗口非活跃状态，用户可能只是鼠标划过看一眼，失去焦点时恢复继续停靠
+        else:  # 窗口非活跃状态，用户可能只是鼠标划过看一眼，失去焦点时恢复继续停靠
             # print("窗口不活跃状态")
-            if x < 0 - width/2 :
+            if x < 0 - width / 2:
                 # print("窗口的一半已超出屏幕左边界")
                 self.berthToLeft(x, y, width, height, screenWidth, screenHeight)
-            elif x > screenWidth - width/2:
+            elif x > screenWidth - width / 2:
                 # print("窗口的一半已超出屏幕右边界")
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
-            elif x == 0: # 窗口非活跃状态，从左边弹出的，恢复继续停靠在左边
+            elif x == 0:  # 窗口非活跃状态，从左边弹出的，恢复继续停靠在左边
                 self.berthToLeft(x, y, width, height, screenWidth, screenHeight)
-            elif  x == screenWidth - width: # 窗口非活跃状态，从右边弹出的，恢复继续停靠在右边
+            elif (
+                x == screenWidth - width
+            ):  # 窗口非活跃状态，从右边弹出的，恢复继续停靠在右边
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
                 # print("窗口未超出屏幕边界")
                 pass
 
-
     def berthToLeft(self, x, y, width, height, screenWidth, screenHeight):
-        self.move(0-width+self.edgeMargin, y) # 停靠到左边，31是标题栏高度
+        self.move(0 - width + self.edgeMargin, y)  # 停靠到左边，31是标题栏高度
         self.isBerthLeft = True
 
     def berthToRight(self, x, y, width, height, screenWidth, screenHeight):
-        self.move(screenWidth-self.edgeMargin, y) # 停靠到右边，31是标题栏高度
+        self.move(screenWidth - self.edgeMargin, y)  # 停靠到右边，31是标题栏高度
         self.isBerthRight = True
 
     def checkWindowInfo(self):
@@ -488,7 +581,6 @@ class GUI(QMainWindow):
         screenWidth = screenRect.width()
         screenHeight = screenRect.height()
         return x, y, width, height, screenWidth, screenHeight
-
 
     def wheelEvent(self, event: QWheelEvent):
         # 设置初始缩放因子
@@ -505,7 +597,9 @@ class GUI(QMainWindow):
             elif event.angleDelta().y() < 0:
                 self.scale_factor *= 0.9  # 缩小
             # 限制缩放因子的范围
-            self.scale_factor = max(self.min_scale, min(self.max_scale, self.scale_factor))
+            self.scale_factor = max(
+                self.min_scale, min(self.max_scale, self.scale_factor)
+            )
             # 应用缩放因子到所有控件
             self.apply_scale_factor()
         else:
@@ -524,20 +618,27 @@ class GUI(QMainWindow):
 
 def start_client_gui():
     Print_Screen_Scale()
-    if Config.only_run_once and check_process('pythonw_CapsWriter_Client.exe'):
-            raise Exception("已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）")
-    if not check_process('hint_while_recording.exe'):
-        subprocess.Popen(['hint_while_recording.exe'], creationflags=subprocess.CREATE_NO_WINDOW)
+    if Config.only_run_once and check_process("pythonw_CapsWriter_Client.exe"):
+        raise Exception(
+            "已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）"
+        )
+    if not check_process("hint_while_recording.exe"):
+        subprocess.Popen(
+            ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
+        )
     app = QApplication(sys.argv)
     if Config.hint_while_recording_at_cursor_position:
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
-    apply_stylesheet(app, theme='dark_teal.xml', css_file='util\\client_gui_theme_custom.css')
+    apply_stylesheet(
+        app, theme="dark_teal.xml", css_file="util\\client_gui_theme_custom.css"
+    )
     global gui
     gui = GUI()
     if not Config.shrink_automatically_to_tray:
         gui.show()
-    sys.exit(app.exec()) 
+    sys.exit(app.exec())
+
 
 def Print_Screen_Scale():
     # 获取屏幕的宽度和高度
@@ -556,16 +657,15 @@ def Print_Screen_Scale():
     print(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if sys.argv[1:]:
         # 如果参数传入文件，那就转录文件
         CapsWriter_path = os.path.dirname(os.path.abspath(__file__))
-        script_path = os.path.join(CapsWriter_path, 'core_client.py')
-        python_exe_path = os.path.join(CapsWriter_path, 'runtime\\python.exe')
+        script_path = os.path.join(CapsWriter_path, "core_client.py")
+        python_exe_path = os.path.join(CapsWriter_path, "runtime\\python.exe")
         args = [arg for arg in sys.argv[1:]]
         command = [python_exe_path, script_path] + args
         subprocess.Popen(["cmd.exe", "/c"] + command, cwd=CapsWriter_path)
-
 
     else:
         # GUI
