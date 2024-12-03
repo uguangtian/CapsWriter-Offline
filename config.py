@@ -54,6 +54,7 @@ class ClientConfig:
     restore_clipboard_after_paste = True         # 模拟粘贴后是否恢复剪贴板
 
     save_audio = True           # 是否保存录音文件
+    save_markdown = True        # 是否将记录写入 md 文件
     audio_name_len = 20         # 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过200
     reduce_audio_files = True # 如果用户已安装 ffmpeg ，调用 ffmpeg 录音时输出 mp3 格式的音频文件，大大减小文件体积，减少磁盘占用
 

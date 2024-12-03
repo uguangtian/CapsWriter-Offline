@@ -69,8 +69,15 @@ async def recv_result():
                 file_audio = rename_audio(
                     message["task_id"], text, message["time_start"]
                 )
+            else:
+                file_audio = None
+
+            if Config.save_markdown:
                 # 记录写入 md 文件
-                write_md(text, message["time_start"], file_audio)
+                if Config.convert_to_traditional_chinese:
+                    write_md(traditional_text, message["time_start"], file_audio)
+                else:
+                    write_md(text, message["time_start"], file_audio)
 
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
