@@ -89,21 +89,23 @@ class ClientConfig:
                                                             # 🤓 Open Home Folder With VSCode 
                                                             # 使用 VSCode 快速打开 CapsWriter 主目录
                                                             # 方便调试
-    hint_while_recording_at_cursor_position = True # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
-    convert_to_traditional_chinese = False  ## 是否启用简繁体中文转换
-    opencc_converter = "s2t.json"  # OpenCC转换器
-    # s2t.json Simplified Chinese to Traditional Chinese 簡體到繁體
-    # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
-    # s2tw.json Simplified Chinese to Traditional Chinese (Taiwan Standard) 簡體到臺灣正體
-    # tw2s.json Traditional Chinese (Taiwan Standard) to Simplified Chinese 臺灣正體到簡體
-    # s2hk.json Simplified Chinese to Traditional Chinese (Hong Kong Standard) 簡體到香港繁體（香港小學學習字詞表標準）
-    # hk2s.json Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁體（香港小學學習字詞表標準）到簡體
-    # s2twp.json Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 簡體到繁體（臺灣正體標準）並轉換爲臺灣常用詞彙
-    # tw2sp.json Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁體（臺灣正體標準）到簡體並轉換爲中國大陸常用詞彙
-    # t2tw.json Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁體（OpenCC 標準）到臺灣正體
-    # t2hk.json Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁體（OpenCC 標準）到香港繁體（香港小學學習字詞表標準）
-    # t2jp.json Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁體（OpenCC 標準，舊字體）到日文新字體
-    # jp2t.json New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字體到繁體（OpenCC 標準，舊字體）
+    hint_while_recording_at_cursor_position = True  # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
+    convert_to_traditional_chinese = True          # 是否启用简繁体中文转换
+    convert_to_traditional_chinese_main = '简'      # `简/繁` 中文作为主要输出
+    enable_double_click_opposite_state = True       # 是否启用,双击`录音键`临时转换 `简/繁` 体中文输出的功能
+    opencc_converter = "s2t.json"                   # OpenCC转换器
+                                                    # s2t.json Simplified Chinese to Traditional Chinese 簡體到繁體
+                                                    # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
+                                                    # s2tw.json Simplified Chinese to Traditional Chinese (Taiwan Standard) 簡體到臺灣正體
+                                                    # tw2s.json Traditional Chinese (Taiwan Standard) to Simplified Chinese 臺灣正體到簡體
+                                                    # s2hk.json Simplified Chinese to Traditional Chinese (Hong Kong Standard) 簡體到香港繁體（香港小學學習字詞表標準）
+                                                    # hk2s.json Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁體（香港小學學習字詞表標準）到簡體
+                                                    # s2twp.json Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 簡體到繁體（臺灣正體標準）並轉換爲臺灣常用詞彙
+                                                    # tw2sp.json Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁體（臺灣正體標準）到簡體並轉換爲中國大陸常用詞彙
+                                                    # t2tw.json Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁體（OpenCC 標準）到臺灣正體
+                                                    # t2hk.json Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁體（OpenCC 標準）到香港繁體（香港小學學習字詞表標準）
+                                                    # t2jp.json Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁體（OpenCC 標準，舊字體）到日文新字體
+                                                    # jp2t.json New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字體到繁體（OpenCC 標準，舊字體）
 
 
 class DeepLXConfig:
