@@ -1,35 +1,36 @@
 import os
-import sys
 import subprocess
-from queue import Queue
+import sys
 import threading
-from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QTextEdit,
-    QSystemTrayIcon,
-    QMenu,
-    QPushButton,
-    QCheckBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QWidget,
-    QLabel,
-    QSpacerItem,
-    QSizePolicy,
-    QLabel,
-)
-from PySide6.QtGui import QIcon, QAction, QPalette, QColor, QFont, QWheelEvent
-from PySide6.QtCore import Qt, QPoint, QTimer
-from qt_material import apply_stylesheet
-from config import ClientConfig as Config
-from util.check_process import check_process
-from util.cloud_clipboard_show_qrcode import CloudClipboardShowQRCode
+from pathlib import Path
+from queue import Queue
+
+import keyboard
 import win32api
 import win32con
 import win32gui
 import win32print
-import keyboard
+from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtGui import QAction, QFont, QIcon, QWheelEvent
+from PySide6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMenu,
+    QPushButton,
+    QSizePolicy,
+    QSpacerItem,
+    QSystemTrayIcon,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+from qt_material import apply_stylesheet
+
+from config import ClientConfig as Config
+from util.check_process import check_process
 
 
 class Hint_While_Recording_At_Cursor_Position(QLabel):
@@ -332,10 +333,10 @@ class GUI(QMainWindow):
         subprocess.Popen([vscode_exe_path, current_directory])
 
     def open_chatglm_website(self):
-        os.system(f"start https://chatglm.cn/main/alltoolsdetail")
+        os.system("start https://chatglm.cn/main/alltoolsdetail")
 
     def open_github_website(self):
-        os.system(f"start https://github.com/H1DDENADM1N/CapsWriter-Offline")
+        os.system("start https://github.com/H1DDENADM1N/CapsWriter-Offline")
 
     def closeEvent(self, event):
         # Minimize to system tray instead of closing the window when the user clicks the close button
@@ -355,14 +356,17 @@ class GUI(QMainWindow):
         QApplication.quit()
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
-        proc = subprocess.Popen(
-            "taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /F",
-            creationflags=subprocess.CREATE_NO_WINDOW,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True,
-            text=True,
-        )
+        try:
+            subprocess.Popen(
+                "taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /F",
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+                text=True,
+            )
+        except Exception:
+            pass
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
@@ -622,7 +626,10 @@ def start_client_gui():
         raise Exception(
             "已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）"
         )
-    if not check_process("hint_while_recording.exe"):
+    if (
+        not check_process("hint_while_recording.exe")
+        and Path("hint_while_recording.exe").exists()
+    ):
         subprocess.Popen(
             ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
         )
