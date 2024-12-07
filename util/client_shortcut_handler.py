@@ -1,24 +1,27 @@
-import keyboard
-from util.client_cosmic import Cosmic, console
-from config import ClientConfig as Config
-
-import time
 import asyncio
-from threading import Event
+import time
 from concurrent.futures import ThreadPoolExecutor
-from util.client_send_audio import send_audio
-from util.my_status import Status
-from util.client_pause_other_audio import pause_other_audio, audio_playering_app_name
-from util.client_stream import stream_open, stream_close, stream_reopen
+from threading import Event
+
+import keyboard
 from pycaw.pycaw import AudioUtilities
 
+from config import ClientConfig as Config
+from util.client_cosmic import Cosmic
+from util.client_pause_other_audio import audio_playering_app_name, pause_other_audio
+from util.client_send_audio import send_audio
+from util.client_stream import stream_reopen
+from util.my_status import Status
+
 task = asyncio.Future()
-status = Status('开始录音', spinner='point')
+status = Status("开始录音", spinner="point")
 pool = ThreadPoolExecutor()
 pressed = False
 released = True
 event = Event()
 unpause_needed = False
+double_clicked = False
+last_time_marker = 0
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
@@ -26,10 +29,14 @@ def shortcut_correct(e: keyboard.KeyboardEvent):
     # 即便设置 right ctrl 触发，在按下 left ctrl 时也会触发
     # 不过，虽然两个按键的 keycode 一样，但事件 e.name 是不一样的
     # 在这里加一个判断，如果 e.name 不是我们期待的按键，就返回
-    key_expect = keyboard.normalize_name(Config.speech_recognition_shortcut).replace('left ', '')
-    key_actual = e.name.replace('left ', '')
-    if key_expect != key_actual: return False
+    key_expect = keyboard.normalize_name(Config.speech_recognition_shortcut).replace(
+        "left ", ""
+    )
+    key_actual = e.name.replace("left ", "")
+    if key_expect != key_actual:
+        return False
     return True
+
 
 def mute_all_sessions():
     sessions = AudioUtilities.GetAllSessions()
@@ -37,11 +44,13 @@ def mute_all_sessions():
         volume = session.SimpleAudioVolume
         volume.SetMute(1, None)
 
+
 def unmute_all_sessions():
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = session.SimpleAudioVolume
         volume.SetMute(0, None)
+
 
 def launch_task():
     # 确认是否需要翻译
@@ -63,8 +72,7 @@ def launch_task():
 
     # 将开始标志放入队列
     asyncio.run_coroutine_threadsafe(
-        Cosmic.queue_in.put({'type': 'begin', 'time': t1, 'data': None}),
-        Cosmic.loop
+        Cosmic.queue_in.put({"type": "begin", "time": t1, "data": None}), Cosmic.loop
     )
 
     # 录音时静音其他音频播放
@@ -76,7 +84,6 @@ def launch_task():
     if Config.pause_other_audio and audio_playering_app_name() != None:
         pause_other_audio()
         unpause_needed = True
-    
 
     # 通知录音线程可以向队列放数据了
     Cosmic.on = t1
@@ -107,12 +114,13 @@ def cancel_task():
     # 取消音频暂停
     global unpause_needed
     if Config.pause_other_audio and unpause_needed:
-        keyboard.send('play/pause')
+        keyboard.send("play/pause")
         unpause_needed = False
     if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()
+
 
 def finish_task():
     global task
@@ -124,12 +132,9 @@ def finish_task():
     # 通知结束任务
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put(
-            {'type': 'finish',
-             'time': time.time(),
-             'data': None
-             },
+            {"type": "finish", "time": time.time(), "data": None},
         ),
-        Cosmic.loop
+        Cosmic.loop,
     )
 
     # 取消音频静音
@@ -139,12 +144,13 @@ def finish_task():
     # 取消音频暂停
     global unpause_needed
     if Config.pause_other_audio and unpause_needed:
-        keyboard.send('play/pause')
+        keyboard.send("play/pause")
         unpause_needed = False
     if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()
+
 
 # =================单击模式======================
 
@@ -160,26 +166,47 @@ def manage_task(e: Event):
     通过检测 e 是否在 threshold 时间内被触发，判断是单击，还是长按
     进行下一步的动作
     """
+    global double_clicked, last_time_marker
+
+    # 計算是否屬於短時間內按下`錄音鍵`
+    is_short_duration = True if time.time() - last_time_marker < Config.threshold else False
+
+    # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`, 并且结束函数
+    if (
+        is_short_duration
+        and double_clicked
+        and Config.enable_double_click_opposite_state
+    ):
+        Cosmic.opposite_state = not Cosmic.opposite_state
+        return
 
     # 记录是否有任务
     on = Cosmic.on
-
     # 先运行任务
     if not on:
+        # 觸發需要輸出 `簡/繁` 的狀態(如果在短時間內按下錄音鍵`is_short_duration`)
+        double_clicked = True
         launch_task()
 
     # 及时松开按键了，是单击
     if e.wait(timeout=Config.threshold * 0.8):
+        # 标记最后弹起的时间
+        last_time_marker = time.time()
         # 如果有任务在运行，就结束任务
         if Cosmic.on and on:
             finish_task()
+            # 恢复輸出 `簡/繁` 原来的狀態
+            if Config.enable_double_click_opposite_state:
+                double_clicked = False
 
     # 没有及时松开按键，是长按
     else:
         # 就取消本栈启动的任务
         if not on:
             cancel_task()
-
+            # 恢复輸出 `簡/繁` 原来的狀態
+            if Config.enable_double_click_opposite_state:
+                double_clicked = False
         # 长按，发送按键
         keyboard.send(Config.speech_recognition_shortcut)
 
@@ -187,16 +214,15 @@ def manage_task(e: Event):
 def click_mode(e: keyboard.KeyboardEvent):
     global pressed, released, event
 
-    if e.event_type == 'down' and released:
+    if e.event_type == "down" and released:
         pressed, released = True, False
         event = Event()
         pool.submit(count_down, event)
         pool.submit(manage_task, event)
 
-    elif e.event_type == 'up' and pressed:
+    elif e.event_type == "up" and pressed:
         pressed, released = False, True
         event.set()
-
 
 
 # ======================长按模式==================================
@@ -204,35 +230,46 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 def hold_mode(e: keyboard.KeyboardEvent):
     """像对讲机一样，按下录音，松开停止"""
-    global task
+    global task, double_clicked, last_time_marker
 
-    if e.event_type == 'down' and not Cosmic.on:
+    # 計算是否屬於短時間內按下`錄音鍵`
+    is_short_duration = True if time.time() - last_time_marker < Config.threshold else False
+
+    # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
+    if is_short_duration and Config.enable_double_click_opposite_state:
+        double_clicked = True
+
+    if e.event_type == "down" and not Cosmic.on:
+        # 根據上一次是否短時間內(`is_short_duration`)按下錄音鍵,來判斷是否需要輸出 `簡/繁`
+        if double_clicked and Config.enable_double_click_opposite_state:
+            Cosmic.opposite_state = not Cosmic.opposite_state
         # 记录开始时间
         launch_task()
 
-    elif e.event_type == 'up':
+    elif e.event_type == "up":
+        # 标记最后弹起的时间
+        last_time_marker = time.time()
         # 记录持续时间，并标识录音线程停止向队列放数据
         duration = time.time() - Cosmic.on
-
         # 取消或停止任务
         if duration < Config.threshold:
             cancel_task()
+
         else:
             finish_task()
-
             # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
-            if Config.restore_key:
+            if not double_clicked and Config.restore_key:
                 time.sleep(0.01)
                 keyboard.send(Config.speech_recognition_shortcut)
-
-
+            # 恢复輸出 `簡/繁` 原来的狀態
+            if Config.enable_double_click_opposite_state:
+                double_clicked = False
 
 
 # ==================== 绑定 handler ===============================
 
 
 def hold_handler(e: keyboard.KeyboardEvent) -> None:
-
     # 验证按键名正确
     if not shortcut_correct(e):
         return
@@ -242,7 +279,6 @@ def hold_handler(e: keyboard.KeyboardEvent) -> None:
 
 
 def click_handler(e: keyboard.KeyboardEvent) -> None:
-
     # 验证按键名正确
     if not shortcut_correct(e):
         return
@@ -253,8 +289,12 @@ def click_handler(e: keyboard.KeyboardEvent) -> None:
 
 def bond_shortcut():
     if Config.hold_mode:
-        keyboard.hook_key(Config.speech_recognition_shortcut, hold_handler, suppress=Config.suppress)
+        keyboard.hook_key(
+            Config.speech_recognition_shortcut, hold_handler, suppress=Config.suppress
+        )
     else:
         # 单击模式，必须得阻塞快捷键
         # 收到长按时，再模拟发送按键
-        keyboard.hook_key(Config.speech_recognition_shortcut, click_handler, suppress=True)
+        keyboard.hook_key(
+            Config.speech_recognition_shortcut, click_handler, suppress=True
+        )
