@@ -1,34 +1,71 @@
-; https://github.com/Tebayaki/AutoHotkeyScripts/blob/main/lib/GetCaretPosEx/GetCaretPosEx.ahk
+/**
+ * @link https://github.com/abgox/InputTip/blob/main/src/v2/InputTip.ahk
+ * 
+ * @link https://github.com/Tebayaki/AutoHotkeyScripts/blob/main/lib/GetCaretPosEx/GetCaretPosEx.ahk
+ */
 
-/*
-@example
-f1:: {
-    if GetCaretPosEx(&left, &top, &right, &bottom, true) {
-        A_CoordModeToolTip := "Screen"
-        ToolTip "Hello", left, bottom
+
+GetCaretPosEx(&left?, &top?, &right?, &bottom?) {
+    exe_name := ""
+    try {
+        exe_name := ProcessGetName(WinGetPID("A"))
+        DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
     }
-}
-*/
-GetCaretPosEx(&left?, &top?, &right?, &bottom?, useHook := false) {
-    if getCaretPosFromGui(&hwnd := 0)
-        return true
-    try
-        className := WinGetClass(hwnd)
-    catch
-        className := ""
-    if className ~= "^(?:Windows|Microsoft)\.UI\..+"
-        funcs := [getCaretPosFromUIA, getCaretPosFromHook, getCaretPosFromMSAA]
-    else if className ~= "^HwndWrapper\[PowerShell_ISE\.exe;;[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\]"
-        funcs := [getCaretPosFromHook, getCaretPosFromWpfCaret]
-    else
-        funcs := [getCaretPosFromMSAA, getCaretPosFromUIA, getCaretPosFromHook]
-    for fn in funcs {
-        if fn == getCaretPosFromHook && !useHook
-            continue
-        if fn()
-            return true
+    ; ToolTip(exe_name)
+    hwnd := getHwnd()
+    disable_list := ":StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:"
+    Wpf_list := ":powershell_ise.exe:"
+    UIA_list := ":WINWORD.EXE:WindowsTerminal.exe:wt.exe:OneCommander.exe:YoudaoDict.exe:Mempad.exe:Taskmgr.exe:"
+    ; MSAA 可能有符号残留
+    MSAA_list := ":EXCEL.EXE:DingTalk.exe:Notepad.exe:Notepad3.exe:Quicker.exe:skylark.exe:aegisub32.exe:aegisub64.exe:aegisub.exe:PandaOCR.exe:PandaOCR.Pro.exe:VStart6.exe:TIM.exe:PowerToys.PowerLauncher.exe:Foxmail.exe:"
+    ; ACC_list := ":explorer.exe:ApplicationFrameHost.exe:"
+    Gui_UIA_list := ":POWERPNT.EXE:Notepad++.exe:firefox.exe:devenv.exe:"
+    ; 需要调用有兼容性问题的 dll 来更新光标位置的应用列表
+    Hook_list_with_dll := ":WeChat.exe:"
+
+    if (InStr(disable_list, ":" exe_name ":")) {
+        return 0
     }
-    return false
+    else if (InStr(UIA_list, ":" exe_name ":")) {
+        return getCaretPosFromUIA()
+    }
+    else if (InStr(MSAA_list, ":" exe_name ":")) {
+        return getCaretPosFromMSAA()
+    }
+    else if (InStr(Gui_UIA_list, ":" exe_name ":")) {
+        if (getCaretPosFromGui(&hwnd := 0)) {
+            return 1
+        }
+        return getCaretPosFromUIA()
+    }
+    else if (InStr(Hook_list_with_dll, ":" exe_name ":")) {
+        return getCaretPosFromHook(1)
+    }
+    else if (InStr(Wpf_list, ":" exe_name ":")) {
+        return getCaretPosFromWpfCaret()
+    }
+    else {
+        if (getCaretPosFromHook(0)) {
+            return 1
+        }
+        functions := [getCaretPosFromMSAA, getCaretPosFromUIA]
+        for fn in functions {
+            if (fn()) {
+                return 1
+            }
+        }
+    }
+    return 0
+
+    getHwnd(hwnd := 0) {
+        x64 := A_PtrSize == 8
+        guiThreadInfo := Buffer(x64 ? 72 : 48)
+        NumPut("uint", guiThreadInfo.Size, guiThreadInfo)
+        if DllCall("GetGUIThreadInfo", "uint", 0, "ptr", guiThreadInfo) {
+            hwnd := NumGet(guiThreadInfo, x64 ? 16 : 12, "ptr")
+        }
+        return hwnd
+    }
 
     getCaretPosFromGui(&hwnd) {
         x64 := A_PtrSize == 8
@@ -187,13 +224,17 @@ end:
         return false
     }
 
-    getCaretPosFromHook() {
+    getCaretPosFromHook(flag) {
         static WM_GET_CARET_POS := DllCall("RegisterWindowMessageW", "str", "WM_GET_CARET_POS", "uint")
         if !tid := DllCall("GetWindowThreadProcessId", "ptr", hwnd, "ptr*", &pid := 0, "uint")
             return false
-        ; Update caret position
-        try {
-            SendMessage(0x010f, 0, 0, hwnd) ; WM_IME_COMPOSITION
+        if (flag) {
+            ; ! 有兼容性问题的 dll 调用，部分应用会因为它触发意外错误
+            ; ! 如: 崩溃，自动复制/输入/删除/等
+            ; Update caret position
+            try {
+                SendMessage(0x010f, 0, 0, hwnd) ; WM_IME_COMPOSITION
+            }
         }
         ; PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ
         if !hProcess := DllCall("OpenProcess", "uint", 1082, "int", false, "uint", pid, "ptr")
@@ -318,6 +359,23 @@ end:
                 }
             }
             return res
+        }
+    }
+
+    getCaretPosFromACC() {
+        static _ := DllCall("LoadLibrary", "Str", "oleacc", "Ptr")
+        try {
+            idObject := 0xFFFFFFF8 ; OBJID_CARET
+            if DllCall("oleacc\AccessibleObjectFromWindow", "ptr", WinExist("A"), "uint", idObject &= 0xFFFFFFFF
+            , "ptr", -16 + NumPut("int64", idObject == 0xFFFFFFF0 ? 0x46000000000000C0 : 0x719B3800AA000C81, NumPut("int64", idObject == 0xFFFFFFF0 ? 0x0000000000020400 : 0x11CF3C3D618736E0, IID := Buffer(16)))
+            , "ptr*", oAcc := ComValue(9, 0)) = 0 {
+                x := Buffer(4), y := Buffer(4), w := Buffer(4), h := Buffer(4)
+                oAcc.accLocation(ComValue(0x4003, x.ptr, 1), ComValue(0x4003, y.ptr, 1), ComValue(0x4003, w.ptr, 1), ComValue(0x4003, h.ptr, 1), 0)
+                left := NumGet(x, 0, "int"), top := NumGet(y, 0, "int"), right := NumGet(w, 0, "int"), bottom := NumGet(h, 0, "int")
+                if (left | top) != 0
+                    return 0
+                return 1
+            }
         }
     }
 

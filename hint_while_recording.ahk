@@ -48,7 +48,7 @@ OwnStyle2 := { TextColorLinearGradientStart: enTxtClolorA        ; ARGB
 chineseVoice(ThisHotkey) {
     Hotkey "~" chineseKey, "Off" ; 关闭快捷键功能,以免重复触发
     Hotkey "~" englishKey chineseKey, "Off"
-    if hwnd := GetCaretPosEx(&x, &y, &w, &h, true) {
+    if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
         ; 能够获取到文本光标时，提示信息在光标位置，且x坐标向右偏移5
         x := x + 5
     }
@@ -69,7 +69,7 @@ chineseVoice(ThisHotkey) {
 englishVoice(ThisHotkey) {
     Hotkey "~" chineseKey, "Off" ; 关闭快捷键功能,以免重复触发
     Hotkey "~" englishKey chineseKey, "Off"
-    if hwnd := GetCaretPosEx(&x, &y, &w, &h, true) {
+    if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
         ; 能够获取到文本光标时，提示信息在光标位置，且x坐标向右偏移5
         x := x + 5
     }
