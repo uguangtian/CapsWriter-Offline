@@ -178,7 +178,7 @@ def manage_task(e: Event):
         and Config.enable_double_click_opposite_state
     ):
         Cosmic.opposite_state = not Cosmic.opposite_state
-        # return
+        return
 
     # 记录是否有任务
     on = Cosmic.on
