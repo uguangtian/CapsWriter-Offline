@@ -48,43 +48,115 @@ OwnStyle2 := { TextColorLinearGradientStart: enTxtClolorA        ; ARGB
 chineseVoice(ThisHotkey) {
     Hotkey "~" chineseKey, "Off" ; 关闭快捷键功能,以免重复触发
     Hotkey "~" englishKey chineseKey, "Off"
+
+    ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+    exe_name := ""
+    try {
+        exe_name := ProcessGetName(WinGetPID("A"))
+        DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+        ; ToolTip(exe_name)
+    }
+    if (InStr(doNotShowHintList, ":" exe_name ":")) {
+        return
+    }
+
     if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
-        ; 能够获取到文本光标时，提示信息在光标位置，且x坐标向右偏移5
+        ; 能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
         x := x + 5
+        if enableBTT
+            btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
+        else
+            ToolTip(cnTxt, x, y) ; 提示信息内容
+        KeyWait(chineseKey)
+        return
     }
     else {
-        ; 获取不到文本光标时，提示信息在当前窗口的位置
-        WinGetPos &X, &Y, &W, &H, "A"
-        x := X + W * 0.25
-        y := Y + H * 0.7
+        ; 获取不到文本光标时，提示信息在鼠标光标的位置
+        CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
+        MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
+        if enableBTT
+            btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
+        else
+            ToolTip(cnTxt, x, y) ; 提示信息内容
+
+        ; 持续获取并跟随鼠标光标位置
+        Loop {
+            MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
+            if (newX != x || newY != y) {  ; 如果鼠标位置发生变化
+                x := newX
+                y := newY
+                if enableBTT
+                    btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ; 更新btt提示信息位置
+                else
+                    ToolTip(cnTxt, x, y) ; 更新ToolTip提示信息位置
+            }
+            ; 检测中文键是否被按下，如果没有被按下则退出循环
+            if not GetKeyState(chineseKey, "P") {
+                ToolTip  ; 清除ToolTip
+                break  ; 退出循环
+            }
+            Sleep 50  ; 控制循环频率，避免占用过多CPU资源
+        }
+
+        KeyWait(chineseKey)
+        return
     }
-    if enableBTT
-        btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
-    else
-        ToolTip(cnTxt, x, y) ; 提示信息内容
-    KeyWait(chineseKey)
-    return
 }
 
 englishVoice(ThisHotkey) {
     Hotkey "~" chineseKey, "Off" ; 关闭快捷键功能,以免重复触发
     Hotkey "~" englishKey chineseKey, "Off"
+
+    ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+    exe_name := ""
+    try {
+        exe_name := ProcessGetName(WinGetPID("A"))
+        DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+        ; ToolTip(exe_name)
+    }
+    if (InStr(doNotShowHintList, ":" exe_name ":")) {
+        return
+    }
+
     if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
-        ; 能够获取到文本光标时，提示信息在光标位置，且x坐标向右偏移5
+        ; 能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
         x := x + 5
+        if enableBTT
+            btt(enTxt, x, y - 3, 20, OwnStyle2, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
+        else
+            ToolTip(enTxt, x, y) ; 提示信息内容
+        KeyWait(chineseKey)
+        return
     }
     else {
-        ; 获取不到文本光标时，提示信息在当前窗口的位置
-        WinGetPos &X, &Y, &W, &H, "A"
-        x := X + W * 0.25
-        y := Y + H * 0.7
+        CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
+        MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
+        if enableBTT
+            btt(enTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
+        else
+            ToolTip(enTxt, x, y) ; 提示信息内容
+
+        ; 持续获取并跟随鼠标光标位置
+        Loop {
+            MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
+            if (newX != x || newY != y) {  ; 如果鼠标位置发生变化
+                x := newX
+                y := newY
+                if enableBTT
+                    btt(enTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ; 更新btt提示信息位置
+                else
+                    ToolTip(enTxt, x, y) ; 更新ToolTip提示信息位置
+            }
+            ; 检测中文键是否被按下，如果没有被按下则退出循环
+            if not GetKeyState(chineseKey, "P") {
+                ToolTip  ; 清除ToolTip
+                break  ; 退出循环
+            }
+            Sleep 50  ; 控制循环频率，避免占用过多CPU资源
+        }
+        KeyWait(chineseKey)
+        return
     }
-    if enableBTT
-        btt(enTxt, x, y - 3, 20, OwnStyle2, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
-    else
-        ToolTip(enTxt, x, y) ; 提示信息内容
-    KeyWait(chineseKey)
-    return
 }
 
 BttRemove(ThisHotkey) {
@@ -114,6 +186,10 @@ DefaultIni() {
     IniWrite("0xFF1A1AFF", IniFile, "Txt", "enTxtClolorA")
     IniWrite("0xFF6666FF", IniFile, "Txt", "enTxtClolorB")
     IniWrite("16", IniFile, "Txt", "enTxtFontSize")
+    IniWrite("在hintAtCursorPositionList中的程序将不会把“语音输入中”的提示显示在文本光标位置，而是显示在鼠标光标的位置", IniFile, "List", "Comment1")
+    IniWrite(":StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:", IniFile, "List", "hintAtCursorPositionList")
+    IniWrite("在doNotShowHintList中的程序将不会显示“语音输入中”的提示", IniFile, "List", "Comment2")
+    IniWrite(":PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:", IniFile, "List", "doNotShowHintList")
 }
 
 ReadIni() {
@@ -129,4 +205,5 @@ ReadIni() {
     global enTxtClolorA := IniRead(IniFile, "Txt", "enTxtClolorA")
     global enTxtClolorB := IniRead(IniFile, "Txt", "enTxtClolorB")
     global enTxtFontSize := IniRead(IniFile, "Txt", "enTxtFontSize")
+    global doNotShowHintList := IniRead(IniFile, "List", "doNotShowHintList")
 }

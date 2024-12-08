@@ -10,10 +10,15 @@ GetCaretPosEx(&left?, &top?, &right?, &bottom?) {
     try {
         exe_name := ProcessGetName(WinGetPID("A"))
         DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+        ; ToolTip(exe_name)
     }
-    ; ToolTip(exe_name)
+
+    IniFile := A_ScriptDir "\hint_while_recording.ini"
+    hintAtCursorPositionList := IniRead(IniFile, "List", "hintAtCursorPositionList")
+
     hwnd := getHwnd()
-    disable_list := ":StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:"
+
+    disable_list := hintAtCursorPositionList . ""
     Wpf_list := ":powershell_ise.exe:"
     UIA_list := ":WINWORD.EXE:WindowsTerminal.exe:wt.exe:OneCommander.exe:YoudaoDict.exe:Mempad.exe:Taskmgr.exe:"
     ; MSAA 可能有符号残留
@@ -367,8 +372,8 @@ end:
         try {
             idObject := 0xFFFFFFF8 ; OBJID_CARET
             if DllCall("oleacc\AccessibleObjectFromWindow", "ptr", WinExist("A"), "uint", idObject &= 0xFFFFFFFF
-            , "ptr", -16 + NumPut("int64", idObject == 0xFFFFFFF0 ? 0x46000000000000C0 : 0x719B3800AA000C81, NumPut("int64", idObject == 0xFFFFFFF0 ? 0x0000000000020400 : 0x11CF3C3D618736E0, IID := Buffer(16)))
-            , "ptr*", oAcc := ComValue(9, 0)) = 0 {
+                , "ptr", -16 + NumPut("int64", idObject == 0xFFFFFFF0 ? 0x46000000000000C0 : 0x719B3800AA000C81, NumPut("int64", idObject == 0xFFFFFFF0 ? 0x0000000000020400 : 0x11CF3C3D618736E0, IID := Buffer(16)))
+                , "ptr*", oAcc := ComValue(9, 0)) = 0 {
                 x := Buffer(4), y := Buffer(4), w := Buffer(4), h := Buffer(4)
                 oAcc.accLocation(ComValue(0x4003, x.ptr, 1), ComValue(0x4003, y.ptr, 1), ComValue(0x4003, w.ptr, 1), ComValue(0x4003, h.ptr, 1), 0)
                 left := NumGet(x, 0, "int"), top := NumGet(y, 0, "int"), right := NumGet(w, 0, "int"), bottom := NumGet(h, 0, "int")
