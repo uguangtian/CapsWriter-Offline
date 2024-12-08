@@ -91,9 +91,9 @@ class ClientConfig:
                                                             # 使用 VSCode 快速打开 CapsWriter 主目录
                                                             # 方便调试
     hint_while_recording_at_cursor_position = True  # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
-    convert_to_traditional_chinese = True          # 是否启用简繁体中文转换
-    convert_to_traditional_chinese_main = '简'      # `简/繁` 中文作为主要输出
+    
     enable_double_click_opposite_state = True       # 是否启用,双击`录音键`临时转换 `简/繁` 体中文输出的功能
+    convert_to_traditional_chinese_main = '简'      # `简/繁` 中文作为主要输出
     opencc_converter = "s2t.json"                   # OpenCC转换器
                                                     # s2t.json Simplified Chinese to Traditional Chinese 簡體到繁體
                                                     # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體

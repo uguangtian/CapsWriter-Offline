@@ -1,5 +1,6 @@
 import json
 
+import opencc
 import websockets
 
 from config import ClientConfig as Config
@@ -43,12 +44,9 @@ async def recv_result():
 
             # 简繁转换
             convert_to_traditional_chinese_done = False
-            if Config.convert_to_traditional_chinese:
-                import opencc
-
-                converter = opencc.OpenCC(Config.opencc_converter)
-                traditional_text = converter.convert(text)
-                convert_to_traditional_chinese_done = True
+            converter = opencc.OpenCC(Config.opencc_converter)
+            traditional_text = converter.convert(text)
+            convert_to_traditional_chinese_done = True
 
             # 离线翻译
             offline_translate_done = False
@@ -74,10 +72,11 @@ async def recv_result():
 
             if Config.save_markdown:
                 # 记录写入 md 文件
-                if Config.convert_to_traditional_chinese:
-                    write_md(traditional_text, message["time_start"], file_audio)
-                else:
-                    write_md(text, message["time_start"], file_audio)
+                match Config.convert_to_traditional_chinese_main:
+                    case "繁":
+                        write_md(traditional_text, message["time_start"], file_audio)
+                    case _:
+                        write_md(text, message["time_start"], file_audio)
 
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
@@ -89,8 +88,8 @@ async def recv_result():
                     "gbk", errors="replace"
                 ).decode("gbk", errors="replace")
                 console.print(f"    在线翻译结果：[green]{online_translated_text_gbk}")
-            if convert_to_traditional_chinese_done:
-                console.print(f"    繁体中文结果：[green]{traditional_text}")
+            if convert_to_traditional_chinese_done and Cosmic.opposite_state:
+                console.print(f"    简繁转换结果：[green]{traditional_text}")
             console.line()
 
             # 打字
@@ -102,23 +101,19 @@ async def recv_result():
                 online_translate_done = False
             elif convert_to_traditional_chinese_done:
                 # 根据'简/繁'转换设定,来选择输出内容的逻辑
-                opposite_state = Cosmic.opposite_state
                 match Config.convert_to_traditional_chinese_main:
-                    case "简":
-                        if opposite_state:
-                            await type_result(traditional_text)
-                        else:
-                            await type_result(text)
                     case "繁":
-                        if opposite_state:
+                        if Cosmic.opposite_state:
                             await type_result(text)
                         else:
                             await type_result(traditional_text)
+                    case _:
+                        if Cosmic.opposite_state:
+                            await type_result(traditional_text)
+                        else:
+                            await type_result(text)
                 convert_to_traditional_chinese_done = False
-            elif not Config.convert_to_traditional_chinese:
-                await type_result(text)
-            if Config.convert_to_traditional_chinese:
-                Cosmic.opposite_state = False
+            Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
     except websockets.ConnectionClosedOK:
