@@ -629,12 +629,13 @@ def start_client_gui():
     if (
         not check_process("hint_while_recording.exe")
         and Path("hint_while_recording.exe").exists()
+        and Config.hold_mode
     ):
         subprocess.Popen(
             ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
         )
     app = QApplication(sys.argv)
-    if Config.hint_while_recording_at_cursor_position:
+    if Config.hint_while_recording_at_cursor_position and Config.hold_mode:
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
     apply_stylesheet(
