@@ -27,6 +27,7 @@ last_time_pressed = 0
 last_time_released = 0
 key_pressed = False
 
+
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
     # keyboard 库按 keycode 判断触发
@@ -68,14 +69,17 @@ def launch_task():
     else:
         Cosmic.online_translate_needed = False
 
-    if not double_clicked and Config.only_enable_microphones_when_pressed_record_shortcut:
+    if (
+        not double_clicked
+        and Config.only_enable_microphones_when_pressed_record_shortcut
+    ):
         # 重启音频流; 在双击情况下, 只在第一次的时候启动(单击模式)
         stream_reopen()
         Cosmic.stream.start()
 
     # 长按模式(hold_mode)双击功能 第二次重启不适用于上面的判断, 因此，需要下面来判断是否重启音频流
     # 长按模式(hold_mode)双击功能 確實需要第二次啓動音频流, 设计的时候就是如此, 因为会进行一次 start  cancel 的流程, 然后第二次啓動才是双击功能的录音
-    elif(
+    elif (
         hold_mode_first_time_cancel_task
         and double_clicked
         and Config.only_enable_microphones_when_pressed_record_shortcut
@@ -239,6 +243,8 @@ def click_mode(e: keyboard.KeyboardEvent):
         pressed, released = False, True
         event.set()
 '''
+
+
 def click_mode(e: keyboard.KeyboardEvent):
     # 0. 原来的设计甚是巧妙巧妙, 但是我的功力有限，消化不良.
     # 1. 这里的设计思路是: 按下`录音键`只记录`按下时的时间标记`，然后根据`弹起来时的时间标记`和前面`按下时的时间标记`的 长短 进行判断应该进行哪一种行为.
@@ -252,11 +258,18 @@ def click_mode(e: keyboard.KeyboardEvent):
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
 
-    global last_time_pressed, last_time_released, key_pressed, double_clicked, is_short_duration
+    global \
+        last_time_pressed, \
+        last_time_released, \
+        key_pressed, \
+        double_clicked, \
+        is_short_duration
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
         # 計算是否屬於短時間內雙击`錄音鍵`
-        is_short_duration = True if time.time() - last_time_released < Config.threshold else False
+        is_short_duration = (
+            True if time.time() - last_time_released < Config.threshold else False
+        )
 
         last_time_pressed = time.time()
         key_pressed = True
@@ -269,7 +282,6 @@ def click_mode(e: keyboard.KeyboardEvent):
 
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
         if last_time_released - last_time_pressed >= Config.threshold:
-
             # 函数`cancel_task()` : 他和我想象中的功能可能不一样
             # 我想象中的功能: `長按` = 进行大小写切换
             # 原来的功能: 可能是 中断并且不输出 已经录入的语音文字
@@ -302,8 +314,7 @@ def click_mode(e: keyboard.KeyboardEvent):
 
         # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
         elif (
-            double_clicked
-            and is_short_duration
+            double_clicked and is_short_duration
             # and Config.enable_double_click_opposite_state
         ):
             Cosmic.opposite_state = not Cosmic.opposite_state
@@ -321,7 +332,9 @@ def hold_mode(e: keyboard.KeyboardEvent):
     global task, double_clicked, last_time_released, hold_mode_first_time_cancel_task
 
     # 計算是否屬於短時間內按下`錄音鍵`
-    is_short_duration = True if time.time() - last_time_released < Config.threshold else False
+    is_short_duration = (
+        True if time.time() - last_time_released < Config.threshold else False
+    )
 
     # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
     if is_short_duration and Config.enable_double_click_opposite_state:

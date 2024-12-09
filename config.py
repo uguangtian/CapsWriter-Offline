@@ -79,7 +79,6 @@ class ClientConfig:
     shrink_automatically_to_tray = False     # 启动后不显示主窗口，自动缩小至托盘
     only_run_once = True # 只允许运行一次，禁止多开
     only_enable_microphones_when_pressed_record_shortcut = True  # 只在按下录音快捷键时启用麦克风
-                                                                # 😂注意只在长按模式启用，若hold_mode = False 时将此项True将导致CapsLock按键功能异常
                                                                 # 建议启用，有些蓝牙耳机录音时无法播放
                                                                 # 而且启用后，切换默认麦克风也不用重启客户端
                                                                 # 比如从蓝牙耳机换回笔记本电脑默认麦克风
