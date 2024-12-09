@@ -2,7 +2,7 @@
 
 ![alt text](assets/main.png)
 
-# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入、中译英、字幕转录；在线多译多、云剪贴板；离、在线翻译并替换
+# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入、中译英、字幕转录；在线多译多、云剪贴板；离、在线翻译并替换；简繁体转换
 
 ## 😎 八个功能：
 
@@ -14,6 +14,7 @@
 6. 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` [离线翻译](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en)为 `英文` ，并自动覆盖替换原文
 7. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` [在线翻译](https://github.com/OwO-Network/DeepLX)为 `在线翻译目标语言` ，并自动覆盖替换原文
 8. 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
+9. 快速双击 `CapsLock` ，可语音输入繁体。长按 `CapsLock` 实现按键原有功能切换大写锁定。
 
 # 📙 目录
 
@@ -26,41 +27,16 @@
 
 # 👀 最新更新
 
-## 简繁体转换，默认未启用，需要手动开启，在 `config.py` 
+## 双击`录音键`临时转换 `简/繁` 体中文输出，可在 `config.py` 设置 `简/繁` 中文作为主要输出 (@JoanthanWu)
 
-> ```python
->     convert_to_traditional_chinese = False  ## 是否启用简繁体中文转换
->     opencc_converter = "s2t.json"  # OpenCC转换器
->     # s2t.json Simplified Chinese to Traditional Chinese 簡體到繁體
->     # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
->     # s2tw.json Simplified Chinese to Traditional Chinese (Taiwan Standard) 簡體到臺灣正體
->     # tw2s.json Traditional Chinese (Taiwan Standard) to Simplified Chinese 臺灣正體到簡體
->     # s2hk.json Simplified Chinese to Traditional Chinese (Hong Kong Standard) 簡體到香港繁體（香港小學學習字詞表標準）
->     # hk2s.json Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁體（香港小學學習字詞表標準）到簡體
->     # s2twp.json Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 簡體到繁體（臺灣正體標準）並轉換爲臺灣常用詞彙
->     # tw2sp.json Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁體（臺灣正體標準）到簡體並轉換爲中國大陸常用詞彙
->     # t2tw.json Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁體（OpenCC 標準）到臺灣正體
->     # t2hk.json Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁體（OpenCC 標準）到香港繁體（香港小學學習字詞表標準）
->     # t2jp.json Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁體（OpenCC 標準，舊字體）到日文新字體
->     # jp2t.json New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字體到繁體（OpenCC 標準，舊字體）
-> 
-> ```
-
-
-## 提供了另一种显示方式(使用BeautifulToolTip库)&还有一些优化 (@JoanthanWu)
+## 更美观的“语音输入中”提示，可在 `hint_while_recording.ini` 设置文本内容、颜色、排除列表等 (@JoanthanWu)
 > ![alt text](assets/PixPin_2024-11-27_10-44-39.png)
 > ![alt text](assets/PixPin_2024-11-27_10-44-46.png)
-> hint_while_recording.ahk:
-> ; 为原来的脚本提供了另一种显示方式(使用BeautifulToolTip库),并且提供修改配置的功能,在这个hint_while_recording.ini文件修改。
-> ; 使用BeautifulToolTip库显示的好处是不会改变焦点,从而退出全屏幕模式(单独测试过没有问题,但是start_client_gui.exe一起用就不一定了)。另外比较漂亮。坏处是增加了30MB记忆体的占用。
-> ; 改善了在使用翻译功能时,有可能错误地显示状态的情况。
-> ; 增加了一个这个脚本的图标，方便识别。; 增加了一个这个脚本的图标，方便识别。
-
-## 使用tasklist取代wmic（win11LTSC已移除wmic）
 
 ## 更新语音识别模型
 
 - https://k2-fsa.github.io/sherpa/onnx/sense-voice/pretrained.html#sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
+
 
 ## 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` 离线翻译为 `英文` ，并自动覆盖替换原文
 
@@ -72,7 +48,7 @@
 
 > ![alt text](<assets/使用 everything 搜索光标选中的文字.gif>)
 
-## 跟随鼠标光标位置的新版输入状态提示功能
+## 跟随鼠标光标位置的新版输入状态提示功能可在 `config.py` 设置禁用
 
 > ![alt text](assets/跟随鼠标光标位置的新版输入状态提示功能.gif)
 
@@ -128,11 +104,13 @@
 20. 将文本上传至云剪切板，方便向 ios 设备分享。基于 [cv.j20.cc]() ，一个无依赖即用即走的剪切板。实测 5~1024 字节，不足字节补 `.` ，超出字节 `无效` 。
 21. 将光标选中了中文离线翻译功能：按下 `Ctrl` + `Alt` + `P` ，可以将光标选中了中文离线翻译为英文，并自动覆盖替换原文。通过 `config.py` 中 `offline_translate_and_replace_the_selected_text_shortcut` 配置
 22. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` 在线翻译为 `在线翻译目标语言` ，并自动覆盖替换原文。通过 `config.py` 中 `online_translate_and_replace_the_selected_text_shortcut` 和 `online_translate_target_languages` 配置
+23. 默认启用双击`录音键`临时转换 `简/繁` 体中文输出的功能，通过 `config.py` 中 `enable_double_click_opposite_state` 配置
+24. 默认使用简体中文作为主要输出，快速双击输出繁体中文。设置 `config.py` 中 `convert_to_traditional_chinese_main = '繁'` 可以默认使用繁体中文，双击输出简体中文
 
 # 🪳 无力解决的 Bug
 
 1. 在多屏幕状态，贴边隐藏位置错乱
-2. 在多屏幕状态，跟随鼠标光标位置的新版输入状态位置错乱
+2. 在多屏幕状态，跟随鼠标光标位置的新版输入状态位置错乱。
 
 # ⬇️ 下载地址
 
@@ -165,6 +143,16 @@
    8.4 如果你更改了默认配置（ `In_the_meantime_start_the_client = False` ），新建 `start_client_gui_admin.exe` 的快捷方式，将客户端的快捷方式放到 `shell:startup` 目录下只会在开机时自动以管理员权限启动客户端。服务端不会被启动。不要再添加客户端 `start_client_gui.exe` 的快捷方式。
 
 9. `🤓 Open Home Folder With VSCode ` 使用前需在 `config.py` 配置 `vscode_exe_path`
+10. 输入状态指示位置错乱如何解决？
+    10.1 通过 `config.py` 中 `hint_while_recording_at_cursor_position` 配置禁用跟随鼠标光标位置的麦克风形状的输入状态提示；
+
+    10.2 通过重命名或删除 `hint_while_recording.exe` 完全不启用输入光标位置的“✦语音输入中‧‧‧”文字状态提示
+
+    10.3 通过 `hint_while_recording.ini` 中 `hintAtCursorPositionList` 配置将部分程序的输入光标位置的“✦语音输入中‧‧‧”文字状态提示显示到鼠标光标位置
+
+    10.4 通过 `hint_while_recording.ini` 中 `doNotShowHintList` 配置禁用部分程序的输入光标位置的“✦语音输入中‧‧‧”文字状态提示
+
+    10.5 欢迎将位置错乱的exe程序名反馈给我
 
 # 🤓 源码运行
 
@@ -286,19 +274,25 @@
 
 - [opus-2020-07-17.zip](https://object.pouta.csc.fi/Tatoeba-MT-models/zho-eng/opus-2020-07-17.zip)
 
-# 🪙 打赏 原版 [CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline)
-
-如果你愿意，可以以打赏的方式支持原版[CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline)作者一下：
-
-![sponsor](assets/sponsor.jpg)
-
-# 🪙 打赏 图形界面版 [CapsWriter-Offline](https://github.com/H1DDENADM1N/CapsWriter-Offline)
-
-感谢你的好意 💖，不过，暂时不必。
-
----
 
 # 🤩 都看到这儿了，给个星星好不好？ ⭐
+
+<details>
+<summary><h1">了解更多</h1></summary>
+
+# 🪙 打赏
+
+## 🪙 打赏原版 [CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline)
+
+如果你愿意，可以打赏的方式支持原版[CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline)作者一下：
+
+> ![sponsor](assets/sponsor.jpg)
+
+## 🪙 打赏图形界面版 [CapsWriter-Offline](https://github.com/H1DDENADM1N/CapsWriter-Offline)
+
+## 感谢你的好意 💖，不过，暂时不必。点个Star⭐，提点🪳Issues，让我知道有人在用，这比金钱更能使我高兴。
+
+---
 
 ## [Pywin32](https://github.com/mhammond/pywin32) 打包进 Embedded Python 的方法
 
@@ -318,3 +312,5 @@ pip install  --target .\site-packages pywin32
 ```
 
 复制 `.\site-packages\pywin32_system32\` 中的 `*.dll` 到 `.\runtime\`
+
+</details>
