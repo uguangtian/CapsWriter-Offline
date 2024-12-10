@@ -205,6 +205,7 @@ class GUI(QMainWindow):
 
         github_website_action = QAction("🌐 GitHub Website", self)
         show_action = QAction("🪟 Show", self)
+        restart_client_action = QAction("🔄 Restart Client", self)
         quit_action = QAction("❌ Quit", self)
 
         edit_hot_en_action.triggered.connect(self.edit_hot_en)
@@ -218,6 +219,7 @@ class GUI(QMainWindow):
 
         github_website_action.triggered.connect(self.open_github_website)
         show_action.triggered.connect(self.showNormal)
+        restart_client_action.triggered.connect(self.restart_client)
         quit_action.triggered.connect(self.quit_app)
 
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
@@ -241,9 +243,20 @@ class GUI(QMainWindow):
         tray_menu.addAction(github_website_action)
         tray_menu.addSeparator()
         tray_menu.addAction(show_action)
+        tray_menu.addAction(restart_client_action)
         tray_menu.addAction(quit_action)
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
+
+    def restart_client(self):
+        subprocess.Popen(
+            [".\\runtime\\python.exe", ".\\util\\client_restart.py"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+        )
 
     def cloudy_paste(self):
         text = self.text_box_client.toPlainText()
