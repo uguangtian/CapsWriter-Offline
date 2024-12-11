@@ -115,22 +115,23 @@ class DeepLXConfig:
 
 class ModelPaths:
     model_dir = Path() / 'models'
-    paraformer_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'model.int8.onnx'   # 语音模型
+    sensevoice_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'model.int8.onnx'   # 语音模型
     tokens_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'tokens.txt'
-    # punc_model_dir = Path() / 'models' / 'punc_ct-transformer_cn-en'    # 标点模型
     opus_mt_dir = Path() / 'models' / 'Helsinki-NLP--opus-mt-zh-en'     # 离线翻译模型
 
 
-class ParaformerArgs:
-    model = f'{ModelPaths.paraformer_path}'
+class SenseVoiceArgs:
+    model = f'{ModelPaths.sensevoice_path}'
     tokens = f'{ModelPaths.tokens_path}'
     num_threads = 6
-    sample_rate = 16000
+    # sample_rate = 16000
     # feature_dim = 80
     # decoding_method = 'greedy_search'
+    # debug = False
+    # provider = "cpu"  # cpu, cuda, coreml
+    language = "auto"  # auto, zh, en, ja, ko, yue
     use_itn = True
-    language = "auto"
-    debug = False
-    provider = "cpu"
+    # rule_fsts = ""
+    # rule_fars = ""
 
 

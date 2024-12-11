@@ -2,7 +2,7 @@
 
 ![alt text](assets/main.png)
 
-# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入、中译英、字幕转录；在线多译多、云剪贴板；离、在线翻译并替换；简繁体转换
+# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （基于SenseVoice模型 支持中粤英日韩多语种）
 
 ## 😎 九个功能：
 
@@ -156,7 +156,7 @@
 
 # 🤓 源码运行
 
-1. 运行 `.\runtime\python.exe .\core_server.py` 脚本 在终端启动服务端，会载入 Paraformer 模型识别模型和标点模型（这会占用 2GB 的内存，载入时长约 50 秒）
+1. 运行 `.\runtime\python.exe .\core_server.py` 脚本 在终端启动服务端，会载入 SenseVoice 模型识别模型和标点模型（这会占用 2GB 的内存，载入时长约 50 秒）
 2. 运行 `.\runtime\python.exe .\core_client.py` 脚本 在终端启动客户端，会载入中译英模型，打开系统默认麦克风，开始监听按键（这会占用 400MB 的内存，载入时长约 20 秒）
 3. 按住 `CapsLock` 键，录音开始，松开 `CapsLock` 键，录音结束，识别结果立马被输入（录音时长短于 0.3 秒不算）
 4. 按住 `Left Shift` 再按 `CapsLock` 进行离线翻译，方便同时需要输入中文和英文翻译的场景
