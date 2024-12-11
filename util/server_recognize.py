@@ -18,7 +18,7 @@ def format_text(text):
         text = chinese_to_num(text)  # 转数字
     if Config.format_spell:
         text = adjust_space(text)  # 调空格
-    return text.encode("gbk", errors="replace").decode("gbk", errors="replace")
+    return text
 
 
 def recognize(recognizer, task: Task):
