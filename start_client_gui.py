@@ -5,7 +5,6 @@ import threading
 from pathlib import Path
 from queue import Queue
 
-import keyboard
 import win32api
 import win32con
 import win32gui
@@ -30,6 +29,7 @@ from PySide6.QtWidgets import (
 from qt_material import apply_stylesheet
 
 from config import ClientConfig as Config
+from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
 
 
@@ -53,7 +53,7 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
         x, y = x / scale_x, y / scale_y
         # 更新标签的位置和文本
         self.move(x + (20 / scale_x), y + (20 / scale_y))
-        if keyboard.is_pressed(Config.speech_recognition_shortcut):
+        if is_microphone_in_use():
             self.setText(chr(0xF8B1))
             self.setVisible(True)
         else:
@@ -648,7 +648,7 @@ def start_client_gui():
             ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
         )
     app = QApplication(sys.argv)
-    if Config.hint_while_recording_at_cursor_position and Config.hold_mode:
+    if Config.hint_while_recording_at_cursor_position:
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
     apply_stylesheet(
