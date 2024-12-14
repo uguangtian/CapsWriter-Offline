@@ -24,8 +24,19 @@ if !FileExist(IniFile) {
 }
 ReadIni()
 
-global is_microphone_in_use := false
-global hold_mode := false
+global keyPressed := False
+global lastTimePressed := 0
+global lastTimeReleased := 0
+global isShortDuration := False
+global threshold := 300
+global is_microphone_in_use := False
+global hold_mode := False
+
+
+Hotkey "~" chineseKey, chineseVoice_down
+Hotkey "~" chineseKey " Up", chineseVoice_up
+; Hotkey "~" englishKey, englishVoice_down
+; Hotkey "~" englishKey " Up", englishVoice_up
 
 OnMessage 0x5555, MsgMonitor
 Persistent
@@ -38,11 +49,7 @@ MsgMonitor(wParam, lParam, msg, *)
     global is_microphone_in_use, hold_mode
     is_microphone_in_use := wParam
     hold_mode := lParam
-    if is_microphone_in_use and hwnd := GetCaretPosEx(&x, &y, &w, &h) { ;麦克风启用
-        x := x + 5
-        btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 })
-    }
-    else { ;麦克风关闭
+    if !is_microphone_in_use {
         btt(, , , 20)
     }
 }
@@ -64,133 +71,52 @@ OwnStyle2 := { TextColorLinearGradientStart: enTxtClolorA        ; ARGB
     , FontRender: 4
     , FontStyle: "Bold" }
 
-chineseVoice(ThisHotkey) {
-    Hotkey "~" chineseKey, "Off" ; 关闭快捷键功能,以免重复触发
-    Hotkey "~" englishKey chineseKey, "Off"
-
-    ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
-    exe_name := ""
-    try {
-        exe_name := ProcessGetName(WinGetPID("A"))
-        DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
-        ; ToolTip(exe_name)
+chineseVoice_down(*) {
+    global keyPressed, lastTimePressed, isShortDuration, threshold, is_microphone_in_use, hold_mode
+    if !keyPressed {
+        lastTimePressed := A_TickCount
+        keyPressed := True
     }
-    if (InStr(doNotShowHintList, ":" exe_name ":")) {
-        return
-    }
-
-    if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
-        ; 能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
-        x := x + 5
-        if enableBTT
-            btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
-        else
-            ToolTip(cnTxt, x, y) ; 提示信息内容
-        KeyWait(chineseKey)
-        return
-    }
-    else {
-        ; 获取不到文本光标时，提示信息在鼠标光标的位置
-        CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
-        MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
-        if enableBTT
-            btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
-        else
-            ToolTip(cnTxt, x, y) ; 提示信息内容
-
-        ; 持续获取并跟随鼠标光标位置
-        Loop {
-            MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
-            if (newX != x || newY != y) {  ; 如果鼠标位置发生变化
-                x := newX
-                y := newY
-                if enableBTT
-                    btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ; 更新btt提示信息位置
-                else
-                    ToolTip(cnTxt, x, y) ; 更新ToolTip提示信息位置
-            }
-            ; 检测中文键是否被按下，如果没有被按下则退出循环
-            if not GetKeyState(chineseKey, "P") {
-                ToolTip  ; 清除ToolTip
-                break  ; 退出循环
-            }
-            Sleep 50  ; 控制循环频率，避免占用过多CPU资源
+    if hold_mode {
+        ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+        exe_name := ""
+        try {
+            exe_name := ProcessGetName(WinGetPID("A"))
+            DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+            ; ToolTip(exe_name)
+        }
+        if (InStr(doNotShowHintList, ":" exe_name ":")) {
+            return
         }
 
-        KeyWait(chineseKey)
-        return
-    }
-}
-
-englishVoice(ThisHotkey) {
-    Hotkey "~" chineseKey, "Off" ; 关闭快捷键功能,以免重复触发
-    Hotkey "~" englishKey chineseKey, "Off"
-
-    ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
-    exe_name := ""
-    try {
-        exe_name := ProcessGetName(WinGetPID("A"))
-        DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
-        ; ToolTip(exe_name)
-    }
-    if (InStr(doNotShowHintList, ":" exe_name ":")) {
-        return
-    }
-
-    if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
-        ; 能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
-        x := x + 5
-        if enableBTT
-            btt(enTxt, x, y - 3, 20, OwnStyle2, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
-        else
-            ToolTip(enTxt, x, y) ; 提示信息内容
-        KeyWait(chineseKey)
-        return
-    }
-    else {
-        CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
-        MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
-        if enableBTT
-            btt(enTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ;btt的主要函数, 透明度(Transparent 0 - 255)
-        else
-            ToolTip(enTxt, x, y) ; 提示信息内容
-
-        ; 持续获取并跟随鼠标光标位置
-        Loop {
-            MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
-            if (newX != x || newY != y) {  ; 如果鼠标位置发生变化
-                x := newX
-                y := newY
-                if enableBTT
-                    btt(enTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 }) ; 更新btt提示信息位置
-                else
-                    ToolTip(enTxt, x, y) ; 更新ToolTip提示信息位置
+        if is_microphone_in_use and hwnd := GetCaretPosEx(&x, &y, &w, &h) { ;麦克风启用
+            if hwnd := GetCaretPosEx(&x, &y, &w, &h) { ;能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
+                x := x + 5
+            } else { ;获取不到文本光标位置，提示信息在鼠标光标位置
+                CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
+                MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
             }
-            ; 检测中文键是否被按下，如果没有被按下则退出循环
-            if not GetKeyState(chineseKey, "P") {
-                ToolTip  ; 清除ToolTip
-                break  ; 退出循环
-            }
-            Sleep 50  ; 控制循环频率，避免占用过多CPU资源
+            btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 })
         }
-        KeyWait(chineseKey)
-        return
+    } else {
+        ToolTip "单击模式的代码懒得写了"
     }
 }
-
-BttRemove(ThisHotkey) {
-    Sleep 50
-    if enableBTT
+chineseVoice_up(*) {
+    global keyPressed, lastTimePressed, lastTimeReleased, isShortDuration, threshold, is_microphone_in_use, hold_mode
+    keyPressed := False
+    lastTimeReleased := A_TickCount
+    isShortDuration := (A_TickCount - lastTimePressed < threshold) ? True : False
+    if hold_mode {
         btt(, , , 20)
-    else
-        ToolTip()
-    SetTimer EnableShortcutKeys, hotkeyTurnOnDelay ; 改善在游戏中错误启动提示的情况: 延迟`hotkeyTurnOnDelay毫秒`后重新启用热键
+    }
+    else {
+        ToolTip "单击模式的代码懒得写了"
+    }
 }
-
-EnableShortcutKeys(*) {
-    Hotkey "~" chineseKey, "On" ; 恢复快捷键功能
-    Hotkey "~" englishKey chineseKey, "On"
-}
+; englishVoice_down(*) {
+;     Hotkey "~" chineseKey englishKey, "Off" ; 关闭快捷键功能,以免重复触发
+; }
 
 DefaultIni() {
     IniWrite("1", IniFile, "BeautifulToolTip", "enableBTT")
