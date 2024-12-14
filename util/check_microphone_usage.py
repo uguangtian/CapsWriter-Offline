@@ -1,6 +1,12 @@
+import threading
 import time
 import winreg
 from pathlib import Path
+
+from config import ClientConfig as Config
+from util.client_send_signal_to_hint_while_recording import (
+    send_signal_to_hint_while_recording,
+)
 
 
 def read_qword_value(root_key, sub_path, value_name):
@@ -10,43 +16,65 @@ def read_qword_value(root_key, sub_path, value_name):
         if reg_type == winreg.REG_QWORD:
             return value
         else:
-            print(f"Value {value_name} is not a QWORD.")
+            # print(f"Value {value_name} is not a QWORD.")
             return None
     except FileNotFoundError:
-        print("Registry key or value not found.")
+        # print("Registry key or value not found.")
         return None
     except Exception as e:
-        print(f"An error occurred: {e}")
+        # print(f"An error occurred: {e}")
         return None
 
 
 def is_microphone_in_use():
-    current_path = Path().cwd()
-    sub_path = (
-        r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone\NonPackaged\\"
-        + str(current_path).replace("\\", "#")
-        + r"#runtime#pythonw_CapsWriter_Client.exe"
-    )
-    # print(sub_path)
-    value_name = "LastUsedTimeStop"
+    # Static variables
+    if not hasattr(is_microphone_in_use, "last_check_time"):
+        is_microphone_in_use.last_check_time = 0
+    if not hasattr(is_microphone_in_use, "cached_result"):
+        is_microphone_in_use.cached_result = False
+    if not hasattr(is_microphone_in_use, "lock"):
+        is_microphone_in_use.lock = threading.RLock()
 
-    qword_value = read_qword_value(winreg.HKEY_CURRENT_USER, sub_path, value_name)
-    if qword_value is not None:
-        # print(f"QWORD value: {qword_value}")  # 麦克风 上次访问时间戳
-        if qword_value == 0:
-            # print("Microphone is in use.")
-            return True
-        else:
-            return False
-    else:
-        # print("Failed to read QWORD value.")
-        return None
+    now = time.time()
+    with is_microphone_in_use.lock:
+        if now - is_microphone_in_use.last_check_time >= 1:
+            try:
+                current_path = Path().cwd()
+                sub_path = (
+                    r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone\NonPackaged\\"
+                    + str(current_path).replace("\\", "#")
+                    + r"#runtime#pythonw_CapsWriter_Client.exe"
+                )
+                value_name = "LastUsedTimeStop"
+
+                qword_value = read_qword_value(
+                    winreg.HKEY_CURRENT_USER, sub_path, value_name
+                )
+                if qword_value is not None:
+                    if qword_value == 0:
+                        actual_result = True
+                    else:
+                        actual_result = False
+                else:
+                    actual_result = False
+            except Exception as e:
+                # print(f"Error checking microphone status: {e}")
+                actual_result = is_microphone_in_use.cached_result
+            is_microphone_in_use.cached_result = actual_result
+            # print(actual_result, Config.hold_mode)
+            send_signal_result = send_signal_to_hint_while_recording(
+                actual_result, Config.hold_mode
+            )
+            # print(send_signal_result)
+            is_microphone_in_use.last_check_time = now
+        return is_microphone_in_use.cached_result
+
+
+def test():
+    while True:
+        time.sleep(0.1)
+        is_microphone_in_use()
 
 
 if __name__ == "__main__":
-    while True:
-        if is_microphone_in_use():
-            print("Microphone is in use.")
-        else:
-            pass
-        time.sleep(1)
+    test()

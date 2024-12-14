@@ -24,9 +24,28 @@ if !FileExist(IniFile) {
 }
 ReadIni()
 
-Hotkey "~" chineseKey, chineseVoice
-Hotkey "~" englishKey chineseKey, englishVoice
-Hotkey "~*" chineseKey " Up", BttRemove
+global is_microphone_in_use := false
+global hold_mode := false
+
+OnMessage 0x5555, MsgMonitor
+Persistent
+
+MsgMonitor(wParam, lParam, msg, *)
+{
+    ; Since returning quickly is often important, it is better to use ToolTip than
+    ; something like MsgBox that would prevent the callback from finishing:
+    ; ToolTip "Message " msg " arrived:`nis_microphone_in_use: " wParam "`nhold_mode: " lParam
+    global is_microphone_in_use, hold_mode
+    is_microphone_in_use := wParam
+    hold_mode := lParam
+    if is_microphone_in_use and hwnd := GetCaretPosEx(&x, &y, &w, &h) { ;麦克风启用
+        x := x + 5
+        btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 })
+    }
+    else { ;麦克风关闭
+        btt(, , , 20)
+    }
+}
 
 OwnStyle1 := { TextColorLinearGradientStart: cnTxtClolorA        ; ARGB
     , TextColorLinearGradientEnd: cnTxtClolorB         ; ARGB
