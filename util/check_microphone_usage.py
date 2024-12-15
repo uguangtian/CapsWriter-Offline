@@ -3,11 +3,6 @@ import time
 import winreg
 from pathlib import Path
 
-from config import ClientConfig as Config
-from util.client_send_signal_to_hint_while_recording import (
-    send_signal_to_hint_while_recording,
-)
-
 
 def read_qword_value(root_key, sub_path, value_name):
     try:
@@ -21,7 +16,7 @@ def read_qword_value(root_key, sub_path, value_name):
     except FileNotFoundError:
         # print("Registry key or value not found.")
         return None
-    except Exception as e:
+    except Exception:
         # print(f"An error occurred: {e}")
         return None
 
@@ -57,14 +52,10 @@ def is_microphone_in_use():
                         actual_result = False
                 else:
                     actual_result = False
-            except Exception as e:
+            except Exception:
                 # print(f"Error checking microphone status: {e}")
                 actual_result = is_microphone_in_use.cached_result
             is_microphone_in_use.cached_result = actual_result
-            # print(actual_result, Config.hold_mode)
-            send_signal_result = send_signal_to_hint_while_recording(
-                actual_result, Config.hold_mode
-            )
             # print(send_signal_result)
             is_microphone_in_use.last_check_time = now
         return is_microphone_in_use.cached_result

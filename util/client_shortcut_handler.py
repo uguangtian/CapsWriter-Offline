@@ -10,10 +10,12 @@ from config import ClientConfig as Config
 from util.client_cosmic import Cosmic
 from util.client_pause_other_audio import audio_playering_app_name, pause_other_audio
 from util.client_send_audio import send_audio
+from util.client_send_signal_to_hint_while_recording import (
+    send_signal_to_hint_while_recording,
+)
 from util.client_stream import stream_reopen
 from util.my_status import Status
-from util.check_microphone_usage import is_microphone_in_use
-from util.client_send_signal_to_hint_while_recording import send_signal_to_hint_while_recording
+
 task = asyncio.Future()
 status = Status("开始录音", spinner="point")
 pool = ThreadPoolExecutor()
@@ -181,76 +183,6 @@ def finish_task():
 
 # =================单击模式======================
 
-'''
-def count_down(e: Event):
-    """按下后，开始倒数"""
-    time.sleep(Config.threshold)
-    e.set()
-
-
-def manage_task(e: Event):
-    """
-    通过检测 e 是否在 threshold 时间内被触发，判断是单击，还是长按
-    进行下一步的动作
-    """
-    global double_clicked, last_time_released, is_short_duration
-
-    # 計算是否屬於短時間內按下`錄音鍵`
-    is_short_duration = True if time.time() - last_time_released < Config.threshold else False
-    # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`, 并且结束函数
-    if (
-        is_short_duration
-        and double_clicked
-        and Config.enable_double_click_opposite_state
-    ):
-        Cosmic.opposite_state = not Cosmic.opposite_state
-        return
-
-    # 记录是否有任务
-    on = Cosmic.on
-    # 先运行任务
-    if not on:
-        launch_task()
-        # 觸發需要輸出 `簡/繁` 的狀態(如果在短時間內按下錄音鍵`is_short_duration`)
-        double_clicked = True
-
-    # 及时松开按键了，是单击
-    if e.wait(timeout=Config.threshold * 0.8):
-        # 标记最后弹起的时间
-        last_time_released = time.time()
-        # 如果有任务在运行，就结束任务
-        if Cosmic.on and on:
-            finish_task()
-            # 恢复輸出 `簡/繁` 原来的狀態
-            if Config.enable_double_click_opposite_state:
-                double_clicked = False
-
-    # 没有及时松开按键，是长按
-    else:
-        # 就取消本栈启动的任务
-        if not on:
-            cancel_task()
-            # 恢复輸出 `簡/繁` 原来的狀態
-            if Config.enable_double_click_opposite_state:
-                double_clicked = False
-        # 长按，发送按键
-        keyboard.send(Config.speech_recognition_shortcut)
-
-
-def click_mode(e: keyboard.KeyboardEvent):
-    global pressed, released, event
-
-    if e.event_type == "down" and released:
-        pressed, released = True, False
-        event = Event()
-        pool.submit(count_down, event)
-        pool.submit(manage_task, event)
-
-    elif e.event_type == "up" and pressed:
-        pressed, released = False, True
-        event.set()
-'''
-
 
 def click_mode(e: keyboard.KeyboardEvent):
     # 0. 原来的设计甚是巧妙巧妙, 但是我的功力有限，消化不良.
@@ -305,7 +237,13 @@ def click_mode(e: keyboard.KeyboardEvent):
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
         elif not double_clicked and not is_short_duration:
             translate_needed()
-            send_signal_to_hint_while_recording(True, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
+            send_signal_to_hint_while_recording(
+                True,
+                is_short_duration,
+                Cosmic.offline_translate_needed,
+                Cosmic.online_translate_needed,
+                Config.hold_mode,
+            )
             launch_task()
             # `double_clicked`变量 在此处函数中 改为常駐 因此不需要以下的config判断
             # if Config.enable_double_click_opposite_state:
@@ -315,7 +253,13 @@ def click_mode(e: keyboard.KeyboardEvent):
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
         elif double_clicked and not is_short_duration:
             finish_task()
-            send_signal_to_hint_while_recording(False, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
+            send_signal_to_hint_while_recording(
+                False,
+                is_short_duration,
+                Cosmic.offline_translate_needed,
+                Cosmic.online_translate_needed,
+                Config.hold_mode,
+            )
             # if Config.enable_double_click_opposite_state:
             double_clicked = False
             key_pressed = False
@@ -327,7 +271,13 @@ def click_mode(e: keyboard.KeyboardEvent):
             # and Config.enable_double_click_opposite_state
         ):
             translate_needed()
-            send_signal_to_hint_while_recording(True, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
+            send_signal_to_hint_while_recording(
+                True,
+                is_short_duration,
+                Cosmic.offline_translate_needed,
+                Cosmic.online_translate_needed,
+                Config.hold_mode,
+            )
             Cosmic.opposite_state = not Cosmic.opposite_state
             key_pressed = False
             # return
@@ -356,7 +306,13 @@ def hold_mode(e: keyboard.KeyboardEvent):
         if double_clicked and Config.enable_double_click_opposite_state:
             Cosmic.opposite_state = not Cosmic.opposite_state
         translate_needed()
-        send_signal_to_hint_while_recording(True, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
+        send_signal_to_hint_while_recording(
+            True,
+            is_short_duration,
+            Cosmic.offline_translate_needed,
+            Cosmic.online_translate_needed,
+            Config.hold_mode,
+        )
         # 记录开始时间
         launch_task()
 
@@ -381,8 +337,13 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if Config.enable_double_click_opposite_state:
                 double_clicked = False
 
-        send_signal_to_hint_while_recording(False, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
-
+        send_signal_to_hint_while_recording(
+            False,
+            is_short_duration,
+            Cosmic.offline_translate_needed,
+            Cosmic.online_translate_needed,
+            Config.hold_mode,
+        )
 
 
 # ==================== 绑定 handler ===============================

@@ -642,7 +642,7 @@ def start_client_gui():
     if (
         not check_process("hint_while_recording.exe")
         and Path("hint_while_recording.exe").exists()
-        and Config.hold_mode
+        # and Config.hold_mode
     ):
         subprocess.Popen(
             ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
