@@ -1,6 +1,6 @@
 ﻿; 为原来的脚本提供了另一种显示方式(使用BeautifulToolTip库),并且提供修改配置的功能,在这个`hint_while_recording.ini`文件修改。
 ; 使用BeautifulToolTip库显示的好处是不会改变焦点,从而退出全屏幕模式(需要在`config.py` 的 `hint_while_recording_at_cursor_position = False`配合使用)。另外比较漂亮。坏处是增加了30MB记忆体的占用。
-; 改善在游戏中错误启动提示的情况: 延迟`hotkeyTurnOnDelay毫秒`后重新启用热键
+
 ; hint_while_recording:
 ; Author:[H1DDENADM1N](https://github.com/H1DDENADM1N/CapsWriter-Offline)
 ; Contributor: [JoanthanWu](https://github.com/JoanthanWu/CapsWriter-Offline)
@@ -25,34 +25,19 @@ if !FileExist(IniFile) {
 ReadIni()
 
 global keyPressed := False
-global lastTimePressed := 0
-global lastTimeReleased := 0
-global isShortDuration := False
-global threshold := 300
 global is_microphone_in_use := False
+global is_short_duration := False
+global offline_translate_needed := false
+global online_translate_needed := false
 global hold_mode := False
-
-
-Hotkey "~" chineseKey, chineseVoice_down
-Hotkey "~" chineseKey " Up", chineseVoice_up
-; Hotkey "~" englishKey, englishVoice_down
-; Hotkey "~" englishKey " Up", englishVoice_up
+global bttRemoveLoopIndex := 0
+global 调用次数 := 0
+global 调用次数A := 0
+global 调用次数B := 0
+global 调用次数C := 0
 
 OnMessage 0x5555, MsgMonitor
 Persistent
-
-MsgMonitor(wParam, lParam, msg, *)
-{
-    ; Since returning quickly is often important, it is better to use ToolTip than
-    ; something like MsgBox that would prevent the callback from finishing:
-    ; ToolTip "Message " msg " arrived:`nis_microphone_in_use: " wParam "`nhold_mode: " lParam
-    global is_microphone_in_use, hold_mode
-    is_microphone_in_use := wParam
-    hold_mode := lParam
-    if !is_microphone_in_use {
-        btt(, , , 20)
-    }
-}
 
 OwnStyle1 := { TextColorLinearGradientStart: cnTxtClolorA        ; ARGB
     , TextColorLinearGradientEnd: cnTxtClolorB         ; ARGB
@@ -70,15 +55,68 @@ OwnStyle2 := { TextColorLinearGradientStart: enTxtClolorA        ; ARGB
     , FontSize: enTxtFontSize
     , FontRender: 4
     , FontStyle: "Bold" }
+OwnStyle3 := { TextColorLinearGradientStart: cnTxtClolorB        ; ARGB
+    , TextColorLinearGradientEnd:cnTxtClolorA          ; ARGB
+    , TextColorLinearGradientAngle: 0                 ; Mode=8 Angle 0(L to R) 90(U to D) 180(R to L) 270(D to U)
+    , TextColorLinearGradientMode: 2                  ; Mode=4 Angle 0(L to R) 90(D to U), Range 1-8.
+    , BackgroundColor: 0x00ffffff
+    , FontSize: cnTxtFontSize
+    , FontRender: 4
+    , FontStyle: "Bold" }
+OwnStyle4 := { TextColorLinearGradientStart: enTxtClolorB        ; ARGB
+    , TextColorLinearGradientEnd:enTxtClolorA          ; ARGB
+    , TextColorLinearGradientAngle: 0                 ; Mode=8 Angle 0(L to R) 90(U to D) 180(R to L) 270(D to U)
+    , TextColorLinearGradientMode: 2                  ; Mode=4 Angle 0(L to R) 90(D to U), Range 1-8.
+    , BackgroundColor: 0x00ffffff
+    , FontSize: enTxtFontSize
+    , FontRender: 4
+    , FontStyle: "Bold" }
 
-chineseVoice_down(*) {
-    global keyPressed, lastTimePressed, isShortDuration, threshold, is_microphone_in_use, hold_mode
-    if !keyPressed {
-        lastTimePressed := A_TickCount
-        keyPressed := True
+; SetTimer 监测, 200
+; 监测(*) {
+;     ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C, 0, 0, 10
+; }
+
+; ============================  主控  ============================
+
+MsgMonitor(wParam, lParam, msg, hwnd) {
+    global is_microphone_in_use, is_short_duration, offline_translate_needed, online_translate_needed, hold_mode, keyPressed, 调用次数
+
+    is_microphone_in_use := (wParam & 1) != 0
+    is_short_duration := (wParam & 2) != 0
+    offline_translate_needed := (wParam & 4) != 0
+    online_translate_needed := (wParam & 8) != 0
+    hold_mode := (wParam & 16) != 0
+
+    ; ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C, 0, 1080, 9
+    ; 调用次数 += 1
+
+    if is_short_duration
+        keyPressed := false
+
+    if !is_microphone_in_use {
+        bttRemoveLoopIndex := 0
+        SetTimer BttRemoveLoop, 50
+        return
     }
-    if hold_mode {
-        ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+    else if (offline_translate_needed OR online_translate_needed) AND (is_microphone_in_use) {
+        EnglishVoice()
+        return
+    }
+    else If (is_microphone_in_use) {
+        ChineseVoice()
+        return
+    }
+}
+
+
+ChineseVoice(*) {
+    global keyPressed, is_short_duration, is_microphone_in_use, hold_mode
+    SetTimer BttRemoveLoop, 0
+    ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+    if (hold_mode AND !keyPressed AND !offline_translate_needed AND !online_translate_needed) {
+        keyPressed := true
+            
         exe_name := ""
         try {
             exe_name := ProcessGetName(WinGetPID("A"))
@@ -88,43 +126,161 @@ chineseVoice_down(*) {
         if (InStr(doNotShowHintList, ":" exe_name ":")) {
             return
         }
+        ShowIt(&x, &y, &w, &h, "cnTxt")
 
-        if is_microphone_in_use and hwnd := GetCaretPosEx(&x, &y, &w, &h) { ;麦克风启用
-            if hwnd := GetCaretPosEx(&x, &y, &w, &h) { ;能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
-                x := x + 5
-            } else { ;获取不到文本光标位置，提示信息在鼠标光标位置
-                CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
-                MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
-            }
-            btt(cnTxt, x, y - 3, 20, OwnStyle1, { Transparent: 255 })
+    } else If (!hold_mode AND !keyPressed AND !offline_translate_needed AND !online_translate_needed) {
+        keyPressed := true
+
+        exe_name := ""
+        try {
+            exe_name := ProcessGetName(WinGetPID("A"))
+            DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+            ; ToolTip(exe_name)
         }
-    } else {
-        ToolTip "单击模式的代码懒得写了"
+        if (InStr(doNotShowHintList, ":" exe_name ":")) {
+            return
+        }
+        ShowIt(&x, &y, &w, &h, "cnTxt")
     }
 }
-chineseVoice_up(*) {
-    global keyPressed, lastTimePressed, lastTimeReleased, isShortDuration, threshold, is_microphone_in_use, hold_mode
-    keyPressed := False
-    lastTimeReleased := A_TickCount
-    isShortDuration := (A_TickCount - lastTimePressed < threshold) ? True : False
-    if hold_mode {
-        btt(, , , 20)
+
+
+EnglishVoice(*) {
+    global keyPressed, is_short_duration, is_microphone_in_use, hold_mode
+    SetTimer BttRemoveLoop, 0
+    ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+    if (hold_mode AND !keyPressed) {
+        keyPressed := true
+
+        exe_name := ""
+        try {
+            exe_name := ProcessGetName(WinGetPID("A"))
+            DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+            ; ToolTip(exe_name)
+        }
+        if (InStr(doNotShowHintList, ":" exe_name ":")) {
+            return
+        }
+        ShowIt(&x, &y, &w, &h, "enTxt")
+
+    } else If (!hold_mode AND !keyPressed) {
+        keyPressed := true
+
+        exe_name := ""
+        try {
+            exe_name := ProcessGetName(WinGetPID("A"))
+            DllCall("SetThreadDpiAwarenessContext", "ptr", -2, "ptr")
+            ; ToolTip(exe_name)
+        }
+        if (InStr(doNotShowHintList, ":" exe_name ":")) {
+            return
+        }
+        ShowIt(&x, &y, &w, &h, "enTxt")
+    }
+}
+
+
+; ============================  显示和移除提示  ============================
+
+
+ShowIt(&x, &y, &w, &h, Txt) {
+    global 调用次数A, 调用次数B
+    if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
+        ; 能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
+        x := x + 5
+        TipShow(Txt, x, y)
+        ; 调用次数A += 1
+        return
     }
     else {
-        ToolTip "单击模式的代码懒得写了"
+        ; 获取不到文本光标时，提示信息在鼠标光标的位置
+        CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
+        MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
+        TipShow(Txt, x, y)
+
+        ; 持续获取并跟随鼠标光标位置
+        Loop {
+            MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
+            if (newX != x || newY != y) {  ; 如果鼠标位置发生变化
+                x := newX
+                y := newY
+                TipShow(Txt, x, y)
+            }
+            ; 检测中文键是否被按下，如果没有被按下则退出循环
+            if !is_microphone_in_use {
+                ToolTip  ; 清除ToolTip
+                break  ; 退出循环
+            }
+            Sleep 50  ; 控制循环频率，避免占用过多CPU资源
+        }
+        ; 调用次数B += 1
+        return
     }
 }
-; englishVoice_down(*) {
-;     Hotkey "~" chineseKey englishKey, "Off" ; 关闭快捷键功能,以免重复触发
-; }
+
+TipShow(Txt,x,y) {
+    if enableBTT
+        if Txt == "cnTxt" {
+            if is_short_duration
+                btt(cnTxtB, x, y - 3, 20, OwnStyle3)
+            else
+                btt(cnTxt, x, y - 3, 20, OwnStyle1)
+        }
+        else {
+            if is_short_duration
+                btt(enTxtB, x, y - 3, 20, OwnStyle4)
+            else
+                btt(enTxt, x, y - 3, 20, OwnStyle2)
+            }
+    else
+        if Txt == "cnTxt" {
+            if is_short_duration
+                ToolTip(cnTxtB, x, y)
+            else
+                ToolTip(cnTxt, x, y)
+        }
+        else {
+            if is_short_duration
+                ToolTip(enTxtB, x, y)
+            else
+                ToolTip(enTxt, x, y)
+            }
+}
+
+BttRemoveLoop(*) {
+    global keyPressed, bttRemoveLoopIndex
+    if keyPressed {
+        if enableBTT
+            btt(, , , 20)
+        else
+            ToolTip()
+        bttRemoveLoopIndex := 0
+        keyPressed := false
+        ; 如果还出现提示没有被移除的情况, 把下面 SetTimer 这一句删掉/注释
+        SetTimer BttRemoveLoop, 0
+        ;ToolTip "BttRemoveLoop A`n" bttRemoveLoopIndex, 200, 200, 8
+        return
+    }
+    else if (bttRemoveLoopIndex <= 60)
+        bttRemoveLoopIndex := bttRemoveLoopIndex + 1
+    else if (bttRemoveLoopIndex > 60) {
+        ; keyPressed := False
+        SetTimer BttRemoveLoop, 0
+        ;ToolTip "BttRemoveLoop B`n" bttRemoveLoopIndex, 300, 300, 9
+        bttRemoveLoopIndex := 0
+        return
+    }
+}
+
+
+; ============================  配置信息  ============================
 
 DefaultIni() {
     IniWrite("1", IniFile, "BeautifulToolTip", "enableBTT")
-    IniWrite("-67", IniFile, "BeautifulToolTip", "hotkeyTurnOnDelay")
     IniWrite("✦语音输入中‧‧‧", IniFile, "ShowText", "cnTxt")
+    IniWrite("✦语音输入中⇄", IniFile, "ShowText", "cnTxtB")
     IniWrite("✦VoiceTrans‧‧‧", IniFile, "ShowText", "enTxt")
-    IniWrite("CapsLock", IniFile, "Hotkey", "chineseKey")
-    IniWrite("+", IniFile, "Hotkey", "englishKey")
+    IniWrite("✦VoiceTrans⇄", IniFile, "ShowText", "enTxtB")
     IniWrite("0xFFCC7A00", IniFile, "Txt", "cnTxtClolorA")
     IniWrite("0xFFFFDF80", IniFile, "Txt", "cnTxtClolorB")
     IniWrite("16", IniFile, "Txt", "cnTxtFontSize")
@@ -139,11 +295,10 @@ DefaultIni() {
 
 ReadIni() {
     global enableBTT := IniRead(IniFile, "BeautifulToolTip", "enableBTT")
-    global hotkeyTurnOnDelay := IniRead(IniFile, "BeautifulToolTip", "hotkeyTurnOnDelay")
     global cnTxt := IniRead(IniFile, "ShowText", "cnTxt")
+    global cnTxtB := IniRead(IniFile, "ShowText", "cnTxtB")
     global enTxt := IniRead(IniFile, "ShowText", "enTxt")
-    global chineseKey := IniRead(IniFile, "Hotkey", "chineseKey")
-    global englishKey := IniRead(IniFile, "Hotkey", "englishKey")
+    global enTxtB := IniRead(IniFile, "ShowText", "enTxtB")
     global cnTxtClolorA := IniRead(IniFile, "Txt", "cnTxtClolorA")
     global cnTxtClolorB := IniRead(IniFile, "Txt", "cnTxtClolorB")
     global cnTxtFontSize := IniRead(IniFile, "Txt", "cnTxtFontSize")

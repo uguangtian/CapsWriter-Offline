@@ -12,7 +12,8 @@ from util.client_pause_other_audio import audio_playering_app_name, pause_other_
 from util.client_send_audio import send_audio
 from util.client_stream import stream_reopen
 from util.my_status import Status
-
+from util.check_microphone_usage import is_microphone_in_use
+from util.client_send_signal_to_hint_while_recording import send_signal_to_hint_while_recording
 task = asyncio.Future()
 status = Status("开始录音", spinner="point")
 pool = ThreadPoolExecutor()
@@ -57,8 +58,7 @@ def unmute_all_sessions():
         volume.SetMute(0, None)
 
 
-def launch_task():
-    global hold_mode_first_time_cancel_task
+def translate_needed():
     # 确认是否需要翻译
     if keyboard.is_pressed(Config.offline_translate_shortcut):
         Cosmic.offline_translate_needed = True
@@ -68,6 +68,13 @@ def launch_task():
         Cosmic.online_translate_needed = True
     else:
         Cosmic.online_translate_needed = False
+
+
+def launch_task():
+    global hold_mode_first_time_cancel_task
+    # 确认是否需要翻译
+    # 改为独立调用
+    # translate_needed()
 
     if (
         not double_clicked
@@ -297,6 +304,8 @@ def click_mode(e: keyboard.KeyboardEvent):
 
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
         elif not double_clicked and not is_short_duration:
+            translate_needed()
+            send_signal_to_hint_while_recording(True, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
             launch_task()
             # `double_clicked`变量 在此处函数中 改为常駐 因此不需要以下的config判断
             # if Config.enable_double_click_opposite_state:
@@ -306,7 +315,7 @@ def click_mode(e: keyboard.KeyboardEvent):
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
         elif double_clicked and not is_short_duration:
             finish_task()
-
+            send_signal_to_hint_while_recording(False, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
             # if Config.enable_double_click_opposite_state:
             double_clicked = False
             key_pressed = False
@@ -317,6 +326,8 @@ def click_mode(e: keyboard.KeyboardEvent):
             double_clicked and is_short_duration
             # and Config.enable_double_click_opposite_state
         ):
+            translate_needed()
+            send_signal_to_hint_while_recording(True, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
             Cosmic.opposite_state = not Cosmic.opposite_state
             key_pressed = False
             # return
@@ -344,6 +355,8 @@ def hold_mode(e: keyboard.KeyboardEvent):
         # 根據上一次是否短時間內(`is_short_duration`)按下錄音鍵,來判斷是否需要輸出 `簡/繁`
         if double_clicked and Config.enable_double_click_opposite_state:
             Cosmic.opposite_state = not Cosmic.opposite_state
+        translate_needed()
+        send_signal_to_hint_while_recording(True, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
         # 记录开始时间
         launch_task()
 
@@ -367,6 +380,9 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 恢复輸出 `簡/繁` 原来的狀態
             if Config.enable_double_click_opposite_state:
                 double_clicked = False
+
+        send_signal_to_hint_while_recording(False, is_short_duration, Cosmic.offline_translate_needed, Cosmic.online_translate_needed, Config.hold_mode)
+
 
 
 # ==================== 绑定 handler ===============================
