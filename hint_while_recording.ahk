@@ -31,6 +31,8 @@ global offline_translate_needed := false
 global online_translate_needed := false
 global hold_mode := False
 global bttRemoveLoopIndex := 0
+global lastX := 0
+global lastY := 0
 global 调用次数 := 0
 global 调用次数A := 0
 global 调用次数B := 0
@@ -74,13 +76,13 @@ OwnStyle4 := { TextColorLinearGradientStart: enTxtClolorB        ; ARGB
 
 ; SetTimer 监测, 200
 ; 监测(*) {
-;     ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C, 0, 0, 10
+;     ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C "`nbttRemoveLoopIndex= " bttRemoveLoopIndex, 0, 0, 10
 ; }
 
 ; ============================  主控  ============================
 
 MsgMonitor(wParam, lParam, msg, hwnd) {
-    global is_microphone_in_use, is_short_duration, offline_translate_needed, online_translate_needed, hold_mode, keyPressed, 调用次数
+    global is_microphone_in_use, is_short_duration, offline_translate_needed, online_translate_needed, hold_mode, keyPressed, 调用次数, bttRemoveLoopIndex
 
     is_microphone_in_use := (wParam & 1) != 0
     is_short_duration := (wParam & 2) != 0
@@ -88,7 +90,7 @@ MsgMonitor(wParam, lParam, msg, hwnd) {
     online_translate_needed := (wParam & 8) != 0
     hold_mode := (wParam & 16) != 0
 
-    ; ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C, 0, 1080, 9
+    ; ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C "`nbttRemoveLoopIndex= " bttRemoveLoopIndex, 0, 1080, 9
     ; 调用次数 += 1
 
     if is_short_duration
@@ -184,7 +186,7 @@ EnglishVoice(*) {
 
 
 ShowIt(&x, &y, &w, &h, Txt) {
-    global 调用次数A, 调用次数B
+    global 调用次数A
     if hwnd := GetCaretPosEx(&x, &y, &w, &h) {
         ; 能够获取到文本光标时，提示信息在输入光标位置，且x坐标向右偏移5
         x := x + 5
@@ -197,25 +199,28 @@ ShowIt(&x, &y, &w, &h, Txt) {
         CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
         MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
         TipShow(Txt, x, y)
-
-        ; 持续获取并跟随鼠标光标位置
-        Loop {
-            MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
-            if (newX != x || newY != y) {  ; 如果鼠标位置发生变化
-                x := newX
-                y := newY
-                TipShow(Txt, x, y)
-            }
-            ; 检测中文键是否被按下，如果没有被按下则退出循环
-            if !is_microphone_in_use {
-                ToolTip  ; 清除ToolTip
-                break  ; 退出循环
-            }
-            Sleep 50  ; 控制循环频率，避免占用过多CPU资源
-        }
-        ; 调用次数B += 1
+        ;followingMouseTip := () => FollowingMouseLoop(Txt, &x, &y)
+        global followingTxt := Txt
+        SetTimer FollowingMouseLoop , 50
         return
     }
+}
+
+FollowingMouseLoop(*) {
+    global keyPressed, lastX, lastY, 调用次数B, 调用次数C
+    keyPressed := true
+    MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
+    if (newX != lastX || newY != lastY) {  ; 如果鼠标位置发生变化
+        lastX := newX
+        lastY := newY
+        TipShow(followingTxt, lastX, lastY)
+        ; 调用次数B += 1
+    }
+    else If (!is_microphone_in_use) {
+        SetTimer FollowingMouseLoop, 0
+        SetTimer BttRemoveLoop, 50
+    }
+    ; 调用次数C += 1
 }
 
 TipShow(Txt,x,y) {
