@@ -58,7 +58,7 @@ OwnStyle2 := { TextColorLinearGradientStart: enTxtClolorA        ; ARGB
     , FontRender: 4
     , FontStyle: "Bold" }
 OwnStyle3 := { TextColorLinearGradientStart: cnTxtClolorB        ; ARGB
-    , TextColorLinearGradientEnd:cnTxtClolorA          ; ARGB
+    , TextColorLinearGradientEnd: cnTxtClolorA          ; ARGB
     , TextColorLinearGradientAngle: 0                 ; Mode=8 Angle 0(L to R) 90(U to D) 180(R to L) 270(D to U)
     , TextColorLinearGradientMode: 2                  ; Mode=4 Angle 0(L to R) 90(D to U), Range 1-8.
     , BackgroundColor: 0x00ffffff
@@ -66,7 +66,7 @@ OwnStyle3 := { TextColorLinearGradientStart: cnTxtClolorB        ; ARGB
     , FontRender: 4
     , FontStyle: "Bold" }
 OwnStyle4 := { TextColorLinearGradientStart: enTxtClolorB        ; ARGB
-    , TextColorLinearGradientEnd:enTxtClolorA          ; ARGB
+    , TextColorLinearGradientEnd: enTxtClolorA          ; ARGB
     , TextColorLinearGradientAngle: 0                 ; Mode=8 Angle 0(L to R) 90(U to D) 180(R to L) 270(D to U)
     , TextColorLinearGradientMode: 2                  ; Mode=4 Angle 0(L to R) 90(D to U), Range 1-8.
     , BackgroundColor: 0x00ffffff
@@ -118,7 +118,7 @@ ChineseVoice(*) {
     ; 在doNotShowHintList中的程序将不会显示“语音输入中”的提示
     if (hold_mode AND !keyPressed AND !offline_translate_needed AND !online_translate_needed) {
         keyPressed := true
-            
+
         exe_name := ""
         try {
             exe_name := ProcessGetName(WinGetPID("A"))
@@ -196,12 +196,8 @@ ShowIt(&x, &y, &w, &h, Txt) {
     }
     else {
         ; 获取不到文本光标时，提示信息在鼠标光标的位置
-        CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
-        MouseGetPos(&x, &y)  ; 获取鼠标的当前位置，并将X坐标存储在变量x中，Y坐标存储在变量y中
-        TipShow(Txt, x, y)
-        ;followingMouseTip := () => FollowingMouseLoop(Txt, &x, &y)
         global followingTxt := Txt
-        SetTimer FollowingMouseLoop , 50
+        SetTimer FollowingMouseLoop, 50
         return
     }
 }
@@ -209,6 +205,7 @@ ShowIt(&x, &y, &w, &h, Txt) {
 FollowingMouseLoop(*) {
     global keyPressed, lastX, lastY, 调用次数B, 调用次数C
     keyPressed := true
+    CoordMode "Mouse", "Screen"  ; 确保MouseGetPos使用的是屏幕坐标
     MouseGetPos(&newX, &newY)  ; 获取鼠标的当前位置
     if (newX != lastX || newY != lastY) {  ; 如果鼠标位置发生变化
         lastX := newX
@@ -223,7 +220,7 @@ FollowingMouseLoop(*) {
     ; 调用次数C += 1
 }
 
-TipShow(Txt,x,y) {
+TipShow(Txt, x, y) {
     if enableBTT
         if Txt == "cnTxt" {
             if is_short_duration
@@ -236,7 +233,7 @@ TipShow(Txt,x,y) {
                 btt(enTxtB, x, y - 3, 20, OwnStyle4)
             else
                 btt(enTxt, x, y - 3, 20, OwnStyle2)
-            }
+        }
     else
         if Txt == "cnTxt" {
             if is_short_duration
@@ -249,7 +246,7 @@ TipShow(Txt,x,y) {
                 ToolTip(enTxtB, x, y)
             else
                 ToolTip(enTxt, x, y)
-            }
+        }
 }
 
 BttRemoveLoop(*) {
