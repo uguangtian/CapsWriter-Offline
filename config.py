@@ -99,6 +99,12 @@ class ClientConfig:
                                                             # 方便调试
     hint_while_recording_at_edit_position_powered_by_ahk = True  # 是否启用 基于AHK的 输入光标位置的输入状态提示功能
     hint_while_recording_at_cursor_position = True  # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
+    check_microphone_usage_by = "注册表"               # "按键" 或 ”注册表“
+                                                    # 默认通过监测注册表判断麦克风是否在被客户端使用进而确定是否在录音
+                                                    # 如果设置了 `only_enable_microphones_when_pressed_record_shortcut = False`
+                                                    # 会造成的鼠标光标旁边永远显示麦克风标志
+                                                    # 将强制忽略此项设置使用 "按键"
+                                                    # "按键" 是通过监测 `speech_recognition_shortcut` 状态是否按下进而推测是否在录音
     
 
     enable_double_click_opposite_state = True       # 是否启用,双击`录音键`临时转换 `简/繁` 体中文输出的功能
