@@ -4,12 +4,18 @@ from pathlib import Path
 
 # 服务端配置
 class ServerConfig:
+    model = 'Sensevoice' # 'Sensevoice' 或 'Paraformer'
+                        # Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
+                        # 比如转录字幕不完整，识别结果不准确、丢失标点等
+                        # 如果你只说中文普通话，建议使用 'Paraformer' 模型
+                        # 不影响简繁转换和翻译
     addr = '0.0.0.0'
     speech_recognition_port = '6016'
     start_online_translate_server = True # 启用在线翻译服务
     start_offline_translate_server = True # 启用离线翻译服务
     offline_translate_port = '6017' # 离线翻译端口
     format_num = True  # 输出时是否将中文数字转为阿拉伯数字
+    format_punc = True  # 使用 'Paraformer' 模型时，输出时是否启用标点符号引擎
     format_spell = True  # 输出时是否调整中英之间的空格 
     shrink_automatically_to_tray = True     # 启动后不显示主窗口，自动缩小至托盘
     only_run_once = True # 只允许运行一次，禁止多开
@@ -131,14 +137,17 @@ class DeepLXConfig:
 
 class ModelPaths:
     model_dir = Path() / 'models'
-    sensevoice_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'model.int8.onnx'   # 语音模型
-    tokens_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'tokens.txt'
+    sensevoice_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'model.int8.onnx'   # Sensevoice语音模型
+    sensevoice_tokens_path = Path() / 'models' / 'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17' / 'tokens.txt'
+    paraformer_path = Path() / 'models' / 'paraformer-offline-zh' / 'model.int8.onnx'   # Paraformer语音模型
+    paraformer_tokens_path = Path() / 'models' / 'paraformer-offline-zh' / 'tokens.txt'
+    punc_model_dir = Path() / 'models' / 'punc_ct-transformer_cn-en'    # 标点模型
     opus_mt_dir = Path() / 'models' / 'Helsinki-NLP--opus-mt-zh-en'     # 离线翻译模型
 
 
 class SenseVoiceArgs:
     model = f'{ModelPaths.sensevoice_path}'
-    tokens = f'{ModelPaths.tokens_path}'
+    tokens = f'{ModelPaths.sensevoice_tokens_path}'
     num_threads = 6
     # sample_rate = 16000
     # feature_dim = 80
@@ -149,5 +158,15 @@ class SenseVoiceArgs:
     use_itn = True
     # rule_fsts = ""
     # rule_fars = ""
+
+
+class ParaformerArgs:
+    paraformer = f'{ModelPaths.paraformer_path}'
+    tokens = f'{ModelPaths.paraformer_tokens_path}'
+    num_threads = 6
+    sample_rate = 16000
+    feature_dim = 80
+    decoding_method = 'greedy_search'
+    debug = False
 
 
