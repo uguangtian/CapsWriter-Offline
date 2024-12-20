@@ -2,7 +2,7 @@
 
 ![alt text](assets/main.png)
 
-# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （基于SenseVoice模型 支持中粤英日韩多语种）
+# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （选用SenseVoice模型时 支持中粤英日韩多语种）
 
 ## 😎 九个功能：
 
@@ -27,6 +27,13 @@
 
 # 👀 最新更新
 
+## 新增 可选项 切换模型 `Sensevoice` 或 `Paraformer`
+
+> Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
+> 比如转录字幕不完整，识别结果不准确、丢失标点等
+> 如果你只说中文普通话，建议使用 'Paraformer' 模型
+> 不影响简繁转换和翻译
+
 ## 新增 可选项 通过注册表/按键判断是否语音输入中
 
 ## 新增 可选项 是否启用离在线翻译和状态提示
@@ -47,10 +54,6 @@
 ## 更美观的“语音输入中”提示，可在 `hint_while_recording.ini` 设置文本内容、颜色、排除列表等 (@JoanthanWu)
 > ![alt text](assets/PixPin_2024-11-27_10-44-39.png)
 > ![alt text](assets/PixPin_2024-11-27_10-44-46.png)
-
-## 更新语音识别模型
-
-- https://k2-fsa.github.io/sherpa/onnx/sense-voice/pretrained.html#sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
 
 
 ## 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` 离线翻译为 `英文` ，并自动覆盖替换原文
@@ -171,7 +174,7 @@
 
 # 🤓 源码运行
 
-1. 运行 `.\runtime\python.exe .\core_server.py` 脚本 在终端启动服务端，会载入 SenseVoice 模型识别模型和标点模型（这会占用 2GB 的内存，载入时长约 50 秒）
+1. 运行 `.\runtime\python.exe .\core_server.py` 脚本 在终端启动服务端，会载入 SenseVoice 模型识别模型 或Paraformer 模型和标点模型（通过`config.py` `model = 'Sensevoice' # 'Sensevoice' 或 'Paraformer'` 配置。这会占用 2GB 的内存，载入时长约 50 秒）
 2. 运行 `.\runtime\python.exe .\core_client.py` 脚本 在终端启动客户端，会载入中译英模型，打开系统默认麦克风，开始监听按键（这会占用 400MB 的内存，载入时长约 20 秒）
 3. 按住 `CapsLock` 键，录音开始，松开 `CapsLock` 键，录音结束，识别结果立马被输入（录音时长短于 0.3 秒不算）
 4. 按住 `Left Shift` 再按 `CapsLock` 进行离线翻译，方便同时需要输入中文和英文翻译的场景
@@ -283,9 +286,25 @@
 
 # ⬇️ 模型下载链接
 
-服务端使用了 [sensevoice模型](https://k2-fsa.github.io/sherpa/onnx/sense-voice/pretrained.html#sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17)
+## 语音识别
 
-客户端使用了中译英模型 [Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en)
+### Sensevoice
+
+[sensevoice模型](https://k2-fsa.github.io/sherpa/onnx/sense-voice/pretrained.html#sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17)
+
+### Paraformer
+
+[sherpa-onnx](https://k2-fsa.github.io/sherpa/onnx/index.html) ，载入阿里巴巴开源的 [Paraformer](https://www.modelscope.cn/models/damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch) 模型（[转为量化的 onnx 格式](https://k2-fsa.github.io/sherpa/onnx/pretrained_models/offline-paraformer/paraformer-models.html)），来作语音识别，整个模型约 230MB 大小。下载有已转换好的模型文件：
+
+- [yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25](https://huggingface.co/yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25)
+
+另外，还使用了阿里巴巴的标点符号模型，大小约 1GB：
+
+- [CT-Transformer 标点-中英文-通用-large-onnx](https://www.modelscope.cn/models/damo/punc_ct-transformer_cn-en-common-vocab471067-large-onnx/summary)
+
+## 离线翻译
+
+中译英模型 [Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en)
 
 - [opus-2020-07-17.zip](https://object.pouta.csc.fi/Tatoeba-MT-models/zho-eng/opus-2020-07-17.zip)
 
