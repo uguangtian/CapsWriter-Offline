@@ -1,22 +1,25 @@
-import sys
 import subprocess
-from queue import Queue
+import sys
 import threading
+from queue import Queue
+
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
-    QTextEdit,
-    QSystemTrayIcon,
     QMenu,
     QPushButton,
+    QSystemTrayIcon,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtGui import QIcon, QAction
-from PySide6.QtCore import Qt, QTimer
 from qt_material import apply_stylesheet
+
 from config import ServerConfig as Config
 from util.check_process import check_process
+from util.server_check_model import check_model_gui
 
 
 class GUI(QMainWindow):
@@ -164,6 +167,8 @@ class GUI(QMainWindow):
 
 
 if __name__ == "__main__":
+    check_model_gui()
+
     if Config.only_run_once and check_process("pythonw_CapsWriter_Server.exe"):
         raise Exception(
             "已经有一个服务端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Server.exe 进程已在运行。如果你确定需要启动多个服务端同时运行，请先修改 config.py  class ServerConfig:  Only_run_once = False 。）"
