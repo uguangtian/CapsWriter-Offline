@@ -4,7 +4,7 @@ from pathlib import Path
 
 # 服务端配置
 class ServerConfig:
-    model = 'Sensevoice' # 'Sensevoice' 或 'Paraformer'
+    model = 'Paraformer' # 'Sensevoice' 或 'Paraformer'
                         # Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
                         # 比如转录字幕不完整，识别结果不准确、丢失标点等
                         # 如果你只说中文普通话，建议使用 'Paraformer' 模型
