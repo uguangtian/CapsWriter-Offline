@@ -1,3 +1,4 @@
+import argparse
 import os
 import subprocess
 import sys
@@ -684,15 +685,20 @@ def Print_Screen_Scale():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:]:
-        # 如果参数传入文件，那就转录文件
-        CapsWriter_path = os.path.dirname(os.path.abspath(__file__))
-        script_path = os.path.join(CapsWriter_path, "core_client.py")
-        python_exe_path = os.path.join(CapsWriter_path, "runtime\\python.exe")
-        args = [arg for arg in sys.argv[1:]]
-        command = [python_exe_path, script_path] + args
-        subprocess.Popen(["cmd.exe", "/c"] + command, cwd=CapsWriter_path)
+    parser = argparse.ArgumentParser(description="处理文件")
+    parser.add_argument("files", nargs="*", type=Path, help="要处理的文件")
+    args = parser.parse_args()
 
+    if args.files:  # 判断是否有文件参数
+        CapsWriter_path = Path(__file__).parent
+        script_path = CapsWriter_path / "core_client.py"
+        python_exe_path = CapsWriter_path / "runtime" / "python.exe"
+        files_quoted = [str(file) for file in args.files]
+        command = [str(python_exe_path), str(script_path)] + files_quoted
+        try:
+            subprocess.Popen(command, cwd=str(CapsWriter_path))
+        except Exception as e:
+            print(f"Error starting the process: {e}")
     else:
         # GUI
         start_client_gui()
