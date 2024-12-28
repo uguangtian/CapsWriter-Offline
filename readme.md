@@ -27,6 +27,11 @@
 
 # 👀 最新更新
 
+## 新增 可选项 开始和结束任务时播放提示音
+> 可在 `config.py` 设置是否启用，以及音频文件路径和音量。需要ffplay.exe
+> ffplay.exe 来自 https://www.gyan.dev/ffmpeg/builds/
+> start.mp3 和 stop.mp3 音频文件来自 https://pixabay.com
+
 ## 新增 可选项 切换模型 `Sensevoice` 或 `Paraformer`
 
 > Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型

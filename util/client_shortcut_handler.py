@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
 import keyboard
+from flask import sessions
 from pycaw.pycaw import AudioUtilities
 
 from config import ClientConfig as Config
@@ -29,6 +30,7 @@ hold_mode_first_time_cancel_task = False
 last_time_pressed = 0
 last_time_released = 0
 key_pressed = False
+sessions = []
 
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
@@ -47,17 +49,24 @@ def shortcut_correct(e: keyboard.KeyboardEvent):
 
 
 def mute_all_sessions():
+    global sessions
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
-        volume = session.SimpleAudioVolume
-        volume.SetMute(1, None)
+        process_name = session.Process and session.Process.name()
+        # 排除 ffplay.exe
+        if process_name != "ffplay.exe":
+            volume = session.SimpleAudioVolume
+            volume.SetMute(1, None)
 
 
 def unmute_all_sessions():
-    sessions = AudioUtilities.GetAllSessions()
+    global sessions
     for session in sessions:
-        volume = session.SimpleAudioVolume
-        volume.SetMute(0, None)
+        process_name = session.Process and session.Process.name()
+        # 排除 ffplay.exe
+        if process_name != "ffplay.exe":
+            volume = session.SimpleAudioVolume
+            volume.SetMute(0, None)
 
 
 def translate_needed():
@@ -79,6 +88,14 @@ def translate_needed():
 
 
 def launch_task():
+    # 开始任务时播放提示音
+    import shutil
+
+    if shutil.which("ffplay") and Config.play_start_music:
+        from util.client_play_music import play_music
+
+        play_music(Config.start_music_path, Config.start_music_volume)
+
     global hold_mode_first_time_cancel_task
     # 确认是否需要翻译
     # 改为独立调用
@@ -175,6 +192,14 @@ def finish_task():
     # 取消音频静音
     if Config.mute_other_audio:
         unmute_all_sessions()
+
+    # 结束任务时播放提示音
+    import shutil
+
+    if shutil.which("ffplay") and Config.play_stop_music:
+        from util.client_play_music import play_music
+
+        play_music(Config.stop_music_path, Config.stop_music_volume)
 
     # 取消音频暂停
     global unpause_needed

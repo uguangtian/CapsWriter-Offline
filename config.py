@@ -103,6 +103,16 @@ class ClientConfig:
                                                             # 🤓 Open Home Folder With VSCode 
                                                             # 使用 VSCode 快速打开 CapsWriter 主目录
                                                             # 方便调试
+
+    play_start_music = True                               # 开始任务时播放提示音
+                                                        # 需要ffplay.exe
+    start_music_path = Path.cwd() / "assets" / "start.mp3" # 开始任务提示音的文件路径
+    start_music_volume = "100"                              # 开始任务提示音的音量    0 ~ 100 之间
+    play_stop_music = True                               # 结束任务时播放提示音
+                                                        # 需要ffplay.exe
+    stop_music_path = Path.cwd() / "assets" / "stop.mp3" # 结束任务提示音的文件路径
+    stop_music_volume = "50"                              # 结束任务提示音的音量    0 ~ 100 之间
+
     hint_while_recording_at_edit_position_powered_by_ahk = True  # 是否启用 基于AHK的 输入光标位置的输入状态提示功能
     hint_while_recording_at_cursor_position = True  # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
     check_microphone_usage_by = "注册表"               # "按键" 或 ”注册表“
