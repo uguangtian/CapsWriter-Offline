@@ -1,9 +1,14 @@
-import json
 import asyncio
-import websockets
-from config import ClientConfig as Config
+import json
 
-async def translate_text(text, url=f"ws://{Config.addr}:{Config.offline_translate_port}"):
+import websockets
+
+from util.config import ClientConfig as Config
+
+
+async def translate_text(
+    text, url=f"ws://{Config.addr}:{Config.offline_translate_port}"
+):
     # 设置要发送的数据
     data = {"text": text}
     # 将Python字典转换为JSON格式的字符串
@@ -16,7 +21,8 @@ async def translate_text(text, url=f"ws://{Config.addr}:{Config.offline_translat
         # 假设响应是JSON格式的字符串，将其转换回Python字典
         response_data = json.loads(response)
         # 假设字典中有一个'translated_text'键，返回它的值
-        return response_data.get('translated_text', 'Translation not available')
+        return response_data.get("translated_text", "Translation not available")
+
 
 # 这个函数将启动翻译任务并返回离线翻译结果
 async def translate_offline(text):
@@ -30,6 +36,7 @@ async def translate_offline(text):
         print(f"An error occurred: {e}")
         return None
 
+
 # 运行异步函数 1
 # if __name__ == "__main__":
 #     text = "你好，世界！"
@@ -38,10 +45,12 @@ async def translate_offline(text):
 
 # 运行异步函数 2
 
+
 async def main():
     text = "你好，世界！"
     trans_text = await translate_offline(text)
     print(trans_text)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

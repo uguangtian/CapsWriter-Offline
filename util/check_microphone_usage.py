@@ -3,7 +3,7 @@ import time
 import winreg
 from pathlib import Path
 
-from config import ClientConfig as Config
+from util.config import ClientConfig as Config
 
 
 def read_qword_value(root_key, sub_path, value_name):

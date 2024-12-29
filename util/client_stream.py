@@ -1,39 +1,40 @@
-
-from util.client_cosmic import console, Cosmic
-from config import ClientConfig as Config
-import numpy as np 
-import sounddevice as sd
 import asyncio
 import sys
-import time
-from rich import inspect
 import threading
+import time
+
+import numpy as np
+import sounddevice as sd
+
+from util.client_cosmic import Cosmic, console
+from util.config import ClientConfig as Config
 
 
-def record_callback(indata: np.ndarray, 
-                    frames: int,
-                    time_info,
-                    status: sd.CallbackFlags) -> None:
+def record_callback(
+    indata: np.ndarray, frames: int, time_info, status: sd.CallbackFlags
+) -> None:
     if not Cosmic.on:
         return
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put(
-            {'type': 'data',
-             'time': time.time(),
-             'data': indata.copy(),
-             },
+            {
+                "type": "data",
+                "time": time.time(),
+                "data": indata.copy(),
+            },
         ),
-        Cosmic.loop
+        Cosmic.loop,
     )
 
 
 def stream_close(signum, frame):
     Cosmic.stream.close()
 
+
 def stream_reopen():
     if not threading.main_thread().is_alive():
         return
-    print('重启音频流')
+    print("重启音频流")
 
     # 关闭旧流
     Cosmic.stream.close()
@@ -53,16 +54,27 @@ def stream_open():
     # 显示录音所用的音频设备
     channels = 1
     try:
-        device = sd.query_devices(kind='input')
-        device_name = device["name"].replace("®", " R ").replace('™', ' TM ').encode('gbk', errors='replace').decode('gbk', errors='replace')
-        channels = min(2, device['max_input_channels'])
-        console.print(f'使用默认音频设备：[italic]{device_name}，声道数：{channels}', end='\n\n')
+        device = sd.query_devices(kind="input")
+        device_name = (
+            device["name"]
+            .replace("®", " R ")
+            .replace("™", " TM ")
+            .encode("gbk", errors="replace")
+            .decode("gbk", errors="replace")
+        )
+        channels = min(2, device["max_input_channels"])
+        console.print(
+            f"使用默认音频设备：[italic]{device_name}，声道数：{channels}", end="\n\n"
+        )
     except UnicodeDecodeError:
-        console.print("由于编码问题，暂时无法获得麦克风设备名字", end='\n\n', style='bright_red')
+        console.print(
+            "由于编码问题，暂时无法获得麦克风设备名字", end="\n\n", style="bright_red"
+        )
     except sd.PortAudioError:
-        console.print("没有找到麦克风设备", end='\n\n', style='bright_red')
-        input('按回车键退出'); sys.exit()
-        
+        console.print("没有找到麦克风设备", end="\n\n", style="bright_red")
+        input("按回车键退出")
+        sys.exit()
+
     if Config.only_enable_microphones_when_pressed_record_shortcut:
         stream = sd.InputStream(
             samplerate=48000,
@@ -72,7 +84,7 @@ def stream_open():
             channels=channels,
             callback=record_callback,
             # finished_callback=stream_reopen,
-        ); # stream.start()
+        )  # stream.start()
     else:
         stream = sd.InputStream(
             samplerate=48000,
@@ -82,7 +94,7 @@ def stream_open():
             channels=channels,
             callback=record_callback,
             finished_callback=stream_reopen,
-        ); stream.start()
+        )
+        stream.start()
 
     return stream
-

@@ -1,10 +1,9 @@
-import re
 import time
 
 import numpy as np
 
-from config import ServerConfig as Config
 from util.chinese_itn import chinese_to_num
+from util.config import ServerConfig as Config
 from util.format_tools import adjust_space
 from util.server_classes import Result, Task
 

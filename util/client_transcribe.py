@@ -9,10 +9,10 @@ from pathlib import Path
 
 import websockets
 
-from config import ClientConfig as Config
 from util import srt_from_txt
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
+from util.config import ClientConfig as Config
 
 
 async def transcribe_check(file: Path):

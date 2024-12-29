@@ -3,7 +3,6 @@ import json
 import opencc
 import websockets
 
-from config import ClientConfig as Config
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
 from util.client_hot_sub import hot_sub
@@ -11,6 +10,7 @@ from util.client_rename_audio import rename_audio
 from util.client_strip_punc import strip_punc
 from util.client_type_result import type_result
 from util.client_write_md import write_md
+from util.config import ClientConfig as Config
 
 if not Cosmic.transcribe_subtitles:
     from util.client_translate_offline import translate_offline

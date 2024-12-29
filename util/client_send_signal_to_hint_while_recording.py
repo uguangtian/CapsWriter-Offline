@@ -3,7 +3,7 @@ from unittest import result
 
 import win32gui
 
-from config import ClientConfig as Config
+from util.config import ClientConfig as Config
 
 
 def encode_booleans(*args: bool) -> int:

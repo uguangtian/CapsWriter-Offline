@@ -7,7 +7,6 @@ import keyboard
 from flask import sessions
 from pycaw.pycaw import AudioUtilities
 
-from config import ClientConfig as Config
 from util.client_cosmic import Cosmic
 from util.client_pause_other_audio import audio_playering_app_name, pause_other_audio
 from util.client_send_audio import send_audio
@@ -15,6 +14,7 @@ from util.client_send_signal_to_hint_while_recording import (
     send_signal_to_hint_while_recording,
 )
 from util.client_stream import stream_reopen
+from util.config import ClientConfig as Config
 from util.my_status import Status
 
 task = asyncio.Future()

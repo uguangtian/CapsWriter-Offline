@@ -1,4 +1,3 @@
-
 # https://ollama.com/ 下载并安装 Ollama
 
 # ollama run gemma:2b
@@ -6,14 +5,19 @@
 # .\runtime\python.exe .\util\client_translate_offline_gemma2b.py
 
 
-
 from ollama import Client
-from config import ClientConfig as Config
-def translate_offline_gemma2b(text, target_language='Chinese'):
-    client = Client(host=f'http://localhost:{Config.offline_translate_port_gemma2b}',)
+
+from util.config import ClientConfig as Config
+
+
+def translate_offline_gemma2b(text, target_language="Chinese"):
+    client = Client(
+        host=f"http://localhost:{Config.offline_translate_port_gemma2b}",
+    )
     message = [
-            {   'role': 'system', 
-                'content': '''
+        {
+            "role": "system",
+            "content": '''
                     You are a professional translation engine, which can translate texts into $to colloquial, professional, elegant and fluent content without explanation with request in the following format:
                     Translate """     <text>     """ into <target language>
                     and your answer:
@@ -27,19 +31,20 @@ def translate_offline_gemma2b(text, target_language='Chinese'):
                     <index>. <sentence> (<sentence translation>)
                     Etymology:
                     <etymology>
-                '''
-            },
-            {   'role': 'user', 
-                'content': f'''
+                ''',
+        },
+        {
+            "role": "user",
+            "content": f'''
                     Translate """${text}""" into {target_language}
-                '''
-            }
-        ]
-    response = client.chat(model='gemma:2b', messages=message)
-    return response['message']['content']
+                ''',
+        },
+    ]
+    response = client.chat(model="gemma:2b", messages=message)
+    return response["message"]["content"]
 
 
 if __name__ == "__main__":
     text = "我爱吃肉"
-    trans_text = translate_offline_gemma2b(text, 'English')
+    trans_text = translate_offline_gemma2b(text, "English")
     print(trans_text)

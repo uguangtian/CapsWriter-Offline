@@ -1,6 +1,6 @@
 import sys
 
-from config import ModelPaths
+from util.config import ModelPaths
 from util.server_cosmic import console
 
 model_exists_expcetion = """

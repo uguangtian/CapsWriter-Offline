@@ -3,8 +3,8 @@ import time
 from multiprocessing import Queue
 from platform import system
 
-from config import ModelPaths, ParaformerArgs, SenseVoiceArgs
-from config import ServerConfig as Config
+from util.config import ModelPaths, ParaformerArgs, SenseVoiceArgs
+from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
 from util.server_cosmic import console
 

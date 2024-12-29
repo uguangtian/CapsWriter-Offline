@@ -6,7 +6,7 @@ from platform import system
 
 import websockets
 
-from config import ServerConfig as Config
+from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
 from util.server_check_model import check_model
 from util.server_cosmic import Cosmic, console

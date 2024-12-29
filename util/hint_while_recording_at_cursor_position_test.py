@@ -1,15 +1,20 @@
 import sys
-import win32api
-from PySide6.QtWidgets import QApplication, QLabel
-from PySide6.QtCore import QTimer, QPoint, Qt
-from PySide6.QtGui import QPalette, QColor, QFont
-from config import ClientConfig as Config
+
 import keyboard
+import win32api
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor, QFont, QPalette
+from PySide6.QtWidgets import QApplication, QLabel
+
+from util.config import ClientConfig as Config
+
 
 class Hint_While_Recording_At_Cursor_Position(QLabel):
     def __init__(self):
         super().__init__()
-        self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        )
         font = QFont("Segoe MDL2 Assets", 14)
         self.setFont(font)
         palette = self.palette()
@@ -27,12 +32,13 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
         # 使用pywin32获取全局鼠标位置
         x, y = win32api.GetCursorPos()
         # 更新标签的位置和文本
-        self.move(x+20, y+20)
+        self.move(x + 20, y + 20)
         if keyboard.is_pressed(Config.speech_recognition_shortcut):
             self.setText(chr(0xF8B1))
             self.setVisible(True)
         else:
             self.setVisible(False)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

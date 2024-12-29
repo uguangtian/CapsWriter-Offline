@@ -17,8 +17,8 @@ from PySide6.QtWidgets import (
 )
 from qt_material import apply_stylesheet
 
-from config import ServerConfig as Config
 from util.check_process import check_process
+from util.config import ServerConfig as Config
 from util.server_check_model import check_model_gui
 
 

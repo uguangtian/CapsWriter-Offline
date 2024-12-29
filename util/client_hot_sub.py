@@ -1,8 +1,5 @@
-from config import ClientConfig as Config
-from util import hot_sub_en
-from util import hot_sub_zh
-from util import hot_sub_rule
-from util import hot_sub_year
+from util import hot_sub_en, hot_sub_rule, hot_sub_year, hot_sub_zh
+from util.config import ClientConfig as Config
 
 
 def hot_sub(text: str) -> str:

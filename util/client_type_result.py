@@ -1,8 +1,10 @@
-from config import ClientConfig as Config
-import keyboard
-import clipman
-import platform
 import asyncio
+import platform
+
+import clipman
+import keyboard
+
+from util.config import ClientConfig as Config
 
 
 async def type_result(text):

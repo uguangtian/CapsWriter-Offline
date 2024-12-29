@@ -29,9 +29,9 @@ from PySide6.QtWidgets import (
 )
 from qt_material import apply_stylesheet
 
-from config import ClientConfig as Config
 from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
+from util.config import ClientConfig as Config
 
 
 class Hint_While_Recording_At_Cursor_Position(QLabel):
