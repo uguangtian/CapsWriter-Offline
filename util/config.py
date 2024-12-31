@@ -1,9 +1,11 @@
 from pathlib import Path
 
-import toml
+from tomlkit import parse
 
 # 加载TOML配置文件
-config = toml.load("config.toml")
+with Path("config.toml").open("r", encoding="utf-8") as f:
+    config_str = f.read()
+    config = parse(config_str)
 
 
 # 服务端配置
@@ -142,8 +144,8 @@ class ModelPaths:
 
 # SenseVoice 参数配置
 class SenseVoiceArgs:
-    model: str = config["sensevoice_args"]["model"]
-    tokens: str = config["sensevoice_args"]["tokens"]
+    model: str = config["model_paths"]["sensevoice_path"]
+    tokens: str = config["model_paths"]["sensevoice_tokens_path"]
     num_threads: int = config["sensevoice_args"]["num_threads"]
     sample_rate: int = config["sensevoice_args"]["sample_rate"]
     feature_dim: int = config["sensevoice_args"]["feature_dim"]
@@ -158,8 +160,8 @@ class SenseVoiceArgs:
 
 # Paraformer 参数配置
 class ParaformerArgs:
-    paraformer: str = config["paraformer_args"]["paraformer"]
-    tokens: str = config["paraformer_args"]["tokens"]
+    paraformer: str = config["model_paths"]["paraformer_path"]
+    tokens: str = config["model_paths"]["paraformer_tokens_path"]
     num_threads: int = config["paraformer_args"]["num_threads"]
     sample_rate: int = config["paraformer_args"]["sample_rate"]
     feature_dim: int = config["paraformer_args"]["feature_dim"]
@@ -167,34 +169,47 @@ class ParaformerArgs:
     debug: bool = config["paraformer_args"]["debug"]
 
 
+def print_config():
+    """测试，打印所有配置信息"""
+
+    def clearly_type(obj):
+        import re
+
+        result = type(obj).__name__
+        match = re.search(r"'(.*?)'", result)
+        if match:
+            return match.group(1)
+        else:
+            return result
+
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+    config_classes = [
+        ServerConfig,
+        ClientConfig,
+        DeepLXConfig,
+        ModelPaths,
+        SenseVoiceArgs,
+        ParaformerArgs,
+    ]
+
+    for config_class in config_classes:
+        table = Table(title=f"{config_class.__name__} 配置")
+
+        table.add_column("属性名", style="cyan")
+        table.add_column("类型", style="magenta")
+        table.add_column("值", style="green")
+
+        for key, value in config_class.__dict__.items():
+            if not key.startswith("_"):
+                attr_type = clearly_type(value)
+                attr_value = str(value)
+                table.add_row(key, attr_type, attr_value)
+
+        console.print(table)
+
+
 if __name__ == "__main__":
-    # 测试，打印所有配置信息
-    print("======================服务端配置==================================")
-    for key, value in ServerConfig.__dict__.items():
-        if not key.startswith("_"):
-            print(f"{key}\n{value}\n")
-
-    print("======================客户端配置==================================")
-    for key, value in ClientConfig.__dict__.items():
-        if not key.startswith("_"):
-            print(f"{key}\n{value}\n")
-
-    print("======================DeepLX配置==================================")
-    for key, value in DeepLXConfig.__dict__.items():
-        if not key.startswith("_"):
-            print(f"{key}\n{value}\n")
-
-    print("======================模型路径配置==================================")
-    for key, value in ModelPaths.__dict__.items():
-        if not key.startswith("_"):
-            print(f"{key}\n{value}\n")
-
-    print("======================SenseVoice参数配置==================================")
-    for key, value in SenseVoiceArgs.__dict__.items():
-        if not key.startswith("_"):
-            print(f"{key}\n{value}\n")
-
-    print("======================Paraformer参数配置==================================")
-    for key, value in ParaformerArgs.__dict__.items():
-        if not key.startswith("_"):
-            print(f"{key}\n{value}\n")
+    print_config()

@@ -171,49 +171,13 @@ class ClientConfigPage(SiPage):
             # 🤓 Open Home Folder With VSCode
             # 使用 VSCode 快速打开 CapsWriter 主目录
             # 方便调试
-            # self.vscode_exe_path = SiLineEditWithDeletionButton(self)
-            # self.vscode_exe_path.lineEdit().setText(
-            #     self.config["client"]["vscode_exe_path"]
-            # )
-            # self.vscode_exe_path.resize(800, 32)
-            # self.vscode_exe_path_selector = SiPushButtonRefactor(self)
-            # self.vscode_exe_path_selector.setSvgIcon(
-            #     SiGlobal.siui.iconpack.get("ic_fluent_search_regular")
-            # )
-            # self.vscode_exe_path_selector.setToolTip("选择 VSCode 可执行文件")
-            # self.vscode_exe_path_selector.adjustSize()
-            # self.vscode_exe_path_label = SiLabel(self)
-            # self.vscode_exe_path_label.setSiliconWidgetFlag(Si.AdjustSizeOnTextChanged)
-            # self.vscode_exe_path_label.setStyleSheet(
-            #     "color: {}".format(SiGlobal.siui.colors["TEXT_C"])
-            # )
-            # self.vscode_exe_path_label.setText(
-            #     "用于通过客户端托盘图标右键菜单项 View 子菜单项 “🤓 Open Home Folder With VSCode” 使用 VSCode 快速打开 CapsWriter 主目录，方便调试"
-            # )
-            # self.vscode_exe_path_plane_beginning = SiOptionCardPlane(self)
-            # self.vscode_exe_path_plane_beginning.setTitle("VSCode 可执行文件位置")
-            # self.vscode_exe_path_plane_beginning.body().addWidget(
-            #     self.vscode_exe_path_label
-            # )
-            # self.vscode_exe_path_plane_beginning.footer().setFixedHeight(64)
-            # self.vscode_exe_path_plane_beginning.footer().setSpacing(8)
-            # self.vscode_exe_path_plane_beginning.footer().setAlignment(Qt.AlignCenter)
-            # self.vscode_exe_path_plane_beginning.footer().addWidget(
-            #     self.vscode_exe_path_selector, side="right"
-            # )
-            # self.vscode_exe_path_plane_beginning.footer().addWidget(
-            #     self.vscode_exe_path, side="right"
-            # )
-            # self.vscode_exe_path_plane_beginning.adjustSize()
-            # group.addWidget(self.vscode_exe_path_plane_beginning)
             self.vscode_exe_path_selector = SelectPath(
                 self,
                 title="VSCode 可执行文件位置",
-                label_text="用于通过客户端托盘图标右键菜单项 View 子菜单项 “🤓 Open Home Folder With VSCode” 使用 VSCode 快速打开 CapsWriter 主目录，方便调试",
+                label_text="用于通过客户端托盘图标右键菜单项 View 子菜单项 “🤓 Open Home Folder With VSCode”\n使用 VSCode 快速打开 CapsWriter 主目录\n方便调试",
                 default_path=self.config["client"]["vscode_exe_path"],
                 file_filter="Executables (*.exe)",
                 mode="file",
-                on_path_selected=self.on_vscode_exe_path_selected,
             )
             group.addWidget(self.vscode_exe_path_selector)
 
@@ -259,7 +223,7 @@ class ClientConfigPage(SiPage):
             )
             self.only_enable_microphones_when_pressed_record_shortcut_linear_attaching.setTitle(
                 "只在按下录音快捷键时启用麦克风",
-                "建议启用，有些蓝牙耳机录音时无法播放\n而且启用后，切换默认麦克风也不用重启客户端\n比如从蓝牙耳机换回笔记本电脑默认麦克风\n缺点就是输入的时候可能会慢些\n毕竟要先建立与麦克风的连接",
+                "建议启用\n有些蓝牙耳机录音时无法播放\n而且启用后\n切换默认麦克风也不用重启客户端\n比如从蓝牙耳机换回笔记本电脑默认麦克风\n缺点就是输入的时候可能会慢些\n毕竟要先建立与麦克风的连接",
             )
             self.only_enable_microphones_when_pressed_record_shortcut_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_mic_record_regular")
@@ -282,7 +246,7 @@ class ClientConfigPage(SiPage):
             self.speech_recognition_port_set_default = SetDefaultButton(self)
             self.speech_recognition_port_linear_attaching = SiOptionCardLinear(self)
             self.speech_recognition_port_linear_attaching.setTitle(
-                "语音识别服务端口", '默认值："6016" 端口号范围 1024-65535'
+                "语音识别服务端口", '默认值："6016"\n端口号范围 1024-65535'
             )
             self.speech_recognition_port_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_globe_location_regular")
@@ -384,7 +348,7 @@ class ClientConfigPage(SiPage):
             self.hold_mode_linear_attaching = SiOptionCardLinear(self)
             self.hold_mode_linear_attaching.setTitle(
                 "长按模式",
-                "按下录音，松开停止，像对讲机一样用\n改为 False，则关闭长按模式，也就是单击模式\n即：单击录音，再次单击停止\n且：长按会执行原本的单击功能",
+                "按下录音\n松开停止\n像对讲机一样用\n改为 False\n则关闭长按模式\n也就是单击模式\n即：单击录音\n再次单击停止\n且：长按会执行原本的单击功能",
             )
             self.hold_mode_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
@@ -534,7 +498,7 @@ class ClientConfigPage(SiPage):
             )
             self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching.setTitle(
                 "在输入光标位置显示 “✦语音输入中‧‧‧” 状态提示",
-                "基于 AHK 的输入光标位置的输入状态提示功能，更多相关配置在 “hint_while_recording.ini” ",
+                "基于 AHK 的输入光标位置的输入状态提示功能\n更多相关配置在 “hint_while_recording.ini” ",
             )
             self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_emoji_hint_regular")
@@ -570,7 +534,7 @@ class ClientConfigPage(SiPage):
             # 监测麦克风是否在使用的方式
             # "按键" 或 "注册表"
             self.check_microphone_usage_by = SiComboBox(self)
-            self.check_microphone_usage_by.resize(256, 32)
+            self.check_microphone_usage_by.resize(325, 32)
             self.check_microphone_usage_by.addOption("注册表")
             self.check_microphone_usage_by.addOption("按键")
             self.check_microphone_usage_by.menu().setShowIcon(False)
@@ -597,7 +561,7 @@ class ClientConfigPage(SiPage):
             self.suppress_linear_attaching = SiOptionCardLinear(self)
             self.suppress_linear_attaching.setTitle(
                 "阻塞按键事件",
-                "如果开启，则按下录音快捷键后，其它程序无法接收到这个按键消息",
+                "如果开启\n则按下录音快捷键后\n其它程序无法接收到这个按键消息",
             )
             self.suppress_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
@@ -613,7 +577,7 @@ class ClientConfigPage(SiPage):
             self.restore_key_linear_attaching = SiOptionCardLinear(self)
             self.restore_key_linear_attaching.setTitle(
                 "恢复按键状态",
-                "录音完成，松开按键后，是否自动再按一遍，以恢复 CapsLock 或 Shift 等按键之前的状态",
+                "录音完成\n松开按键后\n是否自动再按一遍\n以恢复 CapsLock 或 Shift 等按键之前的状态",
             )
             self.restore_key_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
@@ -632,7 +596,7 @@ class ClientConfigPage(SiPage):
             self.threshold_linear_attaching = SiOptionCardLinear(self)
             self.threshold_linear_attaching.setTitle(
                 "触发语音识别的时间阈值",
-                "按下快捷键后，触发语音识别的时间阈值，单位：秒\n默认值：0.3 秒\n如果设置的值过小，可能会造成误触发",
+                "按下快捷键后\n触发语音识别的时间阈值\n单位：秒\n默认值：0.3 秒\n如果设置的值过小\n可能会造成误触发",
             )
             self.threshold_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_timer_regular")
@@ -813,7 +777,7 @@ class ClientConfigPage(SiPage):
             self.audio_name_len_linear_attaching = SiOptionCardLinear(self)
             self.audio_name_len_linear_attaching.setTitle(
                 "录音文件名长度",
-                "将录音识别结果的前多少个字存储到录音文件名中，建议不要超过 200",
+                "将录音识别结果的前多少个字存储到录音文件名中\n建议不要超过 200",
             )
             self.audio_name_len_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_document_text_regular")
@@ -832,7 +796,7 @@ class ClientConfigPage(SiPage):
             self.reduce_audio_files_linear_attaching = SiOptionCardLinear(self)
             self.reduce_audio_files_linear_attaching.setTitle(
                 "使用 ffmpeg 压缩录音文件",
-                "如果用户已安装 ffmpeg，调用 ffmpeg 录音时输出 mp3 格式的音频文件\n大大减小文件体积，减少磁盘占用",
+                "如果用户已安装 ffmpeg\n调用 ffmpeg 录音时输出 mp3 格式的音频文件\n大大减小文件体积\n减少磁盘占用",
             )
             self.reduce_audio_files_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_folder_zip_regular")
@@ -929,7 +893,7 @@ class ClientConfigPage(SiPage):
             self.offline_translate_port_set_default = SetDefaultButton(self)
             self.offline_translate_port_linear_attaching = SiOptionCardLinear(self)
             self.offline_translate_port_linear_attaching.setTitle(
-                "离线翻译服务端口", '默认值："6017" 端口号范围 1024-65535'
+                "离线翻译服务端口", '默认值："6017"\n端口号范围 1024-65535'
             )
             self.offline_translate_port_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_globe_location_regular")
@@ -952,7 +916,7 @@ class ClientConfigPage(SiPage):
             self.offline_translate_shortcut_linear_attaching = SiOptionCardLinear(self)
             self.offline_translate_shortcut_linear_attaching.setTitle(
                 "离线翻译的快捷键",
-                '默认值："left shift"，按住 Left Shift 再按 CapsLock 进行离线翻译',
+                '默认值："left shift"\n按住 Left Shift 再按 CapsLock 进行离线翻译',
             )
             self.offline_translate_shortcut_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
@@ -986,7 +950,7 @@ class ClientConfigPage(SiPage):
             )
             self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.setTitle(
                 "将光标选中的中文翻译并替换为英文的快捷键",
-                '默认值："ctrl + alt + p"，未选中任何文字时，将剪贴板的文字翻译为英文并粘贴',
+                '默认值："ctrl + alt + p"\n未选中任何文字时\n将剪贴板的文字翻译为英文并粘贴',
             )
             self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
@@ -1036,7 +1000,7 @@ class ClientConfigPage(SiPage):
             self.online_translate_shortcut_linear_attaching = SiOptionCardLinear(self)
             self.online_translate_shortcut_linear_attaching.setTitle(
                 "在线翻译的快捷键",
-                '默认值："right shift"，按住 Right Shift 再按 CapsLock 进行在线翻译',
+                '默认值："right shift"\n按住 Right Shift 再按 CapsLock 进行在线翻译',
             )
             self.online_translate_shortcut_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
@@ -1112,7 +1076,7 @@ class ClientConfigPage(SiPage):
             )
             self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching.setTitle(
                 "将光标选中的中文翻译并替换为目标语言的快捷键",
-                '默认值："ctrl + alt + ["，未选中任何文字时，将剪贴板的文字翻译为目标语言并粘贴',
+                '默认值："ctrl + alt + ["\n未选中任何文字时\n将剪贴板的文字翻译为目标语言并粘贴',
             )
             self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching.load(
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")

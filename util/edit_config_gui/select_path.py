@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QFileDialog, QSizePolicy
 from siui.components import (
     SiLabel,
     SiLineEditWithDeletionButton,
@@ -11,6 +12,9 @@ from siui.core import Si, SiGlobal
 
 
 class SelectPath(SiOptionCardPlane):
+    # 定义自定义信号
+    pathSelected = Signal(str)
+
     def __init__(
         self,
         parent,
@@ -19,7 +23,6 @@ class SelectPath(SiOptionCardPlane):
         default_path,
         file_filter="",
         mode="file",
-        on_path_selected=None,
     ):
         super().__init__(parent)
         self.setTitle(title)
@@ -27,7 +30,6 @@ class SelectPath(SiOptionCardPlane):
         self.default_path = default_path
         self.file_filter = file_filter
         self.mode = mode
-        self.on_path_selected = on_path_selected
 
         # Create and add label
         self.label = SiLabel(self)
@@ -40,7 +42,12 @@ class SelectPath(SiOptionCardPlane):
         # Create and configure path input
         self.path_input = SiLineEditWithDeletionButton(self)
         self.path_input.lineEdit().setText(default_path)
-        self.path_input.resize(800, 32)
+        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.path_input.resize(580, 32)
+
+        # 连接路径输入框的编辑完成信号到发射信号
+        self.path_input.lineEdit().editingFinished.connect(self.emitPath)
+        self.path_input.deletion_button.clicked.connect(self.emitPath)
 
         # Create and configure selection button
         self.select_button = SiPushButtonRefactor(self)
@@ -64,15 +71,17 @@ class SelectPath(SiOptionCardPlane):
             )
             if file_path:
                 self.path_input.lineEdit().setText(file_path)
-                if self.on_path_selected:
-                    self.on_path_selected(file_path)
+                self.emitPath()
         elif self.mode == "directory":
             dir_path = QFileDialog.getExistingDirectory(
                 self, "选择目录", self.default_path
             )
             if dir_path:
                 self.path_input.lineEdit().setText(dir_path)
-                if self.on_path_selected:
-                    self.on_path_selected(dir_path)
+                self.emitPath()
         else:
             raise ValueError("模式参数必须是 'file' 或 'directory'")
+
+    def emitPath(self):
+        current_path = self.path_input.lineEdit().text()
+        self.pathSelected.emit(current_path)

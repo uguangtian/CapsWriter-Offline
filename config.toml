@@ -52,7 +52,6 @@ in_the_meantime_start_the_client_and_run_as_admin = true
 # 以管理员权限运行客户端
 
 
-
 # ======================客户端配置==================================
 
 [client]
@@ -146,10 +145,10 @@ trash_punc = "，。,."
 hot_zh = true
 # 是否启用中文热词替换，中文热词存储在 hot_zh.txt 文件里
 
-多音字 = true
+"多音字" = true
 # True 表示多音字匹配
 
-声调 = false
+"声调" = false
 # False 表示忽略声调区别，这样「黄章」就能匹配「慌张」
 
 hot_en = true
@@ -259,8 +258,6 @@ opencc_converter = "s2t.json"
 # jp2t.json New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
 
 
-
-
 # ======================DeepLX 配置==================================
 
 [deeplx]
@@ -272,8 +269,6 @@ exe_path = "deeplx_windows_amd64.exe"
 
 api = "http://127.0.0.1:1188/translate"
 # DeepLX API 地址
-
-
 
 
 # ======================模型路径配置==================================
@@ -299,8 +294,6 @@ punc_model_dir = "models/punc_ct-transformer_cn-en"
 
 opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
 # 离线翻译模型目录
-
-
 
 
 # ======================SenseVoice 参数配置==================================
@@ -341,8 +334,6 @@ rule_fsts = ""
 
 rule_fars = ""
 # 自定义规则 FAR 文件路径
-
-
 
 
 # ======================Paraformer 参数配置==================================

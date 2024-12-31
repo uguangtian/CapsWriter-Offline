@@ -1,11 +1,22 @@
-from PySide6.QtCore import Qt
+from pathlib import Path
+
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QFont
 from siui.components import (
+    SiDenseVContainer,
     SiLineEditWithDeletionButton,
     SiTitledWidgetGroup,
+)
+from siui.components.button import (
+    SiLongPressButtonRefactor,
 )
 from siui.components.option_card import SiOptionCardLinear
 from siui.components.page import SiPage
 from siui.components.spinbox.spinbox import SiIntSpinBox
+from siui.components.titled_widget_group import SiTitledWidgetGroup
+from siui.components.widgets import (
+    SiDenseVContainer,
+)
 from siui.core import SiGlobal
 
 from .select_path import SelectPath
@@ -13,17 +24,22 @@ from .set_default_button import SetDefaultButton
 
 
 class DeeplxConfigPage(SiPage):
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, config_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = config
-        self.deeplx_exe_path: str = ""
+        self.config_path = config_path
+        self.deeplx_exe_path: str = self.config["deeplx"]["exe_path"]
         self.init_ui()
+        self.deeplx_exe_path_selector.pathSelected.connect(
+            self.on_deeplx_exe_path_selected
+        )
         self.online_translate_port_set_default.clicked.connect(
             lambda: self.online_translate_port.setValue(1188)
         )
         self.api_set_default.clicked.connect(
             lambda: self.api.lineEdit().setText("http://127.0.0.1:1188/translate")
         )
+        self.save.clicked.connect(self.save_config)
 
     def init_ui(self):
         self.setPadding(64)
@@ -47,7 +63,6 @@ class DeeplxConfigPage(SiPage):
                 default_path=self.config["deeplx"]["exe_path"],
                 file_filter="Executables (*.exe)",
                 mode="file",
-                on_path_selected=self.on_deeplx_exe_path_selected,
             )
             group.addWidget(self.deeplx_exe_path_selector)
 
@@ -91,6 +106,21 @@ class DeeplxConfigPage(SiPage):
             self.api_linear_attaching.addWidget(self.api)
             group.addWidget(self.api_linear_attaching)
 
+        with self.titled_widgets_group as group:
+            # 保存配置
+            self.save = SiLongPressButtonRefactor(self)
+            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
+            self.save.setIconSize(QSize(32, 32))
+            self.save.setText("\t保存 DeepLX 配置")
+            self.save.setFont(QFont("Microsoft YaHei", 16))
+            self.save.setToolTip("长按以确认")
+            self.save.resize(420, 64)
+            # 查看更多容器
+            self.save_container = SiDenseVContainer(self)
+            self.save_container.setAlignment(Qt.AlignCenter)
+            self.save_container.addWidget(self.save)
+
+            group.addWidget(self.save_container)
         # 添加页脚的空白以增加美观性
         self.titled_widgets_group.addPlaceholder(64)
 
@@ -100,3 +130,45 @@ class DeeplxConfigPage(SiPage):
     def on_deeplx_exe_path_selected(self, path):
         self.deeplx_exe_path = path
         print(f"Deeplx exe path selected: {self.deeplx_exe_path}")
+
+    def save_config(self):
+        def get_value_from_gui():
+            self.config["deeplx"]["exe_path"] = self.deeplx_exe_path
+            self.config["deeplx"]["online_translate_port"] = str(
+                self.online_translate_port.value()
+            )
+            self.config["deeplx"]["api"] = self.api.lineEdit().text()
+
+        def print_config():
+            from rich.console import Console
+            from rich.table import Table
+
+            from util.edit_config_gui.clearly_type import clearly_type
+
+            console = Console()
+            table = Table(title="保存 DeepLX 参数配置")
+            table.add_column("属性名", style="cyan")
+            table.add_column("类型", style="magenta")
+            table.add_column("值", style="green")
+            table.add_row(
+                "exe_path",
+                clearly_type(self.config["deeplx"]["exe_path"]),
+                str(self.config["deeplx"]["exe_path"]),
+            )
+            table.add_row(
+                "online_translate_port",
+                clearly_type(self.config["deeplx"]["online_translate_port"]),
+                str(self.config["deeplx"]["online_translate_port"]),
+            )
+            table.add_row(
+                "api",
+                clearly_type(self.config["deeplx"]["api"]),
+                str(self.config["deeplx"]["api"]),
+            )
+            console.print(table)
+
+        get_value_from_gui()
+        print_config()
+        from util.edit_config_gui.write_toml import write_toml
+
+        write_toml(self.config, self.config_path)
