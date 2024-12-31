@@ -9,6 +9,7 @@ from siui.core import SiGlobal
 from siui.templates.application.application import SiliconApplication
 from tomlkit import parse
 
+from util.edit_config_gui.about_page import AboutPage
 from util.edit_config_gui.client_config_page import ClientConfigPage
 from util.edit_config_gui.deeplx_config_page import DeeplxConfigPage
 from util.edit_config_gui.model_paths_config_page import ModelPathsConfigPage
@@ -27,15 +28,15 @@ class ConfigEditor(SiliconApplication):
 
     def init_ui(self):
         screen_geo = QGuiApplication.primaryScreen().geometry()
-        self.setMinimumSize(880, 360)
-        self.resize(880, 950)
+        self.setMinimumSize(888, 360)
+        self.resize(888, 950)
         self.move(
             (screen_geo.width() - self.width()) // 2,
             (screen_geo.height() - self.height()) // 2,
         )
         self.layerMain().setTitle("配置编辑器")
         self.setWindowTitle("配置编辑器")
-        self.setWindowIcon(QIcon("assets/appicon.ico"))
+        self.setWindowIcon(QIcon("assets/config-icon.ico"))
 
         # 添加页面
         self.layerMain().addPage(
@@ -45,7 +46,7 @@ class ConfigEditor(SiliconApplication):
             side="top",
         )
         self.layerMain().addPage(
-            ClientConfigPage(self.config),
+            ClientConfigPage(self.config, self.config_path),
             icon=SiGlobal.siui.iconpack.get("ic_fluent_person_filled"),
             hint="客户端配置",
             side="top",
@@ -74,8 +75,14 @@ class ConfigEditor(SiliconApplication):
             hint="Paraformer 语音识别模型参数配置",
             side="top",
         )
+        self.layerMain().addPage(
+            AboutPage(self),
+            icon=SiGlobal.siui.iconpack.get("ic_fluent_info_filled"),
+            hint="关于",
+            side="bottom",
+        )
 
-        self.layerMain().setPage(2)
+        self.layerMain().setPage(0)
 
     def load_config(self):
         with Path(self.config_path).open("r", encoding="utf-8") as f:

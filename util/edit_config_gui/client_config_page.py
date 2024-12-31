@@ -1,9 +1,12 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QFont
 from siui.components import (
+    SiDenseVContainer,
     SiLineEditWithDeletionButton,
     SiTitledWidgetGroup,
 )
 from siui.components.button import (
+    SiLongPressButtonRefactor,
     SiToggleButtonRefactor,
 )
 from siui.components.combobox import SiComboBox
@@ -11,7 +14,9 @@ from siui.components.option_card import SiOptionCardLinear
 from siui.components.page import SiPage
 from siui.components.slider_ import SiSlider
 from siui.components.spinbox.spinbox import SiDoubleSpinBox, SiIntSpinBox
+from siui.components.titled_widget_group import SiTitledWidgetGroup
 from siui.components.widgets import (
+    SiDenseVContainer,
     SiSwitch,
 )
 from siui.core import SiGlobal
@@ -21,11 +26,15 @@ from .set_default_button import SetDefaultButton
 
 
 class ClientConfigPage(SiPage):
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, config_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = config
-        self.vscode_exe_path: str = ""
+        self.config_path = config_path
+        self.vscode_exe_path: str = self.config["client"]["vscode_exe_path"]
         self.init_ui()
+        self.vscode_exe_path_selector.pathSelected.connect(
+            self.on_vscode_exe_path_selected
+        )
         self.addr_set_default.clicked.connect(
             lambda: self.addr.lineEdit().setText("127.0.0.1")
         )
@@ -105,6 +114,7 @@ class ClientConfigPage(SiPage):
                 "ctrl + alt + f"
             )
         )
+        self.save.longPressed.connect(self.save_config)
 
     def init_ui(self):
         self.setPadding(64)
@@ -116,6 +126,20 @@ class ClientConfigPage(SiPage):
         self.titled_widgets_group = SiTitledWidgetGroup(self)
         self.titled_widgets_group.setSpacing(32)
         self.titled_widgets_group.setAdjustWidgetsSize(True)
+
+        # 保存配置按钮
+        with self.titled_widgets_group as group:
+            self.save = SiLongPressButtonRefactor(self)
+            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
+            self.save.setIconSize(QSize(32, 32))
+            self.save.setText("\t保存 客户端 配置")
+            self.save.setFont(QFont("Microsoft YaHei", 16))
+            self.save.setToolTip("长按以确认")
+            self.save.resize(420, 64)
+            self.save_container = SiDenseVContainer(self)
+            self.save_container.setAlignment(Qt.AlignCenter)
+            self.save_container.addWidget(self.save)
+            group.addWidget(self.save_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("通用")
@@ -134,7 +158,6 @@ class ClientConfigPage(SiPage):
             )
             self.addr_linear_attaching.addWidget(self.addr_set_default)
             self.addr_linear_attaching.addWidget(self.addr)
-            group.addWidget(self.addr_linear_attaching)
 
             # 启动后是否自动缩小至托盘
             self.shrink_automatically_to_tray = SiSwitch(self)
@@ -153,7 +176,6 @@ class ClientConfigPage(SiPage):
             self.shrink_automatically_to_tray_linear_attaching.addWidget(
                 self.shrink_automatically_to_tray
             )
-            group.addWidget(self.shrink_automatically_to_tray_linear_attaching)
 
             # 只允许运行一次，禁止多开
             self.only_run_once = SiSwitch(self)
@@ -164,7 +186,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_star_one_quarter_filled")
             )
             self.only_run_once_linear_attaching.addWidget(self.only_run_once)
-            group.addWidget(self.only_run_once_linear_attaching)
 
             # 设置 VSCode 可执行文件位置
             # 用于通过客户端托盘图标右键菜单项 View 子菜单项
@@ -179,7 +200,18 @@ class ClientConfigPage(SiPage):
                 file_filter="Executables (*.exe)",
                 mode="file",
             )
-            group.addWidget(self.vscode_exe_path_selector)
+
+            # 设置项
+            self.general_container = SiDenseVContainer(self)
+            self.general_container.setFixedWidth(700)
+            self.general_container.setAdjustWidgetsSize(True)
+            self.general_container.addWidget(self.addr_linear_attaching)
+            self.general_container.addWidget(
+                self.shrink_automatically_to_tray_linear_attaching
+            )
+            self.general_container.addWidget(self.only_run_once_linear_attaching)
+            self.general_container.addWidget(self.vscode_exe_path_selector)
+            group.addWidget(self.general_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("语音识别")
@@ -204,8 +236,6 @@ class ClientConfigPage(SiPage):
             self.speech_recognition_shortcut_linear_attaching.addWidget(
                 self.speech_recognition_shortcut
             )
-            group.addWidget(self.speech_recognition_shortcut_linear_attaching)
-
             # 只在按下录音快捷键时启用麦克风
             # 建议启用，有些蓝牙耳机录音时无法播放
             # 而且启用后，切换默认麦克风也不用重启客户端
@@ -231,9 +261,6 @@ class ClientConfigPage(SiPage):
             self.only_enable_microphones_when_pressed_record_shortcut_linear_attaching.addWidget(
                 self.only_enable_microphones_when_pressed_record_shortcut
             )
-            group.addWidget(
-                self.only_enable_microphones_when_pressed_record_shortcut_linear_attaching
-            )
 
             # 语音识别服务端口
             self.speech_recognition_port = SiIntSpinBox(self)
@@ -257,8 +284,6 @@ class ClientConfigPage(SiPage):
             self.speech_recognition_port_linear_attaching.addWidget(
                 self.speech_recognition_port
             )
-            group.addWidget(self.speech_recognition_port_linear_attaching)
-
             # 麦克风听写时分段长度：15 秒
             self.mic_seg_duration = SiIntSpinBox(self)
             self.mic_seg_duration.resize(256, 32)
@@ -277,7 +302,6 @@ class ClientConfigPage(SiPage):
                 self.mic_seg_duration_set_default
             )
             self.mic_seg_duration_linear_attaching.addWidget(self.mic_seg_duration)
-            group.addWidget(self.mic_seg_duration_linear_attaching)
 
             # 麦克风听写时分段重叠：2 秒
             self.mic_seg_overlap = SiIntSpinBox(self)
@@ -297,7 +321,6 @@ class ClientConfigPage(SiPage):
                 self.mic_seg_overlap_set_default
             )
             self.mic_seg_overlap_linear_attaching.addWidget(self.mic_seg_overlap)
-            group.addWidget(self.mic_seg_overlap_linear_attaching)
 
             # 转录文件时分段长度：25 秒
             self.file_seg_duration = SiIntSpinBox(self)
@@ -317,7 +340,6 @@ class ClientConfigPage(SiPage):
                 self.file_seg_duration_set_default
             )
             self.file_seg_duration_linear_attaching.addWidget(self.file_seg_duration)
-            group.addWidget(self.file_seg_duration_linear_attaching)
 
             # 转录文件时分段重叠：2 秒
             self.file_seg_overlap = SiIntSpinBox(self)
@@ -337,7 +359,6 @@ class ClientConfigPage(SiPage):
                 self.file_seg_overlap_set_default
             )
             self.file_seg_overlap_linear_attaching.addWidget(self.file_seg_overlap)
-            group.addWidget(self.file_seg_overlap_linear_attaching)
 
             # 长按模式，按下录音，松开停止，像对讲机一样用
             # 改为 False，则关闭长按模式，也就是单击模式
@@ -354,7 +375,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
             )
             self.hold_mode_linear_attaching.addWidget(self.hold_mode)
-            group.addWidget(self.hold_mode_linear_attaching)
 
             # 开始任务时是否播放提示音
             # 需要 ffplay.exe
@@ -369,7 +389,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_music_note_1_filled")
             )
             self.play_start_music_linear_attaching.addWidget(self.play_start_music)
-            group.addWidget(self.play_start_music_linear_attaching)
 
             # 开始任务提示音的文件路径
             self.start_music_path = SiLineEditWithDeletionButton(self)
@@ -389,7 +408,6 @@ class ClientConfigPage(SiPage):
                 self.start_music_path_set_default
             )
             self.start_music_path_linear_attaching.addWidget(self.start_music_path)
-            group.addWidget(self.start_music_path_linear_attaching)
 
             # 开始任务提示音的音量，0 ~ 100 之间
             self.start_music_volume = SiSlider(self)
@@ -405,7 +423,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_music_note_1_filled")
             )
             self.start_music_volume_linear_attaching.addWidget(self.start_music_volume)
-            group.addWidget(self.start_music_volume_linear_attaching)
 
             # 结束任务时是否播放提示音
             # 需要 ffplay.exe
@@ -420,7 +437,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_music_note_1_filled")
             )
             self.play_stop_music_linear_attaching.addWidget(self.play_stop_music)
-            group.addWidget(self.play_stop_music_linear_attaching)
 
             # 结束任务提示音的文件路径
             self.stop_music_path = SiLineEditWithDeletionButton(self)
@@ -440,7 +456,6 @@ class ClientConfigPage(SiPage):
                 self.stop_music_path_set_default
             )
             self.stop_music_path_linear_attaching.addWidget(self.stop_music_path)
-            group.addWidget(self.stop_music_path_linear_attaching)
 
             # 结束任务提示音的音量，0 ~ 100 之间
             self.stop_music_volume = SiSlider(self)
@@ -456,7 +471,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_music_note_1_filled")
             )
             self.stop_music_volume_linear_attaching.addWidget(self.stop_music_volume)
-            group.addWidget(self.stop_music_volume_linear_attaching)
 
             # 录音时是否静音其他音频播放
             self.mute_other_audio = SiSwitch(self)
@@ -469,7 +483,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_speaker_mute_regular")
             )
             self.mute_other_audio_linear_attaching.addWidget(self.mute_other_audio)
-            group.addWidget(self.mute_other_audio_linear_attaching)
 
             # 录音时是否暂停其他音频播放
             self.pause_other_audio = SiSwitch(self)
@@ -484,7 +497,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_pause_regular")
             )
             self.pause_other_audio_linear_attaching.addWidget(self.pause_other_audio)
-            group.addWidget(self.pause_other_audio_linear_attaching)
 
             # 是否启用基于 AHK 的输入光标位置的输入状态提示功能
             self.hint_while_recording_at_edit_position_powered_by_ahk = SiSwitch(self)
@@ -506,9 +518,6 @@ class ClientConfigPage(SiPage):
             self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching.addWidget(
                 self.hint_while_recording_at_edit_position_powered_by_ahk
             )
-            group.addWidget(
-                self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching
-            )
 
             # 是否启用跟随鼠标光标位置的新版输入状态提示功能
             self.hint_while_recording_at_cursor_position = SiSwitch(self)
@@ -526,9 +535,6 @@ class ClientConfigPage(SiPage):
             )
             self.hint_while_recording_at_cursor_position_linear_attaching.addWidget(
                 self.hint_while_recording_at_cursor_position
-            )
-            group.addWidget(
-                self.hint_while_recording_at_cursor_position_linear_attaching
             )
 
             # 监测麦克风是否在使用的方式
@@ -553,7 +559,6 @@ class ClientConfigPage(SiPage):
             self.check_microphone_usage_by_linear_attaching.addWidget(
                 self.check_microphone_usage_by
             )
-            group.addWidget(self.check_microphone_usage_by_linear_attaching)
 
             # 是否阻塞按键事件（让其它程序收不到这个按键消息）
             self.suppress = SiSwitch(self)
@@ -567,9 +572,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
             )
             self.suppress_linear_attaching.addWidget(self.suppress)
-            group.addWidget(self.suppress_linear_attaching)
-
-            self.hold_mode_changed()
 
             # 录音完成，松开按键后，是否自动再按一遍，以恢复 CapsLock 或 Shift 等按键之前的状态
             self.restore_key = SiSwitch(self)
@@ -583,7 +585,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
             )
             self.restore_key_linear_attaching.addWidget(self.restore_key)
-            group.addWidget(self.restore_key_linear_attaching)
 
             # 按下快捷键后，触发语音识别的时间阈值
             self.threshold = SiDoubleSpinBox(self)
@@ -603,7 +604,6 @@ class ClientConfigPage(SiPage):
             )
             self.threshold_linear_attaching.addWidget(self.threshold_set_default)
             self.threshold_linear_attaching.addWidget(self.threshold)
-            group.addWidget(self.threshold_linear_attaching)
 
             # 识别结果要消除的末尾标点
             self.trash_punc = SiLineEditWithDeletionButton(self)
@@ -620,7 +620,6 @@ class ClientConfigPage(SiPage):
             )
             self.trash_punc_linear_attaching.addWidget(self.trash_punc_set_default)
             self.trash_punc_linear_attaching.addWidget(self.trash_punc)
-            group.addWidget(self.trash_punc_linear_attaching)
 
             # 是否启用中文热词替换，中文热词存储在 hot_zh.txt 文件里
             self.hot_zh = SiSwitch(self)
@@ -634,7 +633,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_ruler_regular")
             )
             self.hot_zh_linear_attaching.addWidget(self.hot_zh)
-            group.addWidget(self.hot_zh_linear_attaching)
 
             # 多音字匹配
             self.多音字 = SiSwitch(self)
@@ -648,7 +646,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_ruler_regular")
             )
             self.多音字_linear_attaching.addWidget(self.多音字)
-            group.addWidget(self.多音字_linear_attaching)
 
             # 声调匹配
             self.声调 = SiSwitch(self)
@@ -662,7 +659,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_ruler_regular")
             )
             self.声调_linear_attaching.addWidget(self.声调)
-            group.addWidget(self.声调_linear_attaching)
 
             # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
             self.arabic_year_number = SiSwitch(self)
@@ -678,7 +674,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_ruler_regular")
             )
             self.arabic_year_number_linear_attaching.addWidget(self.arabic_year_number)
-            group.addWidget(self.arabic_year_number_linear_attaching)
 
             # 是否启用英文热词替换，英文热词存储在 hot_en.txt 文件里
             self.hot_en = SiSwitch(self)
@@ -692,7 +687,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_ruler_regular")
             )
             self.hot_en_linear_attaching.addWidget(self.hot_en)
-            group.addWidget(self.hot_en_linear_attaching)
 
             # 是否启用自定义规则替换，自定义规则存储在 hot_rule.txt 文件里
             self.hot_rule = SiSwitch(self)
@@ -706,7 +700,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_ruler_regular")
             )
             self.hot_rule_linear_attaching.addWidget(self.hot_rule)
-            group.addWidget(self.hot_rule_linear_attaching)
 
             # 是否启用关键词日记功能，自定义关键词存储在 keyword.txt 文件里
             self.hot_kwd = SiSwitch(self)
@@ -720,7 +713,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_note_edit_regular")
             )
             self.hot_kwd_linear_attaching.addWidget(self.hot_kwd)
-            group.addWidget(self.hot_kwd_linear_attaching)
 
             # 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
             self.paste = SiSwitch(self)
@@ -734,7 +726,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_clipboard_paste_filled")
             )
             self.paste_linear_attaching.addWidget(self.paste)
-            group.addWidget(self.paste_linear_attaching)
 
             # 模拟粘贴后是否恢复剪贴板
             self.restore_clipboard_after_paste = SiSwitch(self)
@@ -753,8 +744,6 @@ class ClientConfigPage(SiPage):
             self.restore_clipboard_after_paste_linear_attaching.addWidget(
                 self.restore_clipboard_after_paste
             )
-            group.addWidget(self.restore_clipboard_after_paste_linear_attaching)
-            self.paste_changed()
 
             # 是否保存录音文件
             self.save_audio = SiSwitch(self)
@@ -765,7 +754,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_save_regular")
             )
             self.save_audio_linear_attaching.addWidget(self.save_audio)
-            group.addWidget(self.save_audio_linear_attaching)
 
             # 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过 200
             self.audio_name_len = SiIntSpinBox(self)
@@ -786,7 +774,6 @@ class ClientConfigPage(SiPage):
                 self.audio_name_len_set_default
             )
             self.audio_name_len_linear_attaching.addWidget(self.audio_name_len)
-            group.addWidget(self.audio_name_len_linear_attaching)
 
             # 如果用户已安装 ffmpeg，调用 ffmpeg 录音时输出 mp3 格式的音频文件，大大减小文件体积，减少磁盘占用
             self.reduce_audio_files = SiSwitch(self)
@@ -802,8 +789,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_folder_zip_regular")
             )
             self.reduce_audio_files_linear_attaching.addWidget(self.reduce_audio_files)
-            group.addWidget(self.reduce_audio_files_linear_attaching)
-            self.save_audio_changed()
 
             # 是否将记录写入 Markdown 文件
             self.save_markdown = SiSwitch(self)
@@ -814,7 +799,105 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_save_regular")
             )
             self.save_markdown_linear_attaching.addWidget(self.save_markdown)
-            group.addWidget(self.save_markdown_linear_attaching)
+
+            # 设置项
+            self.speech_recognition_container = SiDenseVContainer(self)
+            self.speech_recognition_container.setFixedWidth(700)
+            self.speech_recognition_container.setAdjustWidgetsSize(True)
+            self.speech_recognition_container.addWidget(
+                self.speech_recognition_shortcut_linear_attaching
+            )
+
+            self.speech_recognition_container.addWidget(
+                self.only_enable_microphones_when_pressed_record_shortcut_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.speech_recognition_port_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.mic_seg_duration_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.mic_seg_overlap_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.file_seg_duration_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.file_seg_overlap_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(self.hold_mode_linear_attaching)
+            self.hold_mode_changed()
+            self.speech_recognition_container.addWidget(
+                self.play_start_music_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.start_music_path_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.start_music_volume_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.play_stop_music_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.stop_music_path_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.stop_music_volume_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.mute_other_audio_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.pause_other_audio_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.hint_while_recording_at_cursor_position_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.check_microphone_usage_by_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(self.suppress_linear_attaching)
+            self.speech_recognition_container.addWidget(
+                self.restore_key_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(self.threshold_linear_attaching)
+            self.speech_recognition_container.addWidget(
+                self.trash_punc_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(self.hot_zh_linear_attaching)
+            self.speech_recognition_container.addWidget(self.多音字_linear_attaching)
+            self.speech_recognition_container.addWidget(self.声调_linear_attaching)
+            self.speech_recognition_container.addWidget(
+                self.arabic_year_number_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(self.hot_en_linear_attaching)
+            self.speech_recognition_container.addWidget(self.hot_rule_linear_attaching)
+            self.speech_recognition_container.addWidget(self.hot_kwd_linear_attaching)
+            self.speech_recognition_container.addWidget(self.paste_linear_attaching)
+            self.paste_changed()
+            self.speech_recognition_container.addWidget(
+                self.restore_clipboard_after_paste_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.save_audio_linear_attaching
+            )
+            self.save_audio_changed()
+            self.speech_recognition_container.addWidget(
+                self.audio_name_len_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.reduce_audio_files_linear_attaching
+            )
+
+            self.speech_recognition_container.addWidget(
+                self.save_markdown_linear_attaching
+            )
+            group.addWidget(self.speech_recognition_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("简繁转换")
@@ -825,7 +908,11 @@ class ClientConfigPage(SiPage):
                 self.convert_to_traditional_chinese_main.setChecked(False)
             else:
                 self.convert_to_traditional_chinese_main.setChecked(True)
-            self.convert_to_traditional_chinese_main.adjustSize()
+            # self.convert_to_traditional_chinese_main.adjustSize()
+            self.convert_to_traditional_chinese_main.setFont(
+                QFont("Microsoft YaHei", 16)
+            )
+            self.convert_to_traditional_chinese_main.resize(100, 50)
             self.convert_to_traditional_chinese_main_linear_attaching = (
                 SiOptionCardLinear(self)
             )
@@ -838,9 +925,6 @@ class ClientConfigPage(SiPage):
             self.convert_to_traditional_chinese_main_linear_attaching.addWidget(
                 self.convert_to_traditional_chinese_main
             )
-            group.addWidget(self.convert_to_traditional_chinese_main_linear_attaching)
-            self.convert_to_traditional_chinese_main_changed()
-
             # 是否启用双击 `录音键` 临时转换 `简/繁` 体中文输出的功能
             self.enable_double_click_opposite_state = SiSwitch(self)
             self.enable_double_click_opposite_state.setChecked(
@@ -858,7 +942,19 @@ class ClientConfigPage(SiPage):
             self.enable_double_click_opposite_state_linear_attaching.addWidget(
                 self.enable_double_click_opposite_state
             )
-            group.addWidget(self.enable_double_click_opposite_state_linear_attaching)
+
+            # 设置项
+            self.convert_to_traditional_chinese_container = SiDenseVContainer(self)
+            self.convert_to_traditional_chinese_container.setFixedWidth(700)
+            self.convert_to_traditional_chinese_container.setAdjustWidgetsSize(True)
+            self.convert_to_traditional_chinese_container.addWidget(
+                self.convert_to_traditional_chinese_main_linear_attaching
+            )
+            self.convert_to_traditional_chinese_main_changed()
+            self.convert_to_traditional_chinese_container.addWidget(
+                self.enable_double_click_opposite_state_linear_attaching
+            )
+            group.addWidget(self.convert_to_traditional_chinese_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("离线翻译")
@@ -880,8 +976,6 @@ class ClientConfigPage(SiPage):
             self.use_offline_translate_function_linear_attaching.addWidget(
                 self.use_offline_translate_function
             )
-            group.addWidget(self.use_offline_translate_function_linear_attaching)
-
             # 离线翻译服务端口
             self.offline_translate_port = SiIntSpinBox(self)
             self.offline_translate_port.resize(256, 32)
@@ -904,8 +998,6 @@ class ClientConfigPage(SiPage):
             self.offline_translate_port_linear_attaching.addWidget(
                 self.offline_translate_port
             )
-            group.addWidget(self.offline_translate_port_linear_attaching)
-
             # 控制离线翻译的快捷键，默认是 "left shift"，按住 Left Shift 再按 CapsLock 进行离线翻译
             self.offline_translate_shortcut = SiLineEditWithDeletionButton(self)
             self.offline_translate_shortcut.resize(256, 32)
@@ -927,8 +1019,6 @@ class ClientConfigPage(SiPage):
             self.offline_translate_shortcut_linear_attaching.addWidget(
                 self.offline_translate_shortcut
             )
-            group.addWidget(self.offline_translate_shortcut_linear_attaching)
-
             # 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键
             # 如果未选中任何文字，会将剪贴板的文字翻译为英文并粘贴
             self.offline_translate_and_replace_the_selected_text_shortcut = (
@@ -961,10 +1051,25 @@ class ClientConfigPage(SiPage):
             self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.addWidget(
                 self.offline_translate_and_replace_the_selected_text_shortcut
             )
-            group.addWidget(
-                self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching
+
+            # 设置项
+            self.offline_translate_container = SiDenseVContainer(self)
+            self.offline_translate_container.setFixedWidth(700)
+            self.offline_translate_container.setAdjustWidgetsSize(True)
+            self.offline_translate_container.addWidget(
+                self.use_offline_translate_function_linear_attaching
             )
             self.use_offline_translate_function_changed()
+            self.offline_translate_container.addWidget(
+                self.offline_translate_port_linear_attaching
+            )
+            self.offline_translate_container.addWidget(
+                self.offline_translate_shortcut_linear_attaching
+            )
+            self.offline_translate_container.addWidget(
+                self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching
+            )
+            group.addWidget(self.offline_translate_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("在线翻译")
@@ -986,8 +1091,6 @@ class ClientConfigPage(SiPage):
             self.use_online_translate_function_linear_attaching.addWidget(
                 self.use_online_translate_function
             )
-            group.addWidget(self.use_online_translate_function_linear_attaching)
-
             # 控制在线翻译的快捷键，默认是 Right Shift，按住 Right Shift 再按 CapsLock 进行在线翻译
             # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
             # 如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
@@ -1011,8 +1114,6 @@ class ClientConfigPage(SiPage):
             self.online_translate_shortcut_linear_attaching.addWidget(
                 self.online_translate_shortcut
             )
-            group.addWidget(self.online_translate_shortcut_linear_attaching)
-
             # 在线翻译目标语言
             # 常用的 EN JA RU，更多选择参考 https://www.deepl.com/docs-api/translate-text
             self.online_translate_target_languages = SiComboBox(self)
@@ -1055,8 +1156,6 @@ class ClientConfigPage(SiPage):
             self.online_translate_target_languages_linear_attaching.addWidget(
                 self.online_translate_target_languages
             )
-            group.addWidget(self.online_translate_target_languages_linear_attaching)
-
             # 控制在线翻译将光标选中的中文翻译并替换为在线翻译目标语言的快捷键
             # 如果未选中任何文字，会将剪贴板的文字翻译为目标语言并粘贴
             self.online_translate_and_replace_the_selected_text_shortcut = (
@@ -1087,10 +1186,25 @@ class ClientConfigPage(SiPage):
             self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching.addWidget(
                 self.online_translate_and_replace_the_selected_text_shortcut
             )
-            group.addWidget(
-                self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching
+
+            # 设置项
+            self.online_translate_container = SiDenseVContainer(self)
+            self.online_translate_container.setFixedWidth(700)
+            self.online_translate_container.setAdjustWidgetsSize(True)
+            self.online_translate_container.addWidget(
+                self.use_online_translate_function_linear_attaching
             )
             self.use_online_translate_function_changed()
+            self.online_translate_container.addWidget(
+                self.online_translate_shortcut_linear_attaching
+            )
+            self.online_translate_container.addWidget(
+                self.online_translate_target_languages_linear_attaching
+            )
+            self.online_translate_container.addWidget(
+                self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching
+            )
+            group.addWidget(self.online_translate_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("使用 Everything 搜索选中文字")
@@ -1113,9 +1227,6 @@ class ClientConfigPage(SiPage):
             )
             self.use_search_selected_text_with_everything_function_linear_attaching.addWidget(
                 self.use_search_selected_text_with_everything_function
-            )
-            group.addWidget(
-                self.use_search_selected_text_with_everything_function_linear_attaching
             )
 
             # 控制使用 Everything 搜索选中文字的快捷键，默认是 "ctrl + alt + f"
@@ -1144,10 +1255,20 @@ class ClientConfigPage(SiPage):
             self.search_selected_text_with_everything_shortcut_linear_attaching.addWidget(
                 self.search_selected_text_with_everything_shortcut
             )
-            group.addWidget(
-                self.search_selected_text_with_everything_shortcut_linear_attaching
+
+            # 设置项
+            self.search__with_everything_container = SiDenseVContainer(self)
+            self.search__with_everything_container.setFixedWidth(700)
+            self.search__with_everything_container.setAdjustWidgetsSize(True)
+            self.search__with_everything_container.addWidget(
+                self.use_search_selected_text_with_everything_function_linear_attaching
             )
             self.use_search_selected_text_with_everything_function_changed()
+            self.search__with_everything_container.addWidget(
+                self.search_selected_text_with_everything_shortcut_linear_attaching
+            )
+            group.addWidget(self.search__with_everything_container)
+
         # 添加页脚的空白以增加美观性
         self.titled_widgets_group.addPlaceholder(64)
 
@@ -1215,3 +1336,470 @@ class ClientConfigPage(SiPage):
             self.online_translate_shortcut_linear_attaching.hide()
             self.online_translate_target_languages_linear_attaching.hide()
             self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching.hide()
+
+    def save_config(self):
+        def get_value_from_gui():
+            self.config["client"]["addr"] = self.addr.line_edit.text()
+            self.config["client"]["speech_recognition_port"] = str(
+                self.speech_recognition_port.value()
+            )
+            self.config["client"]["offline_translate_port"] = str(
+                self.offline_translate_port.value()
+            )
+            self.config["client"]["speech_recognition_shortcut"] = (
+                self.speech_recognition_shortcut.line_edit.text()
+            )
+            self.config["client"]["use_offline_translate_function"] = (
+                self.use_offline_translate_function.isChecked()
+            )
+            self.config["client"]["offline_translate_shortcut"] = (
+                self.offline_translate_shortcut.line_edit.text()
+            )
+            self.config["client"][
+                "offline_translate_and_replace_the_selected_text_shortcut"
+            ] = self.offline_translate_and_replace_the_selected_text_shortcut.line_edit.text()
+            self.config["client"]["use_online_translate_function"] = (
+                self.use_online_translate_function.isChecked()
+            )
+            self.config["client"]["online_translate_shortcut"] = (
+                self.online_translate_shortcut.line_edit.text()
+            )
+            self.config["client"]["online_translate_target_languages"] = (
+                self.online_translate_target_languages.value_label.text()
+            )
+            self.config["client"][
+                "online_translate_and_replace_the_selected_text_shortcut"
+            ] = self.online_translate_and_replace_the_selected_text_shortcut.line_edit.text()
+            self.config["client"][
+                "use_search_selected_text_with_everything_function"
+            ] = self.use_search_selected_text_with_everything_function.isChecked()
+            self.config["client"]["search_selected_text_with_everything_shortcut"] = (
+                self.search_selected_text_with_everything_shortcut.line_edit.text()
+            )
+            self.config["client"][
+                "use_search_selected_text_with_everything_function"
+            ] = self.use_search_selected_text_with_everything_function.isChecked()
+            self.config["client"]["search_selected_text_with_everything_shortcut"] = (
+                self.search_selected_text_with_everything_shortcut.line_edit.text()
+            )
+            self.config["client"]["hold_mode"] = self.hold_mode.isChecked()
+            self.config["client"]["suppress"] = self.suppress.isChecked()
+            self.config["client"]["restore_key"] = self.restore_key.isChecked()
+            self.config["client"]["threshold"] = self.threshold.value()
+            self.config["client"]["paste"] = self.paste.isChecked()
+            self.config["client"]["restore_clipboard_after_paste"] = (
+                self.restore_clipboard_after_paste.isChecked()
+            )
+            self.config["client"]["save_audio"] = self.save_audio.isChecked()
+            self.config["client"]["save_markdown"] = self.save_markdown.isChecked()
+            self.config["client"]["audio_name_len"] = self.audio_name_len.value()
+            self.config["client"]["reduce_audio_files"] = (
+                self.reduce_audio_files.isChecked()
+            )
+            self.config["client"]["trash_punc"] = self.trash_punc.line_edit.text()
+            self.config["client"]["hot_zh"] = self.hot_zh.isChecked()
+            self.config["client"]["多音字"] = self.多音字.isChecked()
+            self.config["client"]["声调"] = self.声调.isChecked()
+            self.config["client"]["hot_en"] = self.hot_en.isChecked()
+            self.config["client"]["hot_rule"] = self.hot_rule.isChecked()
+            self.config["client"]["hot_kwd"] = self.hot_kwd.isChecked()
+            self.config["client"]["mic_seg_duration"] = self.mic_seg_duration.value()
+            self.config["client"]["mic_seg_overlap"] = self.mic_seg_overlap.value()
+            self.config["client"]["file_seg_duration"] = self.file_seg_duration.value()
+            self.config["client"]["file_seg_overlap"] = self.file_seg_overlap.value()
+            self.config["client"]["mute_other_audio"] = (
+                self.mute_other_audio.isChecked()
+            )
+            self.config["client"]["pause_other_audio"] = (
+                self.pause_other_audio.isChecked()
+            )
+            self.config["client"]["arabic_year_number"] = (
+                self.arabic_year_number.isChecked()
+            )
+            self.config["client"]["shrink_automatically_to_tray"] = (
+                self.shrink_automatically_to_tray.isChecked()
+            )
+            self.config["client"]["only_run_once"] = self.only_run_once.isChecked()
+            self.config["client"][
+                "only_enable_microphones_when_pressed_record_shortcut"
+            ] = self.only_enable_microphones_when_pressed_record_shortcut.isChecked()
+            self.config["client"]["vscode_exe_path"] = self.vscode_exe_path
+            self.config["client"]["play_start_music"] = (
+                self.play_start_music.isChecked()
+            )
+            self.config["client"]["start_music_path"] = (
+                self.start_music_path.line_edit.text()
+            )
+            self.config["client"]["start_music_volume"] = str(
+                self.start_music_volume.value()
+            )
+            self.config["client"]["play_stop_music"] = self.play_stop_music.isChecked()
+            self.config["client"]["stop_music_path"] = (
+                self.stop_music_path.line_edit.text()
+            )
+            self.config["client"]["stop_music_volume"] = str(
+                self.stop_music_volume.value()
+            )
+            self.config["client"][
+                "hint_while_recording_at_edit_position_powered_by_ahk"
+            ] = self.hint_while_recording_at_cursor_position.isChecked()
+            self.config["client"]["hint_while_recording_at_cursor_position"] = (
+                self.hint_while_recording_at_cursor_position.isChecked()
+            )
+            self.config["client"]["check_microphone_usage_by"] = (
+                self.check_microphone_usage_by.value_label.text()
+            )
+            self.config["client"]["enable_double_click_opposite_state"] = (
+                self.enable_double_click_opposite_state.isChecked()
+            )
+            self.config["client"]["convert_to_traditional_chinese_main"] = (
+                "繁" if self.convert_to_traditional_chinese_main.isChecked() else "简"
+            )
+
+        def print_config():
+            from rich.console import Console
+            from rich.table import Table
+
+            from util.edit_config_gui.clearly_type import clearly_type
+
+            console = Console()
+            table = Table(title="保存 Paraformer 语音识别模型参数配置")
+            table.add_column("属性名", style="cyan")
+            table.add_column("类型", style="magenta")
+            table.add_column("值", style="green")
+            table.add_row(
+                "addr",
+                clearly_type(self.config["client"]["addr"]),
+                str(self.config["client"]["addr"]),
+            )
+            table.add_row(
+                "speech_recognition_port",
+                clearly_type(self.config["client"]["speech_recognition_port"]),
+                str(self.config["client"]["speech_recognition_port"]),
+            )
+            table.add_row(
+                "offline_translate_port",
+                clearly_type(self.config["client"]["offline_translate_port"]),
+                str(self.config["client"]["offline_translate_port"]),
+            )
+            table.add_row(
+                "speech_recognition_shortcut",
+                clearly_type(self.config["client"]["speech_recognition_shortcut"]),
+                str(self.config["client"]["speech_recognition_shortcut"]),
+            )
+            table.add_row(
+                "use_offline_translate_function",
+                clearly_type(self.config["client"]["use_offline_translate_function"]),
+                str(self.config["client"]["use_offline_translate_function"]),
+            )
+            table.add_row(
+                "offline_translate_shortcut",
+                clearly_type(self.config["client"]["offline_translate_shortcut"]),
+                str(self.config["client"]["offline_translate_shortcut"]),
+            )
+            table.add_row(
+                "offline_translate_and_replace_the_selected_text_shortcut",
+                clearly_type(
+                    self.config["client"][
+                        "offline_translate_and_replace_the_selected_text_shortcut"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "offline_translate_and_replace_the_selected_text_shortcut"
+                    ]
+                ),
+            )
+            table.add_row(
+                "use_online_translate_function",
+                clearly_type(self.config["client"]["use_online_translate_function"]),
+                str(self.config["client"]["use_online_translate_function"]),
+            )
+            table.add_row(
+                "online_translate_shortcut",
+                clearly_type(self.config["client"]["online_translate_shortcut"]),
+                str(self.config["client"]["online_translate_shortcut"]),
+            )
+            table.add_row(
+                "online_translate_target_languages",
+                clearly_type(
+                    self.config["client"]["online_translate_target_languages"]
+                ),
+                str(self.config["client"]["online_translate_target_languages"]),
+            )
+            table.add_row(
+                "online_translate_and_replace_the_selected_text_shortcut",
+                clearly_type(
+                    self.config["client"][
+                        "online_translate_and_replace_the_selected_text_shortcut"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "online_translate_and_replace_the_selected_text_shortcut"
+                    ]
+                ),
+            )
+            table.add_row(
+                "use_search_selected_text_with_everything_function",
+                clearly_type(
+                    self.config["client"][
+                        "use_search_selected_text_with_everything_function"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "use_search_selected_text_with_everything_function"
+                    ]
+                ),
+            )
+            table.add_row(
+                "search_selected_text_with_everything_shortcut",
+                clearly_type(
+                    self.config["client"][
+                        "search_selected_text_with_everything_shortcut"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "search_selected_text_with_everything_shortcut"
+                    ]
+                ),
+            )
+            table.add_row(
+                "hold_mode",
+                clearly_type(self.config["client"]["hold_mode"]),
+                str(self.config["client"]["hold_mode"]),
+            )
+            table.add_row(
+                "suppress",
+                clearly_type(self.config["client"]["suppress"]),
+                str(self.config["client"]["suppress"]),
+            )
+            table.add_row(
+                "restore_key",
+                clearly_type(self.config["client"]["restore_key"]),
+                str(self.config["client"]["restore_key"]),
+            )
+            table.add_row(
+                "threshold",
+                clearly_type(self.config["client"]["threshold"]),
+                str(self.config["client"]["threshold"]),
+            )
+            table.add_row(
+                "paste",
+                clearly_type(self.config["client"]["paste"]),
+                str(self.config["client"]["paste"]),
+            )
+            table.add_row(
+                "restore_clipboard_after_paste",
+                clearly_type(self.config["client"]["restore_clipboard_after_paste"]),
+                str(self.config["client"]["restore_clipboard_after_paste"]),
+            )
+            table.add_row(
+                "save_audio",
+                clearly_type(self.config["client"]["save_audio"]),
+                str(self.config["client"]["save_audio"]),
+            )
+            table.add_row(
+                "save_markdown",
+                clearly_type(self.config["client"]["save_markdown"]),
+                str(self.config["client"]["save_markdown"]),
+            )
+            table.add_row(
+                "audio_name_len",
+                clearly_type(self.config["client"]["audio_name_len"]),
+                str(self.config["client"]["audio_name_len"]),
+            )
+            table.add_row(
+                "reduce_audio_files",
+                clearly_type(self.config["client"]["reduce_audio_files"]),
+                str(self.config["client"]["reduce_audio_files"]),
+            )
+            table.add_row(
+                "trash_punc",
+                clearly_type(self.config["client"]["trash_punc"]),
+                str(self.config["client"]["trash_punc"]),
+            )
+            table.add_row(
+                "hot_zh",
+                clearly_type(self.config["client"]["hot_zh"]),
+                str(self.config["client"]["hot_zh"]),
+            )
+            table.add_row(
+                "多音字",
+                clearly_type(self.config["client"]["多音字"]),
+                str(self.config["client"]["多音字"]),
+            )
+            table.add_row(
+                "声调",
+                clearly_type(self.config["client"]["声调"]),
+                str(self.config["client"]["声调"]),
+            )
+            table.add_row(
+                "hot_en",
+                clearly_type(self.config["client"]["hot_en"]),
+                str(self.config["client"]["hot_en"]),
+            )
+            table.add_row(
+                "hot_rule",
+                clearly_type(self.config["client"]["hot_rule"]),
+                str(self.config["client"]["hot_rule"]),
+            )
+            table.add_row(
+                "hot_kwd",
+                clearly_type(self.config["client"]["hot_kwd"]),
+                str(self.config["client"]["hot_kwd"]),
+            )
+            table.add_row(
+                "mic_seg_duration",
+                clearly_type(self.config["client"]["mic_seg_duration"]),
+                str(self.config["client"]["mic_seg_duration"]),
+            )
+            table.add_row(
+                "mic_seg_overlap",
+                clearly_type(self.config["client"]["mic_seg_overlap"]),
+                str(self.config["client"]["mic_seg_overlap"]),
+            )
+            table.add_row(
+                "file_seg_duration",
+                clearly_type(self.config["client"]["file_seg_duration"]),
+                str(self.config["client"]["file_seg_duration"]),
+            )
+            table.add_row(
+                "file_seg_overlap",
+                clearly_type(self.config["client"]["file_seg_overlap"]),
+                str(self.config["client"]["file_seg_overlap"]),
+            )
+            table.add_row(
+                "mute_other_audio",
+                clearly_type(self.config["client"]["mute_other_audio"]),
+                str(self.config["client"]["mute_other_audio"]),
+            )
+            table.add_row(
+                "pause_other_audio",
+                clearly_type(self.config["client"]["pause_other_audio"]),
+                str(self.config["client"]["pause_other_audio"]),
+            )
+            table.add_row(
+                "arabic_year_number",
+                clearly_type(self.config["client"]["arabic_year_number"]),
+                str(self.config["client"]["arabic_year_number"]),
+            )
+            table.add_row(
+                "shrink_automatically_to_tray",
+                clearly_type(self.config["client"]["shrink_automatically_to_tray"]),
+                str(self.config["client"]["shrink_automatically_to_tray"]),
+            )
+            table.add_row(
+                "only_run_once",
+                clearly_type(self.config["client"]["only_run_once"]),
+                str(self.config["client"]["only_run_once"]),
+            )
+            table.add_row(
+                "only_enable_microphones_when_pressed_record_shortcut",
+                clearly_type(
+                    self.config["client"][
+                        "only_enable_microphones_when_pressed_record_shortcut"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "only_enable_microphones_when_pressed_record_shortcut"
+                    ]
+                ),
+            )
+            table.add_row(
+                "vscode_exe_path",
+                clearly_type(self.config["client"]["vscode_exe_path"]),
+                str(self.config["client"]["vscode_exe_path"]),
+            )
+            table.add_row(
+                "play_start_music",
+                clearly_type(self.config["client"]["play_start_music"]),
+                str(self.config["client"]["play_start_music"]),
+            )
+            table.add_row(
+                "start_music_path",
+                clearly_type(self.config["client"]["start_music_path"]),
+                str(self.config["client"]["start_music_path"]),
+            )
+            table.add_row(
+                "start_music_volume",
+                clearly_type(self.config["client"]["start_music_volume"]),
+                str(self.config["client"]["start_music_volume"]),
+            )
+            table.add_row(
+                "play_stop_music",
+                clearly_type(self.config["client"]["play_stop_music"]),
+                str(self.config["client"]["play_stop_music"]),
+            )
+            table.add_row(
+                "stop_music_path",
+                clearly_type(self.config["client"]["stop_music_path"]),
+                str(self.config["client"]["stop_music_path"]),
+            )
+            table.add_row(
+                "stop_music_volume",
+                clearly_type(self.config["client"]["stop_music_volume"]),
+                str(self.config["client"]["stop_music_volume"]),
+            )
+            table.add_row(
+                "hint_while_recording_at_edit_position_powered_by_ahk",
+                clearly_type(
+                    self.config["client"][
+                        "hint_while_recording_at_edit_position_powered_by_ahk"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "hint_while_recording_at_edit_position_powered_by_ahk"
+                    ]
+                ),
+            )
+            table.add_row(
+                "hint_while_recording_at_cursor_position",
+                clearly_type(
+                    self.config["client"]["hint_while_recording_at_cursor_position"]
+                ),
+                str(self.config["client"]["hint_while_recording_at_cursor_position"]),
+            )
+            table.add_row(
+                "check_microphone_usage_by",
+                clearly_type(self.config["client"]["check_microphone_usage_by"]),
+                str(self.config["client"]["check_microphone_usage_by"]),
+            )
+            table.add_row(
+                "enable_double_click_opposite_state",
+                clearly_type(
+                    self.config["client"]["enable_double_click_opposite_state"]
+                ),
+                str(self.config["client"]["enable_double_click_opposite_state"]),
+            )
+            table.add_row(
+                "convert_to_traditional_chinese_main",
+                clearly_type(
+                    self.config["client"]["convert_to_traditional_chinese_main"]
+                ),
+                str(self.config["client"]["convert_to_traditional_chinese_main"]),
+            )
+            console.print(table)
+
+        from siui.core import SiGlobal
+
+        from util.edit_config_gui.write_toml import write_toml
+
+        try:
+            get_value_from_gui()
+            print_config()
+            write_toml(self.config, self.config_path)
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                "保存客户端配置成功！\n手动重启客户端以加载新配置。",
+                msg_type=1,
+                fold_after=2000,
+            )
+        except Exception as e:
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                f"保存客户端配置失败！\n错误信息：{e}",
+                msg_type=4,
+            )

@@ -45,7 +45,7 @@ class ServerConfigPage(SiPage):
         self.offline_translate_port_set_default.clicked.connect(
             lambda: self.offline_translate_port.setValue(6017)
         )
-        self.save.clicked.connect(self.save_config)
+        self.save.longPressed.connect(self.save_config)
 
     def init_ui(self):
         self.setPadding(64)
@@ -57,6 +57,20 @@ class ServerConfigPage(SiPage):
         self.titled_widgets_group = SiTitledWidgetGroup(self)
         self.titled_widgets_group.setSpacing(32)
         self.titled_widgets_group.setAdjustWidgetsSize(True)
+
+        # 保存配置按钮
+        with self.titled_widgets_group as group:
+            self.save = SiLongPressButtonRefactor(self)
+            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
+            self.save.setIconSize(QSize(32, 32))
+            self.save.setText("\t保存 服务端 配置")
+            self.save.setFont(QFont("Microsoft YaHei", 16))
+            self.save.setToolTip("长按以确认")
+            self.save.resize(420, 64)
+            self.save_container = SiDenseVContainer(self)
+            self.save_container.setAlignment(Qt.AlignCenter)
+            self.save_container.addWidget(self.save)
+            group.addWidget(self.save_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("通用")
@@ -75,8 +89,6 @@ class ServerConfigPage(SiPage):
             )
             self.addr_linear_attaching.addWidget(self.addr_set_default)
             self.addr_linear_attaching.addWidget(self.addr)
-            group.addWidget(self.addr_linear_attaching)
-
             # 启动后是否自动缩小至托盘
             self.shrink_automatically_to_tray = SiSwitch(self)
             self.shrink_automatically_to_tray.setChecked(
@@ -94,8 +106,6 @@ class ServerConfigPage(SiPage):
             self.shrink_automatically_to_tray_linear_attaching.addWidget(
                 self.shrink_automatically_to_tray
             )
-            group.addWidget(self.shrink_automatically_to_tray_linear_attaching)
-
             # 只允许运行一次，禁止多开
             self.only_run_once = SiSwitch(self)
             self.only_run_once.setChecked(self.config["server"]["only_run_once"])
@@ -105,8 +115,6 @@ class ServerConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_star_one_quarter_filled")
             )
             self.only_run_once_linear_attaching.addWidget(self.only_run_once)
-            group.addWidget(self.only_run_once_linear_attaching)
-
             # 启动服务端时同时启动客户端
             self.in_the_meantime_start_the_client = SiSwitch(self)
             self.in_the_meantime_start_the_client.setChecked(
@@ -142,8 +150,21 @@ class ServerConfigPage(SiPage):
             self.in_the_meantime_start_the_client_linear_attaching.addWidget(
                 self.in_the_meantime_start_the_client_and_run_as_admin
             )
+
+            # 设置项
+            self.general_container = SiDenseVContainer(self)
+            self.general_container.setFixedWidth(700)
+            self.general_container.setAdjustWidgetsSize(True)
+            self.general_container.addWidget(self.addr_linear_attaching)
+            self.general_container.addWidget(
+                self.shrink_automatically_to_tray_linear_attaching
+            )
+            self.general_container.addWidget(self.only_run_once_linear_attaching)
             self.in_the_meantime_start_the_client_changed()
-            group.addWidget(self.in_the_meantime_start_the_client_linear_attaching)
+            self.general_container.addWidget(
+                self.in_the_meantime_start_the_client_linear_attaching
+            )
+            group.addWidget(self.general_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("语音识别")
@@ -164,7 +185,6 @@ class ServerConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_brain_circuit_regular")
             )
             self.model_linear_attaching.addWidget(self.model)
-            group.addWidget(self.model_linear_attaching)
 
             # 语音识别服务端口
             self.speech_recognition_port = SiIntSpinBox(self)
@@ -188,7 +208,6 @@ class ServerConfigPage(SiPage):
             self.speech_recognition_port_linear_attaching.addWidget(
                 self.speech_recognition_port
             )
-            group.addWidget(self.speech_recognition_port_linear_attaching)
 
             # 是否将中文数字转为阿拉伯数字
             self.format_num = SiSwitch(self)
@@ -199,7 +218,6 @@ class ServerConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_settings_light")
             )
             self.format_num_linear_attaching.addWidget(self.format_num)
-            group.addWidget(self.format_num_linear_attaching)
 
             # 使用 'Paraformer' 模型时，输出时是否启用标点符号引擎
             self.format_punc = SiSwitch(self)
@@ -211,7 +229,6 @@ class ServerConfigPage(SiPage):
             )
             self.format_punc_linear_attaching.addWidget(self.format_punc)
             self.model_changed()
-            group.addWidget(self.format_punc_linear_attaching)
 
             # 是否调整中英之间的空格
             self.format_spell = SiSwitch(self)
@@ -222,7 +239,25 @@ class ServerConfigPage(SiPage):
                 SiGlobal.siui.iconpack.get("ic_fluent_settings_light")
             )
             self.format_spell_linear_attaching.addWidget(self.format_spell)
-            group.addWidget(self.format_spell_linear_attaching)
+
+            # 设置项
+            self.speech_recognition_container = SiDenseVContainer(self)
+            self.speech_recognition_container.setFixedWidth(700)
+            self.speech_recognition_container.setAdjustWidgetsSize(True)
+            self.speech_recognition_container.addWidget(self.model_linear_attaching)
+            self.speech_recognition_container.addWidget(
+                self.speech_recognition_port_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.format_num_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.format_punc_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.format_spell_linear_attaching
+            )
+            group.addWidget(self.speech_recognition_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("翻译")
@@ -243,8 +278,6 @@ class ServerConfigPage(SiPage):
             self.start_online_translate_server_linear_attaching.addWidget(
                 self.start_online_translate_server
             )
-            group.addWidget(self.start_online_translate_server_linear_attaching)
-
             # 是否启用离线翻译服务
             self.start_offline_translate_server = SiSwitch(self)
             self.start_offline_translate_server.setChecked(
@@ -261,9 +294,7 @@ class ServerConfigPage(SiPage):
             )
             self.start_offline_translate_server_linear_attaching.addWidget(
                 self.start_offline_translate_server
-            )
-            group.addWidget(self.start_offline_translate_server_linear_attaching)
-            # # 离线翻译服务端口
+            )  # # 离线翻译服务端口
             self.offline_translate_port = SiIntSpinBox(self)
             self.offline_translate_port.resize(256, 32)
             self.offline_translate_port.setMinimum(1024)
@@ -285,25 +316,23 @@ class ServerConfigPage(SiPage):
             self.offline_translate_port_linear_attaching.addWidget(
                 self.offline_translate_port
             )
+            # 设置项
+            self.translation_container = SiDenseVContainer(self)
+            self.translation_container.setFixedWidth(700)
+            self.translation_container.setAdjustWidgetsSize(True)
+            self.translation_container.addWidget(
+                self.start_online_translate_server_linear_attaching
+            )
+            self.translation_container.addWidget(
+                self.start_offline_translate_server_linear_attaching
+            )
             self.start_offline_translate_server_changed()
-            group.addWidget(self.offline_translate_port_linear_attaching)
+            self.translation_container.addWidget(
+                self.offline_translate_port_linear_attaching
+            )
+            group.addWidget(self.translation_container)
 
-        with self.titled_widgets_group as group:
-            # 保存配置
-            self.save = SiLongPressButtonRefactor(self)
-            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
-            self.save.setIconSize(QSize(32, 32))
-            self.save.setText("\t保存 服务端 配置")
-            self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
-            self.save.resize(420, 64)
-            # 查看更多容器
-            self.save_container = SiDenseVContainer(self)
-            self.save_container.setAlignment(Qt.AlignCenter)
-            self.save_container.addWidget(self.save)
-
-            group.addWidget(self.save_container)
-
+        # 保存按钮
         # 添加页脚的空白以增加美观性
         self.titled_widgets_group.addPlaceholder(64)
 
@@ -444,8 +473,21 @@ class ServerConfigPage(SiPage):
             )
             console.print(table)
 
-        get_value_from_gui()
-        print_config()
+        from siui.core import SiGlobal
+
         from util.edit_config_gui.write_toml import write_toml
 
-        write_toml(self.config, self.config_path)
+        try:
+            get_value_from_gui()
+            print_config()
+            write_toml(self.config, self.config_path)
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                "保存服务端配置成功！\n手动重启服务端以加载新配置。",
+                msg_type=1,
+                fold_after=2000,
+            )
+        except Exception as e:
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                f"保存服务端配置失败！\n错误信息：{e}",
+                msg_type=4,
+            )

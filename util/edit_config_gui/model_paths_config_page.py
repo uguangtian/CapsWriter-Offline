@@ -55,7 +55,7 @@ class ModelPathsConfigPage(SiPage):
         self.opus_mt_dir_path_selector.pathSelected.connect(
             self.on_opus_mt_dir_path_selected
         )
-        self.save.clicked.connect(self.save_config)
+        self.save.longPressed.connect(self.save_config)
 
     def init_ui(self):
         self.setPadding(64)
@@ -67,6 +67,20 @@ class ModelPathsConfigPage(SiPage):
         self.titled_widgets_group = SiTitledWidgetGroup(self)
         self.titled_widgets_group.setSpacing(32)
         self.titled_widgets_group.setAdjustWidgetsSize(True)
+
+        # 保存配置按钮
+        with self.titled_widgets_group as group:
+            self.save = SiLongPressButtonRefactor(self)
+            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
+            self.save.setIconSize(QSize(32, 32))
+            self.save.setText("\t保存 模型路径 配置")
+            self.save.setFont(QFont("Microsoft YaHei", 16))
+            self.save.setToolTip("长按以确认")
+            self.save.resize(420, 64)
+            self.save_container = SiDenseVContainer(self)
+            self.save_container.setAlignment(Qt.AlignCenter)
+            self.save_container.addWidget(self.save)
+            group.addWidget(self.save_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("通用")
@@ -80,7 +94,11 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="",
                 mode="directory",
             )
-            group.addWidget(self.model_dir_path_selector)
+            self.general_container = SiDenseVContainer(self)
+            self.general_container.setFixedWidth(700)
+            self.general_container.setAdjustWidgetsSize(True)
+            self.general_container.addWidget(self.model_dir_path_selector)
+            group.addWidget(self.general_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("SenseVoice 语音模型")
@@ -94,7 +112,6 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="*.onnx",
                 mode="file",
             )
-            group.addWidget(self.sensevoice_path_selector)
 
             # SenseVoice tokens 路径
             self.sensevoice_tokens_path_selector = SelectPath(
@@ -105,7 +122,12 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="*.txt",
                 mode="file",
             )
-            group.addWidget(self.sensevoice_tokens_path_selector)
+            self.sensevoice_container = SiDenseVContainer(self)
+            self.sensevoice_container.setFixedWidth(700)
+            self.sensevoice_container.setAdjustWidgetsSize(True)
+            self.sensevoice_container.addWidget(self.sensevoice_path_selector)
+            self.sensevoice_container.addWidget(self.sensevoice_tokens_path_selector)
+            group.addWidget(self.sensevoice_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("Paraformer 语音模型")
@@ -119,7 +141,6 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="*.onnx",
                 mode="file",
             )
-            group.addWidget(self.paraformer_path_selector)
 
             # Paraformer tokens 路径
             self.paraformer_tokens_path_selector = SelectPath(
@@ -130,7 +151,6 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="*.txt",
                 mode="file",
             )
-            group.addWidget(self.paraformer_tokens_path_selector)
 
             # 标点模型目录
             self.punc_model_dir_path_selector = SelectPath(
@@ -141,7 +161,13 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="",
                 mode="directory",
             )
-            group.addWidget(self.punc_model_dir_path_selector)
+            self.paraformer_container = SiDenseVContainer(self)
+            self.paraformer_container.setFixedWidth(700)
+            self.paraformer_container.setAdjustWidgetsSize(True)
+            self.paraformer_container.addWidget(self.paraformer_path_selector)
+            self.paraformer_container.addWidget(self.paraformer_tokens_path_selector)
+            self.paraformer_container.addWidget(self.punc_model_dir_path_selector)
+            group.addWidget(self.paraformer_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("Helsinki NLP--opus-mt-zh-en 离线翻译模型")
@@ -155,23 +181,11 @@ class ModelPathsConfigPage(SiPage):
                 file_filter="",
                 mode="directory",
             )
-            group.addWidget(self.opus_mt_dir_path_selector)
-
-        with self.titled_widgets_group as group:
-            # 保存配置
-            self.save = SiLongPressButtonRefactor(self)
-            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
-            self.save.setIconSize(QSize(32, 32))
-            self.save.setText("\t保存 模型路径配置")
-            self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
-            self.save.resize(420, 64)
-            # 查看更多容器
-            self.save_container = SiDenseVContainer(self)
-            self.save_container.setAlignment(Qt.AlignCenter)
-            self.save_container.addWidget(self.save)
-
-            group.addWidget(self.save_container)
+            self.opus_container = SiDenseVContainer(self)
+            self.opus_container.setFixedWidth(700)
+            self.opus_container.setAdjustWidgetsSize(True)
+            self.opus_container.addWidget(self.opus_mt_dir_path_selector)
+            group.addWidget(self.opus_container)
 
         # 添加页脚的空白以增加美观性
         self.titled_widgets_group.addPlaceholder(64)
@@ -269,8 +283,21 @@ class ModelPathsConfigPage(SiPage):
             )
             console.print(table)
 
-        get_value_from_gui()
-        print_config()
+        from siui.core import SiGlobal
+
         from util.edit_config_gui.write_toml import write_toml
 
-        write_toml(self.config, self.config_path)
+        try:
+            get_value_from_gui()
+            print_config()
+            write_toml(self.config, self.config_path)
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                "保存 模型路径 配置成功！\n手动重启服务端以加载新配置。",
+                msg_type=1,
+                fold_after=2000,
+            )
+        except Exception as e:
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                f"保存 模型路径 配置失败！\n错误信息：{e}",
+                msg_type=4,
+            )

@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
 from siui.components import (
@@ -45,7 +43,7 @@ class SenseVoiceArgsConfigPage(SiPage):
         self.rule_fars_set_default.clicked.connect(
             lambda: self.rule_fars.lineEdit().setText("")
         )
-        self.save.clicked.connect(self.save_config)
+        self.save.longPressed.connect(self.save_config)
 
     def init_ui(self):
         self.setPadding(64)
@@ -57,6 +55,20 @@ class SenseVoiceArgsConfigPage(SiPage):
         self.titled_widgets_group = SiTitledWidgetGroup(self)
         self.titled_widgets_group.setSpacing(32)
         self.titled_widgets_group.setAdjustWidgetsSize(True)
+
+        # 保存配置按钮
+        with self.titled_widgets_group as group:
+            self.save = SiLongPressButtonRefactor(self)
+            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
+            self.save.setIconSize(QSize(32, 32))
+            self.save.setText("\t保存 SenseVoice 配置")
+            self.save.setFont(QFont("Microsoft YaHei", 16))
+            self.save.setToolTip("长按以确认")
+            self.save.resize(420, 64)
+            self.save_container = SiDenseVContainer(self)
+            self.save_container.setAlignment(Qt.AlignCenter)
+            self.save_container.addWidget(self.save)
+            group.addWidget(self.save_container)
 
         with self.titled_widgets_group as group:
             group.addTitle("通用")
@@ -243,32 +255,21 @@ class SenseVoiceArgsConfigPage(SiPage):
             self.rule_fars_linear_attaching.addWidget(self.rule_fars)
 
             # 设置项
-            group.addWidget(self.num_threads_linear_attaching)
-            group.addWidget(self.sample_rate_linear_attaching)
-            group.addWidget(self.feature_dim_linear_attaching)
-            group.addWidget(self.decoding_method_linear_attaching)
-            group.addWidget(self.debug_linear_attaching)
-            group.addWidget(self.provider_linear_attaching)
-            group.addWidget(self.language_linear_attaching)
-            group.addWidget(self.use_itn_linear_attaching)
-            group.addWidget(self.rule_fsts_linear_attaching)
-            group.addWidget(self.rule_fars_linear_attaching)
+            self.general_container = SiDenseVContainer(self)
+            self.general_container.setFixedWidth(700)
+            self.general_container.setAdjustWidgetsSize(True)
+            self.general_container.addWidget(self.num_threads_linear_attaching)
+            self.general_container.addWidget(self.sample_rate_linear_attaching)
+            self.general_container.addWidget(self.feature_dim_linear_attaching)
+            self.general_container.addWidget(self.decoding_method_linear_attaching)
+            self.general_container.addWidget(self.debug_linear_attaching)
+            self.general_container.addWidget(self.provider_linear_attaching)
+            self.general_container.addWidget(self.language_linear_attaching)
+            self.general_container.addWidget(self.use_itn_linear_attaching)
+            self.general_container.addWidget(self.rule_fsts_linear_attaching)
+            self.general_container.addWidget(self.rule_fars_linear_attaching)
 
-        with self.titled_widgets_group as group:
-            # 保存配置
-            self.save = SiLongPressButtonRefactor(self)
-            self.save.setSvgIcon(SiGlobal.siui.iconpack.get("ic_fluent_save_filled"))
-            self.save.setIconSize(QSize(32, 32))
-            self.save.setText("\t保存 SenseVoice 参数配置")
-            self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
-            self.save.resize(420, 64)
-            # 查看更多容器
-            self.save_container = SiDenseVContainer(self)
-            self.save_container.setAlignment(Qt.AlignCenter)
-            self.save_container.addWidget(self.save)
-
-            group.addWidget(self.save_container)
+            group.addWidget(self.general_container)
         # 添加页脚的空白以增加美观性
         self.titled_widgets_group.addPlaceholder(64)
 
@@ -363,8 +364,21 @@ class SenseVoiceArgsConfigPage(SiPage):
             )
             console.print(table)
 
-        get_value_from_gui()
-        print_config()
+        from siui.core import SiGlobal
+
         from util.edit_config_gui.write_toml import write_toml
 
-        write_toml(self.config, self.config_path)
+        try:
+            get_value_from_gui()
+            print_config()
+            write_toml(self.config, self.config_path)
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                "保存 SenseVoice 配置成功！\n手动重启服务端以加载新配置。",
+                msg_type=1,
+                fold_after=2000,
+            )
+        except Exception as e:
+            SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                f"保存 SenseVoice 配置失败！\n错误信息：{e}",
+                msg_type=4,
+            )
