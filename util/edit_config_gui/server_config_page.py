@@ -20,6 +20,8 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
+from util.value_check import ValueCheck
+
 from .set_default_button import SetDefaultButton
 
 
@@ -46,6 +48,80 @@ class ServerConfigPage(SiPage):
             lambda: self.offline_translate_port.setValue(6017)
         )
         self.save.longPressed.connect(self.save_config)
+        # 数据校验绑定
+        self.addr.lineEdit().editingFinished.connect(self.validate_addr)
+        self.save.clicked.connect(self.validate_addr)
+        self.save.clicked.connect(self.validate_speech_recognition_port)
+        self.save.clicked.connect(self.validate_offline_translate_port)
+
+    def validate_addr(self):
+        ip: str = self.addr.lineEdit().text()
+        is_valid, error = ValueCheck.is_local_listenable_ip(ip)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{ip}[/green]")
+        else:
+            print(f"[red]{ip} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.addr.lineEdit().setText("0.0.0.0")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="服务端监听地址格式错误",
+                    text=f'{ip} - {error}\n已修改为默认值："0.0.0.0"',
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_speech_recognition_port(self):
+        port: str = str(self.speech_recognition_port.value())
+        is_valid, error = ValueCheck.is_local_listenable_port(port)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{port}[/green]")
+        else:
+            print(f"[red]{port} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.speech_recognition_port.setValue(6016)
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="语音识别服务端口格式错误",
+                    text=f'{port} - {error}\n已修改为默认值："6016"',
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_offline_translate_port(self):
+        port: str = str(self.offline_translate_port.value())
+        is_valid, error = ValueCheck.is_local_listenable_port(port)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{port}[/green]")
+        else:
+            print(f"[red]{port} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.offline_translate_port.setValue(6017)
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="离线翻译服务端口格式错误",
+                    text=f'{port} - {error}\n已修改为默认值："6017"',
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
 
     def init_ui(self):
         self.setPadding(64)
@@ -65,7 +141,9 @@ class ServerConfigPage(SiPage):
             self.save.setIconSize(QSize(32, 32))
             self.save.setText("\t保存 服务端 配置")
             self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
+            self.save.setToolTip(
+                "点击按钮进行数据格式检查\n长按以确认将数据写入配置文件\n保存配置后请手动重启 服务端/客户端 以加载新配置生效"
+            )
             self.save.resize(420, 64)
             self.save_container = SiDenseVContainer(self)
             self.save_container.setAlignment(Qt.AlignCenter)

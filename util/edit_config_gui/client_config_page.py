@@ -21,6 +21,8 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
+from util.value_check import ValueCheck
+
 from .select_path import SelectPath
 from .set_default_button import SetDefaultButton
 
@@ -34,6 +36,11 @@ class ClientConfigPage(SiPage):
         self.init_ui()
         self.vscode_exe_path_selector.pathSelected.connect(
             self.on_vscode_exe_path_selected
+        )
+        self.vscode_exe_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_vscode_exe_path_selected(
+                self.vscode_exe_path_selector.path_input.lineEdit().text()
+            )
         )
         self.addr_set_default.clicked.connect(
             lambda: self.addr.lineEdit().setText("127.0.0.1")
@@ -115,6 +122,292 @@ class ClientConfigPage(SiPage):
             )
         )
         self.save.longPressed.connect(self.save_config)
+        # 数据校验绑定
+        self.addr.lineEdit().editingFinished.connect(self.validate_addr)
+        self.save.clicked.connect(self.validate_addr)
+        self.save.clicked.connect(lambda: self.validate_vscode_exe_path(on_save=True))
+        self.speech_recognition_shortcut.lineEdit().editingFinished.connect(
+            self.validate_speech_recognition_shortcut
+        )
+        self.save.clicked.connect(self.validate_speech_recognition_shortcut)
+        self.start_music_path.lineEdit().editingFinished.connect(
+            self.validate_start_music_path
+        )
+        self.save.clicked.connect(self.validate_start_music_path)
+        self.stop_music_path.lineEdit().editingFinished.connect(
+            self.validate_stop_music_path
+        )
+        self.save.clicked.connect(self.validate_stop_music_path)
+        self.offline_translate_shortcut.lineEdit().editingFinished.connect(
+            self.validate_offline_translate_shortcut
+        )
+        self.save.clicked.connect(self.validate_offline_translate_shortcut)
+        self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().editingFinished.connect(
+            self.validate_offline_translate_and_replace_the_selected_text_shortcut
+        )
+        self.save.clicked.connect(
+            self.validate_offline_translate_and_replace_the_selected_text_shortcut
+        )
+        self.online_translate_shortcut.lineEdit().editingFinished.connect(
+            self.validate_online_translate_shortcut
+        )
+        self.save.clicked.connect(self.validate_online_translate_shortcut)
+        self.online_translate_and_replace_the_selected_text_shortcut.lineEdit().editingFinished.connect(
+            self.validate_online_translate_and_replace_the_selected_text_shortcut
+        )
+        self.save.clicked.connect(
+            self.validate_online_translate_and_replace_the_selected_text_shortcut
+        )
+        self.search_selected_text_with_everything_shortcut.lineEdit().editingFinished.connect(
+            self.validate_search_selected_text_with_everything_shortcut
+        )
+        self.save.clicked.connect(
+            self.validate_search_selected_text_with_everything_shortcut
+        )
+
+    def validate_addr(self):
+        ip: str = self.addr.lineEdit().text()
+        is_valid, error = ValueCheck.is_local_listenable_ip(ip)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{ip}[/green]")
+        else:
+            print(f"[red]{ip} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.addr.lineEdit().setText("127.0.0.1")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="要连接的服务端地址格式错误",
+                    text=f'{ip} - {error}\n已修改为默认值："127.0.0.1"',
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_vscode_exe_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.vscode_exe_path:
+                return
+        else:
+            if not self.config_path:
+                self.vscode_exe_path_selector.path_input.lineEdit().setText("")
+                self.vscode_exe_path = ""
+        is_valid, error = ValueCheck.is_file_exist(self.vscode_exe_path, ".exe")
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.vscode_exe_path}[/green]")
+        else:
+            print(f"[red]{self.vscode_exe_path} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.vscode_exe_path_selector.path_input.lineEdit().setText("")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="VSCode 可执行文件位置错误",
+                    text=f"{self.vscode_exe_path} - {error}\n已清空，请重新设置\n或者不使用 🤓 Open Home Folder With VSCode 功能",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_speech_recognition_shortcut(self):
+        shortcut: str = self.speech_recognition_shortcut.lineEdit().text()
+        is_valid, error = ValueCheck.is_hotkey(shortcut)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{shortcut}[/green]")
+        else:
+            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.speech_recognition_shortcut.lineEdit().setText("caps lock")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="语音识别快捷键格式错误",
+                    text=f"{shortcut} - {error}\n已修改为默认值：“caps lock”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_start_music_path(self):
+        path: str = self.start_music_path.lineEdit().text()
+        is_valid, error = ValueCheck.is_file_exist(path, ".mp3")
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{path}[/green]")
+        else:
+            print(f"[red]{path} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.start_music_path.lineEdit().setText("assets/start.mp3")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="启动音乐文件位置错误",
+                    text=f"{path} - {error}\n已修改为默认值：“assets/start.mp3”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_stop_music_path(self):
+        path: str = self.stop_music_path.lineEdit().text()
+        is_valid, error = ValueCheck.is_file_exist(path, ".mp3")
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{path}[/green]")
+        else:
+            print(f"[red]{path} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.stop_music_path.lineEdit().setText("assets/stop.mp3")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="停止音乐文件位置错误",
+                    text=f"{path} - {error}\n已修改为默认值：“assets/stop.mp3”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_offline_translate_shortcut(self):
+        shortcut: str = self.offline_translate_shortcut.lineEdit().text()
+        is_valid, error = ValueCheck.is_hotkey(shortcut)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{shortcut}[/green]")
+        else:
+            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.offline_translate_shortcut.lineEdit().setText("left shift")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="离线翻译快捷键格式错误",
+                    text=f"{shortcut} - {error}\n已修改为默认值：“left shift”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_offline_translate_and_replace_the_selected_text_shortcut(self):
+        shortcut: str = self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().text()
+        is_valid, error = ValueCheck.is_hotkey(shortcut)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{shortcut}[/green]")
+        else:
+            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().setText(
+                "ctrl + alt + p"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="离线翻译并替换选中文本快捷键格式错误",
+                    text=f"{shortcut} - {error}\n已修改为默认值：“ctrl + alt + p”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_online_translate_shortcut(self):
+        shortcut: str = self.online_translate_shortcut.lineEdit().text()
+        is_valid, error = ValueCheck.is_hotkey(shortcut)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{shortcut}[/green]")
+        else:
+            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.online_translate_shortcut.lineEdit().setText("right shift")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="在线翻译快捷键格式错误",
+                    text=f"{shortcut} - {error}\n已修改为默认值：“right shift”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_online_translate_and_replace_the_selected_text_shortcut(self):
+        shortcut: str = self.online_translate_and_replace_the_selected_text_shortcut.lineEdit().text()
+        is_valid, error = ValueCheck.is_hotkey(shortcut)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{shortcut}[/green]")
+        else:
+            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.online_translate_and_replace_the_selected_text_shortcut.lineEdit().setText(
+                "ctrl + alt + ["
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="在线翻译并替换选中文本快捷键格式错误",
+                    text=f"{shortcut} - {error}\n已修改为默认值：“ctrl + alt + [”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_search_selected_text_with_everything_shortcut(self):
+        shortcut: str = (
+            self.search_selected_text_with_everything_shortcut.lineEdit().text()
+        )
+        is_valid, error = ValueCheck.is_hotkey(shortcut)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{shortcut}[/green]")
+        else:
+            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.search_selected_text_with_everything_shortcut.lineEdit().setText(
+                "ctrl + alt + f"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="搜索选中文本与 Everything 快捷键格式错误",
+                    text=f"{shortcut} - {error}\n已修改为默认值：“ctrl + alt + f”",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
 
     def init_ui(self):
         self.setPadding(64)
@@ -134,7 +427,9 @@ class ClientConfigPage(SiPage):
             self.save.setIconSize(QSize(32, 32))
             self.save.setText("\t保存 客户端 配置")
             self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
+            self.save.setToolTip(
+                "点击按钮进行数据格式检查\n长按以确认将数据写入配置文件\n保存配置后请手动重启 服务端/客户端 以加载新配置生效"
+            )
             self.save.resize(420, 64)
             self.save_container = SiDenseVContainer(self)
             self.save_container.setAlignment(Qt.AlignCenter)
@@ -1278,6 +1573,7 @@ class ClientConfigPage(SiPage):
     def on_vscode_exe_path_selected(self, path):
         self.vscode_exe_path = path
         print(f"VSCode exe path selected: {self.vscode_exe_path}")
+        self.validate_vscode_exe_path()
 
     def hint_while_recording_at_cursor_position_changed(self):
         if self.hint_while_recording_at_cursor_position.isChecked():
@@ -1790,6 +2086,7 @@ class ClientConfigPage(SiPage):
         from util.edit_config_gui.write_toml import write_toml
 
         try:
+            self.save.clicked.emit()
             get_value_from_gui()
             print_config()
             write_toml(self.config, self.config_path)

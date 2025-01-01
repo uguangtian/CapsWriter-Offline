@@ -14,6 +14,8 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
+from util.value_check import ValueCheck
+
 from .select_path import SelectPath
 
 
@@ -37,25 +39,395 @@ class ModelPathsConfigPage(SiPage):
         self.model_dir_path_selector.pathSelected.connect(
             self.on_model_dir_path_selected
         )
+        self.model_dir_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_model_dir_path_selected(
+                self.model_dir_path_selector.path_input.lineEdit().text()
+            )
+        )
         self.sensevoice_path_selector.pathSelected.connect(
             self.on_sensevoice_path_selected
+        )
+        self.sensevoice_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_sensevoice_path_selected(
+                self.sensevoice_path_selector.path_input.lineEdit().text()
+            )
         )
         self.sensevoice_tokens_path_selector.pathSelected.connect(
             self.on_sensevoice_tokens_path_selected
         )
+        self.sensevoice_tokens_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_sensevoice_tokens_path_selected(
+                self.sensevoice_tokens_path_selector.path_input.lineEdit().text()
+            )
+        )
         self.paraformer_path_selector.pathSelected.connect(
             self.on_paraformer_path_selected
+        )
+        self.paraformer_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_paraformer_path_selected(
+                self.paraformer_path_selector.path_input.lineEdit().text()
+            )
         )
         self.paraformer_tokens_path_selector.pathSelected.connect(
             self.on_paraformer_tokens_path_selected
         )
+        self.paraformer_tokens_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_paraformer_tokens_path_selected(
+                self.paraformer_tokens_path_selector.path_input.lineEdit().text()
+            )
+        )
         self.punc_model_dir_path_selector.pathSelected.connect(
             self.on_punc_model_dir_path_selected
+        )
+        self.punc_model_dir_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_punc_model_dir_path_selected(
+                self.punc_model_dir_path_selector.path_input.lineEdit().text()
+            )
         )
         self.opus_mt_dir_path_selector.pathSelected.connect(
             self.on_opus_mt_dir_path_selected
         )
+        self.opus_mt_dir_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_opus_mt_dir_path_selected(
+                self.opus_mt_dir_path_selector.path_input.lineEdit().text()
+            )
+        )
         self.save.longPressed.connect(self.save_config)
+        # 数据校验绑定
+        self.save.clicked.connect(lambda: self.validate_on_model_dir_path(on_save=True))
+        self.save.clicked.connect(
+            lambda: self.validate_on_sensevoice_path(on_save=True)
+        )
+        self.save.clicked.connect(
+            lambda: self.validate_on_sensevoice_tokens_path(on_save=True)
+        )
+        self.save.clicked.connect(
+            lambda: self.validate_on_paraformer_path(on_save=True)
+        )
+        self.save.clicked.connect(
+            lambda: self.validate_on_paraformer_tokens_path(on_save=True)
+        )
+        self.save.clicked.connect(
+            lambda: self.validate_on_punc_model_dir_path(on_save=True)
+        )
+        self.save.clicked.connect(
+            lambda: self.validate_on_opus_mt_dir_path(on_save=True)
+        )
+
+    def validate_on_model_dir_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.model_dir:
+                return
+        else:
+            if not self.model_dir:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="模型文件总目录路径 路径不可为空",
+                        text="已恢复默认值：models",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.model_dir_path_selector.path_input.lineEdit().setText("models")
+                self.model_dir = "models"
+        is_valid, error = ValueCheck.is_dir_exist(self.model_dir)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.model_dir}[/green]")
+        else:
+            print(f"[red]{self.model_dir} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.model_dir_path_selector.path_input.lineEdit().setText("models")
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="模型文件总目录路径 路径位置错误",
+                    text=f"{self.model_dir} - {error}\n已恢复默认值：models",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_on_sensevoice_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.sensevoice_path:
+                return
+        else:
+            if not self.sensevoice_path:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="SenseVoice 模型路径 路径不可为空",
+                        text="已恢复默认值：models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.sensevoice_path_selector.path_input.lineEdit().setText(
+                    "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+                )
+                self.sensevoice_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+        is_valid, error = ValueCheck.is_file_exist(self.sensevoice_path)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.sensevoice_path}[/green]")
+        else:
+            print(f"[red]{self.sensevoice_path} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.sensevoice_path_selector.path_input.lineEdit().setText(
+                "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="SenseVoice 模型路径 路径位置错误",
+                    text=f"{self.sensevoice_path} - {error}\n已恢复默认值：models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_on_sensevoice_tokens_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.sensevoice_tokens_path:
+                return
+        else:
+            if not self.sensevoice_tokens_path:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="SenseVoice tokens 路径 路径不可为空",
+                        text="已恢复默认值：models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.sensevoice_tokens_path_selector.path_input.lineEdit().setText(
+                    "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+                )
+                self.sensevoice_tokens_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+        is_valid, error = ValueCheck.is_file_exist(self.sensevoice_tokens_path)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.sensevoice_tokens_path}[/green]")
+        else:
+            print(
+                f"[red]{self.sensevoice_tokens_path} - {error if error else '无效'}[/red]"
+            )
+
+        if error:
+            self.sensevoice_tokens_path_selector.path_input.lineEdit().setText(
+                "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="SenseVoice tokens 路径 路径位置错误",
+                    text=f"{self.sensevoice_tokens_path} - {error}\n已恢复默认值：models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_on_paraformer_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.paraformer_path:
+                return
+        else:
+            if not self.paraformer_path:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="Paraformer 模型路径 路径不可为空",
+                        text="已恢复默认值：models/paraformer-offline-zh/model.int8.onnx",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.paraformer_path_selector.path_input.lineEdit().setText(
+                    "models/paraformer-offline-zh/model.int8.onnx"
+                )
+                self.paraformer_path = "models/paraformer-offline-zh/model.int8.onnx"
+        is_valid, error = ValueCheck.is_file_exist(self.paraformer_path)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.paraformer_path}[/green]")
+        else:
+            print(f"[red]{self.paraformer_path} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.paraformer_path_selector.path_input.lineEdit().setText(
+                "models/paraformer-offline-zh/model.int8.onnx"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="Paraformer 模型路径 路径位置错误",
+                    text=f"{self.paraformer_path} - {error}\n已恢复默认值：models/paraformer-offline-zh/model.int8.onnx",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_on_paraformer_tokens_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.paraformer_tokens_path:
+                return
+        else:
+            if not self.paraformer_tokens_path:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="Paraformer tokens 路径 路径不可为空",
+                        text="已恢复默认值：models/paraformer-offline-zh/tokens.txt",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.paraformer_tokens_path_selector.path_input.lineEdit().setText(
+                    "models/paraformer-offline-zh/tokens.txt"
+                )
+                self.paraformer_tokens_path = "models/paraformer-offline-zh/tokens.txt"
+        is_valid, error = ValueCheck.is_file_exist(self.paraformer_tokens_path)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.paraformer_tokens_path}[/green]")
+        else:
+            print(
+                f"[red]{self.paraformer_tokens_path} - {error if error else '无效'}[/red]"
+            )
+
+        if error:
+            self.paraformer_tokens_path_selector.path_input.lineEdit().setText(
+                "models/paraformer-offline-zh/tokens.txt"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="Paraformer tokens 路径 路径位置错误",
+                    text=f"{self.paraformer_tokens_path} - {error}\n已恢复默认值：models/paraformer-offline-zh/tokens.txt",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_on_punc_model_dir_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.punc_model_dir:
+                return
+        else:
+            if not self.punc_model_dir:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="标点模型目录路径 路径不可为空",
+                        text="已恢复默认值：models/punc_ct-transformer_cn-en",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.punc_model_dir_path_selector.path_input.lineEdit().setText(
+                    "models/punc_ct-transformer_cn-en"
+                )
+                self.punc_model_dir = "models/punc_ct-transformer_cn-en"
+        is_valid, error = ValueCheck.is_dir_exist(self.punc_model_dir)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.punc_model_dir}[/green]")
+        else:
+            print(f"[red]{self.punc_model_dir} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.punc_model_dir_path_selector.path_input.lineEdit().setText(
+                "models/punc_ct-transformer_cn-en"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="标点模型目录路径 路径位置错误",
+                    text=f"{self.punc_model_dir} - {error}\n已恢复默认值：models/punc_ct-transformer_cn-en",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
+
+    def validate_on_opus_mt_dir_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.opus_mt_dir:
+                return
+        else:
+            if not self.opus_mt_dir:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="Helsinki NLP--opus-mt-zh-en 翻译模型目录路径 路径不可为空",
+                        text="已恢复默认值：models/Helsinki-NLP--opus-mt-zh-en",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.opus_mt_dir_path_selector.path_input.lineEdit().setText(
+                    "models/Helsinki-NLP--opus-mt-zh-en"
+                )
+                self.opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
+        is_valid, error = ValueCheck.is_dir_exist(self.opus_mt_dir)
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.opus_mt_dir}[/green]")
+        else:
+            print(f"[red]{self.opus_mt_dir} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.opus_mt_dir_path_selector.path_input.lineEdit().setText(
+                "models/Helsinki-NLP--opus-mt-zh-en"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="Helsinki NLP--opus-mt-zh-en 翻译模型目录路径 路径位置错误",
+                    text=f"{self.opus_mt_dir} - {error}\n已恢复默认值：models/Helsinki-NLP--opus-mt-zh-en",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
 
     def init_ui(self):
         self.setPadding(64)
@@ -75,7 +447,9 @@ class ModelPathsConfigPage(SiPage):
             self.save.setIconSize(QSize(32, 32))
             self.save.setText("\t保存 模型路径 配置")
             self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
+            self.save.setToolTip(
+                "点击按钮进行数据格式检查\n长按以确认将数据写入配置文件\n保存配置后请手动重启 服务端/客户端 以加载新配置生效"
+            )
             self.save.resize(420, 64)
             self.save_container = SiDenseVContainer(self)
             self.save_container.setAlignment(Qt.AlignCenter)
@@ -196,30 +570,37 @@ class ModelPathsConfigPage(SiPage):
     def on_model_dir_path_selected(self, path: str):
         self.model_dir = path
         print(f"model_dir path selected: {self.model_dir}")
+        self.validate_on_model_dir_path()
 
     def on_sensevoice_path_selected(self, path: str):
         self.sensevoice_path = path
         print(f"sensevoice_path selected: {self.sensevoice_path}")
+        self.validate_on_sensevoice_path()
 
     def on_sensevoice_tokens_path_selected(self, path: str):
         self.sensevoice_tokens_path = path
         print(f"sensevoice_tokens_path selected: {self.sensevoice_tokens_path}")
+        self.validate_on_sensevoice_tokens_path()
 
     def on_paraformer_path_selected(self, path: str):
         self.paraformer_path = path
         print(f"paraformer_path selected: {self.paraformer_path}")
+        self.validate_on_paraformer_path()
 
     def on_paraformer_tokens_path_selected(self, path: str):
         self.paraformer_tokens_path = path
         print(f"paraformer_tokens_path selected: {self.paraformer_tokens_path}")
+        self.validate_on_paraformer_tokens_path()
 
     def on_punc_model_dir_path_selected(self, path: str):
         self.punc_model_dir = path
         print(f"punc_model_dir selected: {self.punc_model_dir}")
+        self.validate_on_punc_model_dir_path()
 
     def on_opus_mt_dir_path_selected(self, path: str):
         self.opus_mt_dir = path
         print(f"opus_mt_dir selected: {self.opus_mt_dir}")
+        self.validate_on_opus_mt_dir_path()
 
     def save_config(self):
         def get_value_from_gui():
@@ -288,6 +669,7 @@ class ModelPathsConfigPage(SiPage):
         from util.edit_config_gui.write_toml import write_toml
 
         try:
+            self.save.clicked.emit()
             get_value_from_gui()
             print_config()
             write_toml(self.config, self.config_path)

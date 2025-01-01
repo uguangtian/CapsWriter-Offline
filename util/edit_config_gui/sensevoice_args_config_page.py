@@ -63,7 +63,9 @@ class SenseVoiceArgsConfigPage(SiPage):
             self.save.setIconSize(QSize(32, 32))
             self.save.setText("\t保存 SenseVoice 配置")
             self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
+            self.save.setToolTip(
+                "点击按钮进行数据格式检查\n长按以确认将数据写入配置文件\n保存配置后请手动重启 服务端/客户端 以加载新配置生效"
+            )
             self.save.resize(420, 64)
             self.save_container = SiDenseVContainer(self)
             self.save_container.setAlignment(Qt.AlignCenter)

@@ -88,7 +88,7 @@ def assume_by_keypress():
 def test():
     while True:
         time.sleep(0.1)
-        is_microphone_in_use()
+        print(is_microphone_in_use())
 
 
 if __name__ == "__main__":

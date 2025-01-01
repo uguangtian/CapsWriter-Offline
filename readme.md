@@ -5,10 +5,9 @@
 # <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （选用SenseVoice模型时 支持中粤英日韩多语种）
 
 > [!IMPORTANT]
-> 新增图形化配置界面，可方便修改配置，但仍支持手动修改 `config.toml` 文件
->> ![alt text](assets/config-gui.png)
+> 新增图形化配置界面 `edit_config_gui.exe`，可方便修改配置，但仍支持手动修改 `config.toml` 文件
 
-## 😎 九个功能：
+## 😎 十个功能：
 
 1. 按下键盘上的大写锁定键 `CapsLock` ，录音开始，当松开大写锁定键时，就会识别你的录音，并将识别结果立刻输入
 2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果离线翻译为英文，并将识别结果立刻输入
@@ -19,8 +18,7 @@
 7. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` [在线翻译](https://github.com/OwO-Network/DeepLX)为 `在线翻译目标语言` ，并自动覆盖替换原文
 8. 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
 9. 快速双击 `CapsLock` ，可语音输入繁体。长按 `CapsLock` 实现按键原有功能切换大写锁定。
-
-# 📙 目录
+10. 可通过 `edit_config_gui.exe` 图形化配置界面安全地修改客户端/服务端配置，也可手动修改 `config.toml` 文件
 
 - [✨ 特性](#-特性)
 - [⬇️ 下载地址](#-下载地址)
@@ -31,6 +29,8 @@
 
 # 👀 最新更新
 
+<details>
+<summary><h1">展开最近更新</h1></summary>
 ## 新增 可选项 开始和结束任务时播放提示音
 > 可在 `config.toml` 设置是否启用，以及音频文件路径和音量。需要ffplay.exe
 > ffplay.exe 来自 https://www.gyan.dev/ffmpeg/builds/
@@ -104,6 +104,8 @@
 ## 新版客户端托盘图标右键菜单：
 
 > ![alt text](assets/客户端托盘图标右键菜单.png)
+
+</details>
 
 ---
 
@@ -193,59 +195,396 @@
 
 # 🔧 修改配置
 
-你可以编辑 `config.toml` ，在开头部分有注释，指导你修改服务端、客户端的：
+你可以使用 `edit_config_gui.exe` 图形界面工具方便且安全地修改 服务端、客户端的配置，也可以直接编辑 `config.toml` ，在开头部分有注释，指导你修改服务端、客户端的：
 
-- 连接的地址和端口，默认是 `127.0.0.1` 和 `6006`
-- 键盘快捷键
-- 是否要保存录音文件
-- 要移除识别结果末尾的哪些标点，（如果你想把句尾的问号也删除掉，可以在这边加上）
-- 是否在录音时静音或暂停其他音频播放
-- 是否阿拉伯数字化年份
-- 是否启动后自动缩小至托盘，不显示主窗口
-- 是否禁止多开
-- 是否启动服务端时自动启动客户端
-- 在线翻译目标语言 参考 [docs-api](https://www.deepl.com/docs-api/translate-text)
-- 离、在线翻译并替换 快捷键
+```toml
+# ======================服务端配置==================================
+[server]
+model = "Sensevoice"
+# 'Sensevoice' 或 'Paraformer'
+# Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
+# 比如转录字幕不完整，识别结果不准确、丢失标点等
+# 如果你只说中文普通话，建议使用 'Paraformer' 模型
+# 不影响简繁转换和翻译
 
-  - AR - 阿拉伯语
-  - BG - 保加利亚语
-  - CS - 捷克语
-  - DA - 丹麦语
-  - DE - 德语
-  - EL - 希腊语
-  - EN - 英语（为了向后兼容而未指定的变体；请改为选择 EN-GB 或 EN-US）
-  - EN-GB - 英语（英国）
-  - EN-US - 英语（美国）
-  - ES - 西班牙语
-  - ET - 爱沙尼亚语
-  - FI - 芬兰语
-  - FR - 法语
-  - HU - 匈牙利语
-  - ID - 印度尼西亚语
-  - IT - 意大利语
-  - JA - 日语
-  - KO - 韩语
-  - LT - 立陶宛语
-  - LV - 拉脱维亚语
-  - NB - 挪威语（博克马尔）
-  - NL - 荷兰语
-  - PL - 波兰语
-  - PT - 葡萄牙语（为了向后兼容而未指定的变体；请改为选择 PT-BR 或 PT-PT）
-  - PT-BR - 葡萄牙语（巴西）
-  - PT-PT - 葡萄牙语（除巴西葡萄牙语外的所有葡萄牙语变体）
-  - RO - 罗马尼亚语
-  - RU - 俄语
-  - SK - 斯洛伐克语
-  - SL - 斯洛文尼亚语
-  - SV - 瑞典语
-  - TR - 土耳其语
-  - UK - 乌克兰语
-  - ZH - 中文（简体）
+addr = "0.0.0.0"
+# 服务端监听地址
 
-- 是否只在按下录音快捷键时启用麦克风
-- 设置 VSCode 可执行文件位置
+speech_recognition_port = "6016"
+# 语音识别服务端口
 
-![config](assets/config.png)
+start_online_translate_server = true
+# 是否启用在线翻译服务
+
+start_offline_translate_server = true
+# 是否启用离线翻译服务
+
+offline_translate_port = "6017"
+# 离线翻译服务端口
+
+format_num = true
+# 是否将中文数字转为阿拉伯数字
+
+format_punc = true
+# 使用 'Paraformer' 模型时，输出时是否启用标点符号引擎
+
+format_spell = true
+# 是否调整中英之间的空格
+
+shrink_automatically_to_tray = true
+# 启动后是否自动缩小至托盘
+
+only_run_once = true
+# 只允许运行一次，禁止多开
+
+in_the_meantime_start_the_client = true
+# 启动服务端时是否同时启动客户端
+
+in_the_meantime_start_the_client_and_run_as_admin = true
+# 启动服务端的同时以管理员权限启动客户端
+# 当某程序以管理员权限运行
+# 可能会出现有识别结果但是却无法在那个程序输入文字的状况
+# 例如：Listary、PixPin等
+# 这是因为 start_client_gui.exe 默认以用户权限运行客户端
+# 运行在用户权限的程序无法控制管理员权限的程序
+# 你可以关闭用户权限运行的客户端
+# 尝试使用 start_client_gui_admin.exe
+# 以管理员权限运行客户端
+
+
+# ======================客户端配置==================================
+
+[client]
+addr = "127.0.0.1"
+# 要连接的服务端地址
+
+speech_recognition_port = "6016"
+# 语音识别服务端口
+
+offline_translate_port = "6017"
+# 离线翻译服务端口
+
+offline_translate_port_gemma2b = "11434"
+# Gemma 2B 离线翻译端口
+
+speech_recognition_shortcut = "caps lock"
+# 控制录音的快捷键，默认是 "caps lock"
+
+use_offline_translate_function = true
+# 是否启用离线翻译功能
+
+offline_translate_shortcut = "left shift"
+# 控制离线翻译的快捷键，默认是 "left shift"，按住 Left Shift 再按 CapsLock 进行离线翻译
+
+offline_translate_and_replace_the_selected_text_shortcut = "ctrl + alt + p"
+# 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键
+# 如果未选中任何文字，会将剪贴板的文字翻译为英文并粘贴
+
+use_online_translate_function = true
+# 是否启用在线翻译功能
+
+online_translate_shortcut = "right shift"
+# 控制在线翻译的快捷键，默认是 Right Shift，按住 Right Shift 再按 CapsLock 进行在线翻译
+# 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
+# 如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
+
+online_translate_target_languages = "JA"
+# 在线翻译目标语言
+# 常用的 EN JA RU，更多选择参考 https://www.deepl.com/docs-api/translate-text
+
+online_translate_and_replace_the_selected_text_shortcut = "ctrl + alt + ["
+# 控制在线翻译将光标选中的中文翻译并替换为在线翻译目标语言的快捷键
+# 如果未选中任何文字，会将剪贴板的文字翻译为目标语言并粘贴
+
+use_search_selected_text_with_everything_function = true
+# 是否启用使用 Everything 搜索选中文字的功能
+
+search_selected_text_with_everything_shortcut = "ctrl + alt + f"
+# 调用 Everything 搜索光标选中的字符
+# 使用前需先安装 Everything，https://www.voidtools.com/zh-cn/downloads/
+
+everything_exe_path = "C:\\Program Files\\Everything\\Everything.exe"
+# 设置 Everything 可执行文件位置
+
+hold_mode = true
+# 长按模式，按下录音，松开停止，像对讲机一样用
+# 改为 False，则关闭长按模式，也就是单击模式
+# 即：单击录音，再次单击停止
+# 且：长按会执行原本的单击功能
+
+suppress = false
+# 是否阻塞按键事件（让其它程序收不到这个按键消息）
+
+restore_key = true
+# 录音完成，松开按键后，是否自动再按一遍，以恢复 CapsLock 或 Shift 等按键之前的状态
+
+threshold = 0.3
+# 按下快捷键后，触发语音识别的时间阈值
+
+paste = true
+# 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
+
+restore_clipboard_after_paste = true
+# 模拟粘贴后是否恢复剪贴板
+
+save_audio = true
+# 是否保存录音文件
+
+save_markdown = true
+# 是否将记录写入 Markdown 文件
+
+audio_name_len = 20
+# 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过 200
+
+reduce_audio_files = true
+# 如果用户已安装 ffmpeg，调用 ffmpeg 录音时输出 mp3 格式的音频文件，大大减小文件体积，减少磁盘占用
+
+trash_punc = "，。,."
+# 识别结果要消除的末尾标点
+
+hot_zh = true
+# 是否启用中文热词替换，中文热词存储在 hot_zh.txt 文件里
+
+"多音字" = true
+# True 表示多音字匹配
+
+"声调" = false
+# False 表示忽略声调区别，这样「黄章」就能匹配「慌张」
+
+hot_en = true
+# 是否启用英文热词替换，英文热词存储在 hot_en.txt 文件里
+
+hot_rule = true
+# 是否启用自定义规则替换，自定义规则存储在 hot_rule.txt 文件里
+
+hot_kwd = true
+# 是否启用关键词日记功能，自定义关键词存储在 keyword.txt 文件里
+
+mic_seg_duration = 15
+# 麦克风听写时分段长度：15 秒
+
+mic_seg_overlap = 2
+# 麦克风听写时分段重叠：2 秒
+
+file_seg_duration = 25
+# 转录文件时分段长度：25 秒
+
+file_seg_overlap = 2
+# 转录文件时分段重叠：2 秒
+
+mute_other_audio = true
+# 录音时是否静音其他音频播放
+
+pause_other_audio = true
+# 录音时是否暂停其他音频播放
+
+arabic_year_number = true
+# 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
+
+shrink_automatically_to_tray = false
+# 启动后是否自动缩小至托盘
+
+only_run_once = true
+# 只允许运行一次，禁止多开
+
+only_enable_microphones_when_pressed_record_shortcut = true
+# 只在按下录音快捷键时启用麦克风
+# 建议启用，有些蓝牙耳机录音时无法播放
+# 而且启用后，切换默认麦克风也不用重启客户端
+# 比如从蓝牙耳机换回笔记本电脑默认麦克风
+# 缺点就是输入的时候可能会慢些
+# 毕竟要先建立与麦克风的连接
+
+vscode_exe_path = "C:\\SSS\\VSCode\\Code - Insiders.exe"
+# 设置 VSCode 可执行文件位置
+# 用于通过客户端托盘图标右键菜单项 View 子菜单项
+# 🤓 Open Home Folder With VSCode
+# 使用 VSCode 快速打开 CapsWriter 主目录
+# 方便调试
+
+play_start_music = true
+# 开始任务时是否播放提示音
+# 需要 ffplay.exe
+
+start_music_path = "assets/start.mp3"
+# 开始任务提示音的文件路径
+
+start_music_volume = "100"
+# 开始任务提示音的音量，0 ~ 100 之间
+
+play_stop_music = true
+# 结束任务时是否播放提示音
+# 需要 ffplay.exe
+
+stop_music_path = "assets/stop.mp3"
+# 结束任务提示音的文件路径
+
+stop_music_volume = "50"
+# 结束任务提示音的音量，0 ~ 100 之间
+
+hint_while_recording_at_edit_position_powered_by_ahk = true
+# 是否启用基于 AHK 的输入光标位置的输入状态提示功能
+
+hint_while_recording_at_cursor_position = true
+# 是否启用跟随鼠标光标位置的新版输入状态提示功能
+
+check_microphone_usage_by = "注册表"
+# "按键" 或 "注册表"
+# 默认通过监测注册表判断麦克风是否在被客户端使用进而确定是否在录音
+# 如果设置了 `only_enable_microphones_when_pressed_record_shortcut = False`
+# 会造成的鼠标光标旁边永远显示麦克风标志
+# 将强制忽略此项设置使用 "按键"
+# "按键" 是通过监测 `speech_recognition_shortcut` 状态是否按下进而推测是否在录音
+
+enable_double_click_opposite_state = true
+# 是否启用双击 `录音键` 临时转换 `简/繁` 体中文输出的功能
+
+convert_to_traditional_chinese_main = "简"
+# `简/繁` 中文作为主要输出
+
+opencc_converter = "s2t.json"
+# OpenCC 转换器
+# s2t.json Simplified Chinese to Traditional Chinese 简体到繁体
+# t2s.json Traditional Chinese to Simplified Chinese 繁体到简体
+# s2tw.json Simplified Chinese to Traditional Chinese (Taiwan Standard) 简体到台湾正体
+# tw2s.json Traditional Chinese (Taiwan Standard) to Simplified Chinese 台湾正体到简体
+# s2hk.json Simplified Chinese to Traditional Chinese (Hong Kong Standard) 简体到香港繁体（香港小学学习字词表标准）
+# hk2s.json Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁体（香港小学学习字词表标准）到简体
+# s2twp.json Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 简体到繁体（台湾正体标准）并转换为台湾常用词汇
+# tw2sp.json Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁体（台湾正体标准）到简体并转换为中国大陆常用词汇
+# t2tw.json Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁体（OpenCC 标准）到台湾正体
+# t2hk.json Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁体（OpenCC 标准）到香港繁体（香港小学学习字词表标准）
+# t2jp.json Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
+# jp2t.json New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
+
+
+# ======================DeepLX 配置==================================
+
+[deeplx]
+online_translate_port = "1188"
+# DeepLX 在线翻译服务端口
+
+exe_path = "deeplx_windows_amd64.exe"
+# DeepLX 可执行文件路径
+
+api = "http://127.0.0.1:1188/translate"
+# DeepLX API 地址
+
+
+# ======================模型路径配置==================================
+
+[model_paths]
+model_dir = "models"
+# 模型文件目录
+
+sensevoice_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+# SenseVoice 模型路径
+
+sensevoice_tokens_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+# SenseVoice tokens 路径
+
+paraformer_path = "models/paraformer-offline-zh/model.int8.onnx"
+# Paraformer 模型路径
+
+paraformer_tokens_path = "models/paraformer-offline-zh/tokens.txt"
+# Paraformer tokens 路径
+
+punc_model_dir = "models/punc_ct-transformer_cn-en"
+# 标点模型目录
+
+opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
+# 离线翻译模型目录
+
+
+# ======================SenseVoice 参数配置==================================
+
+[sensevoice_args]
+model = "${model_paths.sensevoice_path}"
+# SenseVoice 模型路径
+
+tokens = "${model_paths.sensevoice_tokens_path}"
+# SenseVoice tokens 路径
+
+num_threads = 6
+# 使用的线程数
+
+sample_rate = 16000
+# 采样率
+
+feature_dim = 80
+# 特征维度
+
+decoding_method = "greedy_search"
+# 解码方法
+
+debug = false
+# 是否启用调试模式
+
+provider = "cpu"
+# 推理设备（cpu, cuda, coreml）
+
+language = "auto"
+# 识别语言（auto, zh, en, ja, ko, yue）
+
+use_itn = true
+# 是否使用逆文本归一化
+
+rule_fsts = ""
+# 自定义规则 FST 文件路径
+
+rule_fars = ""
+# 自定义规则 FAR 文件路径
+
+
+# ======================Paraformer 参数配置==================================
+
+[paraformer_args]
+paraformer = "${model_paths.paraformer_path}"
+# Paraformer 模型路径
+
+tokens = "${model_paths.paraformer_tokens_path}"
+# Paraformer tokens 路径
+
+num_threads = 6
+# 使用的线程数
+
+sample_rate = 16000
+# 采样率
+
+feature_dim = 80
+# 特征维度
+
+decoding_method = "greedy_search"
+# 解码方法
+
+debug = false
+# 是否启用调试模式
+
+```
+
+你可以直接编辑 `hint_while_recording.ini` 文件，修改“✦语音输入中‧‧‧”提示的配置
+
+```ini
+[BeautifulToolTip]
+enableBTT=1
+[ShowText]
+cnTxt=✦语音输入中‧‧‧
+cnTxtB=✦语音输入中⇄
+enTxt=✦VoiceTrans‧‧‧
+enTxtB=✦VoiceTrans⇄
+[Txt]
+cnTxtClolorA=0xFFCC7A00
+cnTxtClolorB=0xFFFFDF80
+cnTxtFontSize=16
+enTxtClolorA=0xFF1A1AFF
+enTxtClolorB=0xFF6666FF
+enTxtFontSize=16
+[List]
+Comment1=在hintAtCursorPositionList中的程序将不会把“语音输入中”的提示显示在文本光标位置，而是显示在鼠标光标的位置
+hintAtCursorPositionList=:StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:explorer.exe:
+Comment2=在doNotShowHintList中的程序将不会显示“语音输入中”的提示
+doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:
+```
 
 # 🔧 功能：热词
 
@@ -355,5 +694,10 @@ pip install  --target .\site-packages pywin32
 ```
 
 复制 `.\site-packages\pywin32_system32\` 中的 `*.dll` 到 `.\runtime\`
+
+# siui
+## [PySide6-SiliconUI](https://github.com/H1DDENADM1N/PySide6-SiliconUI)
+
+## [PyQt-SiliconUI](https://github.com/ChinaIceF/PyQt-SiliconUI)
 
 </details>

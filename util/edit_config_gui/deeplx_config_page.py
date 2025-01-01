@@ -17,6 +17,8 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
+from util.value_check import ValueCheck
+
 from .select_path import SelectPath
 from .set_default_button import SetDefaultButton
 
@@ -31,6 +33,11 @@ class DeeplxConfigPage(SiPage):
         self.deeplx_exe_path_selector.pathSelected.connect(
             self.on_deeplx_exe_path_selected
         )
+        self.deeplx_exe_path_selector.path_input.lineEdit().editingFinished.connect(
+            lambda: self.on_deeplx_exe_path_selected(
+                self.deeplx_exe_path_selector.path_input.lineEdit().text()
+            )
+        )
         self.online_translate_port_set_default.clicked.connect(
             lambda: self.online_translate_port.setValue(1188)
         )
@@ -38,6 +45,53 @@ class DeeplxConfigPage(SiPage):
             lambda: self.api.lineEdit().setText("http://127.0.0.1:1188/translate")
         )
         self.save.longPressed.connect(self.save_config)
+        # 数据校验绑定
+        self.save.clicked.connect(lambda: self.validate_deeplx_exe_path(on_save=True))
+
+    def validate_deeplx_exe_path(self, on_save: bool = False):
+        if not on_save:
+            if not self.deeplx_exe_path:
+                return
+        else:
+            if not self.deeplx_exe_path:
+                try:
+                    SiGlobal.siui.windows[
+                        "MAIN_WINDOW"
+                    ].LayerRightMessageSidebar().send(
+                        title="DeepLX 可执行文件 路径不可为空",
+                        text="已恢复默认值：deeplx_windows_amd64.exe",
+                        msg_type=3,
+                        icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                        fold_after=5000,
+                    )
+                except ValueError:
+                    pass
+                self.deeplx_exe_path_selector.path_input.lineEdit().setText(
+                    "deeplx_windows_amd64.exe"
+                )
+                self.deeplx_exe_path = "deeplx_windows_amd64.exe"
+        is_valid, error = ValueCheck.is_file_exist(self.deeplx_exe_path, ".exe")
+        from rich import print
+
+        if is_valid:
+            print(f"[green]{self.deeplx_exe_path}[/green]")
+        else:
+            print(f"[red]{self.deeplx_exe_path} - {error if error else '无效'}[/red]")
+
+        if error:
+            self.deeplx_exe_path_selector.path_input.lineEdit().setText(
+                "deeplx_windows_amd64.exe"
+            )
+            try:
+                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
+                    title="DeepLX 可执行文件位置错误",
+                    text=f"{self.deeplx_exe_path} - {error}\n已恢复默认值：deeplx_windows_amd64.exe",
+                    msg_type=3,
+                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
+                    fold_after=5000,
+                )
+            except ValueError:
+                pass
 
     def init_ui(self):
         self.setPadding(64)
@@ -57,7 +111,9 @@ class DeeplxConfigPage(SiPage):
             self.save.setIconSize(QSize(32, 32))
             self.save.setText("\t保存 DeepLX 配置")
             self.save.setFont(QFont("Microsoft YaHei", 16))
-            self.save.setToolTip("长按以确认")
+            self.save.setToolTip(
+                "点击按钮进行数据格式检查\n长按以确认将数据写入配置文件\n保存配置后请手动重启 服务端/客户端 以加载新配置生效"
+            )
             self.save.resize(420, 64)
             self.save_container = SiDenseVContainer(self)
             self.save_container.setAlignment(Qt.AlignCenter)
@@ -135,6 +191,7 @@ class DeeplxConfigPage(SiPage):
     def on_deeplx_exe_path_selected(self, path):
         self.deeplx_exe_path = path
         print(f"Deeplx exe path selected: {self.deeplx_exe_path}")
+        self.validate_deeplx_exe_path()
 
     def save_config(self):
         def get_value_from_gui():
@@ -177,6 +234,7 @@ class DeeplxConfigPage(SiPage):
         from util.edit_config_gui.write_toml import write_toml
 
         try:
+            self.save.clicked.emit()
             get_value_from_gui()
             print_config()
             write_toml(self.config, self.config_path)
