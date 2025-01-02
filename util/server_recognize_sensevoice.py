@@ -74,7 +74,11 @@ def recognize(recognizer, task: Task):
     result.tokens += [token for token in stream.result.tokens[m:n]]
 
     # token 合并为文本
-    text = "".join(result.tokens)
+    text = (
+        "".join(result.tokens)
+        .encode("gbk", errors="ignore")
+        .decode("gbk", errors="ignore")
+    )  # Fix 按下录音键但没有说话会识别成 그 无法被gbk解码，导致服务端可客户端gui全部崩溃，仅重启客户端会造成不停连接成功连接断开死循环
 
     result.text = text
 
