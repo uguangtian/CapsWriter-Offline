@@ -8,7 +8,7 @@ from flask import sessions
 from pycaw.pycaw import AudioUtilities
 
 from util.client_cosmic import Cosmic
-from util.client_pause_other_audio import audio_playering_app_name, pause_other_audio
+from util.client_pause_other_audio import audio_playering_app_name
 from util.client_send_audio import send_audio
 from util.client_send_signal_to_hint_while_recording import (
     send_signal_to_hint_while_recording,
@@ -133,9 +133,11 @@ def launch_task():
 
     # 录音时暂停其他音频播放 且 有音频正在播放
     global unpause_needed
-    if Config.pause_other_audio and audio_playering_app_name() != None:
-        pause_other_audio()
-        unpause_needed = True
+    if Config.pause_other_audio and not unpause_needed:
+        if process_name := audio_playering_app_name():
+            if process_name != "ffplay.exe":
+                keyboard.send("play/pause")
+                unpause_needed = True
 
     # 通知录音线程可以向队列放数据了
     Cosmic.on = t1
@@ -233,7 +235,8 @@ def click_mode(e: keyboard.KeyboardEvent):
         last_time_released, \
         key_pressed, \
         double_clicked, \
-        is_short_duration
+        is_short_duration, \
+        unpause_needed
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
         # 計算是否屬於短時間內雙击`錄音鍵`
@@ -321,7 +324,12 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 def hold_mode(e: keyboard.KeyboardEvent):
     """像对讲机一样，按下录音，松开停止"""
-    global task, double_clicked, last_time_released, hold_mode_first_time_cancel_task
+    global \
+        task, \
+        double_clicked, \
+        last_time_released, \
+        hold_mode_first_time_cancel_task, \
+        unpause_needed
 
     # 計算是否屬於短時間內按下`錄音鍵`
     is_short_duration = (
@@ -331,6 +339,10 @@ def hold_mode(e: keyboard.KeyboardEvent):
     # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
     if is_short_duration and Config.enable_double_click_opposite_state:
         double_clicked = True
+        if Config.pause_other_audio and not unpause_needed:
+            if process_name := audio_playering_app_name():
+                if process_name != "ffplay.exe":
+                    unpause_needed = True
 
     if e.event_type == "down" and not Cosmic.on:
         # 根據上一次是否短時間內(`is_short_duration`)按下錄音鍵,來判斷是否需要輸出 `簡/繁`
