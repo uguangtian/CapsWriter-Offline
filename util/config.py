@@ -3,7 +3,8 @@ from pathlib import Path
 from tomlkit import parse
 
 # 加载TOML配置文件
-with Path("config.toml").open("r", encoding="utf-8") as f:
+config_toml_path = Path(__file__).parent.parent / "config.toml"
+with config_toml_path.open("r", encoding="utf-8") as f:
     config_str = f.read()
     config = parse(config_str)
 
