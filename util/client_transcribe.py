@@ -111,7 +111,8 @@ async def transcribe_recv(file: Path):
 
     # 解析结果
     text_merge = message["text"]
-    text_split = re.sub("[，。？]", "\n", text_merge)
+    # text_split = re.sub("[，。？]", "\n", text_merge)
+    text_split = re.sub("([，。？])", r"\1\n", text_merge)
     timestamps = message["timestamps"]
     tokens = message["tokens"]
 
