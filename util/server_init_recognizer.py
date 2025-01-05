@@ -24,9 +24,6 @@ def disable_jieba_debug():
 
 
 def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
-    # Ctrl-C 退出
-    signal.signal(signal.SIGINT, lambda signum, frame: exit())
-
     # 导入模块
     with console.status("载入模块中…", spinner="bouncingBall", spinner_style="yellow"):
         import sherpa_onnx

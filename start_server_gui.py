@@ -132,17 +132,13 @@ class GUI(QMainWindow):
 
     def start_script(self):
         # Start core_server.py and redirect output to the server queue
-
-        # While Debug error    for line in iter(out.readline, ''):
-        # Use this line to replace the original code
-        # self.core_server_process = subprocess.Popen(['.\\runtime\\pythonw_CapsWriter_Server.exe', 'core_server.py'], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
-
         self.core_server_process = subprocess.Popen(
             [".\\runtime\\pythonw_CapsWriter_Server.exe", "core_server.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
         )
         threading.Thread(
             target=self.enqueue_output,
@@ -156,14 +152,19 @@ class GUI(QMainWindow):
         self.update_timer.start(100)
 
     def enqueue_output(self, out, queue):
-        for line in iter(out.readline, b""):
+        for line in iter(out.readline, ""):
+            line = line.strip()
             queue.put(line)
 
     def update_text_box(self):
         # Update server text box
         while not self.output_queue_server.empty():
-            line = self.output_queue_server.get()
-            self.text_box_server.append(line)
+            try:
+                line = self.output_queue_server.get()
+                self.text_box_server.append(line)
+            except Exception as e:
+                self.text_box_server.append(e)
+                break
 
 
 if __name__ == "__main__":

@@ -37,11 +37,12 @@ async def main():
         end="\n\n",
     )
 
+    console.print("载入模块中，载入时长约 50 秒，请耐心等待...")
+
     # 跨进程列表，用于保存 socket 的 id，用于让识别进程查看连接是否中断
     Cosmic.sockets_id = Manager().list()
 
     # 负责识别的子进程
-    console.print("载入模块中，载入时长约 50 秒，请耐心等待...")
     recognize_process = Process(
         target=init_recognizer,
         args=(Cosmic.queue_in, Cosmic.queue_out, Cosmic.sockets_id),

@@ -453,22 +453,13 @@ class GUI(QMainWindow):
                 daemon=True,
             ).start()
 
-        # While Debug error    for line in iter(out.readline, ''):
-        # Use this line to replace the original code
-        # self.core_client_process = subprocess.Popen(
-        #     [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
-        #     creationflags=subprocess.CREATE_NO_WINDOW,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.STDOUT,
-        #     text=True,
-        #     encoding="utf-8",
-        # )
         self.core_client_process = subprocess.Popen(
             [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
         )
         threading.Thread(
             target=self.enqueue_output,
