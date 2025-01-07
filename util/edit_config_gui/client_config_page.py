@@ -1738,7 +1738,7 @@ class ClientConfigPage(SiPage):
             )
             self.config["client"][
                 "hint_while_recording_at_edit_position_powered_by_ahk"
-            ] = self.hint_while_recording_at_cursor_position.isChecked()
+            ] = self.hint_while_recording_at_edit_position_powered_by_ahk.isChecked()
             self.config["client"]["hint_while_recording_at_cursor_position"] = (
                 self.hint_while_recording_at_cursor_position.isChecked()
             )
