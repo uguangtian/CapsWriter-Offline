@@ -113,5 +113,19 @@ async def send_audio():
                 }
                 task = asyncio.create_task(send_message(message))
                 break
+            elif task["type"] == "cancel":
+                # 告诉服务端任务已取消
+                message = {
+                    "task_id": task_id,
+                    "seg_duration": 15,
+                    "seg_overlap": 2,
+                    "is_final": True,
+                    "time_start": time_start,
+                    "time_frame": task["time"],
+                    "source": "mic",
+                    "data": "",
+                }
+                task = asyncio.create_task(send_message(message))
+                break
     except Exception as e:
-        print(e)
+        console.print(e)

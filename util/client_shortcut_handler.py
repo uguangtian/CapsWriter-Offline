@@ -158,9 +158,6 @@ def cancel_task():
     Cosmic.on = False
     status.stop()
 
-    # 取消协程任务
-    task.cancel()
-
     # 取消音频静音
     if Config.mute_other_audio:
         unmute_all_sessions()
@@ -170,6 +167,13 @@ def cancel_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send("play/pause")
         unpause_needed = False
+
+    # 发送取消任务的消息到队列
+    asyncio.run_coroutine_threadsafe(
+        Cosmic.queue_in.put({"type": "cancel", "time": time.time(), "data": None}),
+        Cosmic.loop,
+    )
+
     if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
