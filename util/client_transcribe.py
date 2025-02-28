@@ -12,6 +12,8 @@ import websockets
 from util import srt_from_txt
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
+from util.client_hot_sub import hot_sub
+from util.client_hot_update import observe_hot, update_hot_all
 from util.config import ClientConfig as Config
 
 
@@ -99,18 +101,25 @@ async def transcribe_send(file: Path):
 
 
 async def transcribe_recv(file: Path):
+    # 更新热词
+    update_hot_all()
+    # 实时更新热词
+    observer = observe_hot()
+
     # 获取连接
     websocket = Cosmic.websocket
 
     # 接收结果
     async for message in websocket:
         message = json.loads(message)
-        console.print(f'    转录进度: {message["duration"]:.2f}s', end="\r")
+        console.print(f"    转录进度: {message['duration']:.2f}s", end="\r")
         if message["is_final"]:
             break
 
     # 解析结果
     text_merge = message["text"]
+    # 热词替换
+    text_merge = hot_sub(text_merge)
     # text_split = re.sub("[，。？]", "\n", text_merge)
     text_split = re.sub("([，。？])", r"\1\n", text_merge)
     timestamps = message["timestamps"]
@@ -132,4 +141,5 @@ async def transcribe_recv(file: Path):
 
     process_duration = message["time_complete"] - message["time_start"]
     console.print(f"\033[K    处理耗时：{process_duration:.2f}s")
-    console.print(f'    识别结果：\n[green]{message["text"]}')
+    # console.print(f"    识别结果：\n[green]{message['text']}")
+    console.print(f"    识别结果：\n[green]{text_merge}")
