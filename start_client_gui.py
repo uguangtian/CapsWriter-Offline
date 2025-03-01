@@ -675,16 +675,32 @@ def Print_Screen_Scale():
     print(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
 
+def read_file_list(file_list_path: Path):
+    """读取文件列表文件，返回文件路径列表"""
+    with open(file_list_path, "r", encoding="utf-8") as f:
+        return [Path(line.strip()) for line in f if line.strip()]
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="处理文件")
     parser.add_argument("files", nargs="*", type=Path, help="要处理的文件")
+    parser.add_argument("--file-list", type=Path, help="包含文件列表的文本文件")
     args = parser.parse_args()
 
-    if args.files:  # 判断是否有文件参数
+    if args.file_list:  # 如果传递了 --file-list 参数
+        try:
+            files = read_file_list(args.file_list)
+        except Exception as e:
+            print(f"Error reading file list: {e}")
+            sys.exit(1)
+    else:
+        files = args.files  # 直接传递的文件列表
+
+    if files:  # 如果有文件需要处理
         CapsWriter_path = Path(__file__).parent
         script_path = CapsWriter_path / "core_client.py"
         python_exe_path = CapsWriter_path / "runtime" / "python.exe"
-        files_quoted = [str(file) for file in args.files]
+        files_quoted = [str(file) for file in files]
         command = [str(python_exe_path), str(script_path)] + files_quoted
         try:
             subprocess.Popen(command, cwd=str(CapsWriter_path))
