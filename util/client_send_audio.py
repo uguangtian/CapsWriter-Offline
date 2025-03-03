@@ -103,8 +103,8 @@ async def send_audio():
                 # 告诉服务端音频片段结束了
                 message = {
                     "task_id": task_id,
-                    "seg_duration": 15,
-                    "seg_overlap": 2,
+                    "seg_duration": Config.mic_seg_duration,  # 分段长度
+                    "seg_overlap": Config.mic_seg_overlap,  # 分段重叠
                     "is_final": True,
                     "time_start": time_start,
                     "time_frame": task["time"],
@@ -117,8 +117,8 @@ async def send_audio():
                 # 告诉服务端任务已取消
                 message = {
                     "task_id": task_id,
-                    "seg_duration": 15,
-                    "seg_overlap": 2,
+                    "seg_duration": Config.mic_seg_duration,  # 分段长度
+                    "seg_overlap": Config.mic_seg_overlap,  # 分段重叠
                     "is_final": True,
                     "time_start": time_start,
                     "time_frame": task["time"],
