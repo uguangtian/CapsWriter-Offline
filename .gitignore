@@ -1,3 +1,4 @@
+.vscode
 2025/03
 build
 dist
@@ -6,6 +7,6 @@ runtime
 python3.11
 **/*.swp
 *.swp
+<<<<<<< HEAD
 util/__pycache__
-
-
+util/__pycache__/**/*

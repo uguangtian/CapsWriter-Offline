@@ -174,6 +174,43 @@ if __name__ == "__main__":
     # 如果没有多余参数，就从麦克风输入
     if sys.argv[1:]:
         print("typer.run", sys.argv[1:])
-        typer.run(init_file)
+        
+        # 检查输入是否为文件夹
+        input_paths = [Path(p) for p in sys.argv[1:]]
+        # typer.run(init_file)
+    
+        file_paths = []
+        
+        for path in input_paths:
+            if path.is_dir():
+                # 如果是文件夹，遍历处理其中的所有视频和音频文件
+                print(f"处理文件夹: {path}")
+                # 定义支持的视频和音频文件扩展名
+                media_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv',  # 视频
+                                   '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']  # 音频
+                
+                # 遍历文件夹中的所有文件
+                for file in path.glob('**/*'):
+                    if file.is_file() and file.suffix.lower() in media_extensions:
+                        print(f"找到媒体文件: {file}")
+                        file_paths.append(file)
+            else:
+                # 如果是文件，直接添加
+                file_paths.append(path)
+        
+        if file_paths:
+            # 使用找到的所有文件路径调用 init_file
+            # 不直接调用 init_file，而是通过 typer.run 执行
+            asyncio.run(main_file(file_paths))
+
+            # for file_path in file_paths:
+            #     print(f"处理文件: {file_path}")
+            #     # typer.run(init_file([file_path]))
+            #     asyncio.run(main_file(file_path))
+
+                # typer.run(lambda f=file_path: init_file([f]))
+        else:
+            print("未找到任何媒体文件")
+        #     sys.exit(1)
     else:
         init_mic()
