@@ -30,7 +30,7 @@ from util.client_recv_result import recv_result
 # print("在 MacOS 上需要以管理员启动客户端才能监听键盘活动，请 sudo 启动")
 
 
-# from util.client_transcribe import transcribe_check, transcribe_recv, transcribe_send
+from util.client_transcribe import transcribe_check, transcribe_recv, transcribe_send
 # from util.empty_working_set import empty_current_working_set
 
 # 确保根目录位置正确，用相对路径加载模型
@@ -43,15 +43,44 @@ colorama.init()
 
 # MacOS 的权限设置
 if system() == "Darwin" and not sys.argv[1:]:
-    if os.getuid() != 0:
-        print("在 MacOS 上需要以管理员启动客户端才能监听键盘活动，请 sudo 启动")
+    try:
+        # 使用 ctypes 直接调用 ApplicationServices 框架
+        import ctypes
+        
+        # 加载 ApplicationServices 框架
+        framework = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices')
+        
+        # 定义函数原型
+        framework.AXIsProcessTrusted.restype = ctypes.c_bool
+        
+        # 检查是否有辅助功能权限
+        trusted = framework.AXIsProcessTrusted()
+        if not trusted:
+            print("请在系统偏好设置 -> 安全性与隐私 -> 隐私 -> 辅助功能中授予权限")
+            print("授权后重新启动程序")
+            input("按回车退出")
+            sys.exit()
+    except Exception as e:
+        print(f"检查辅助功能权限时出错: {e}")
+        print("请先安装必要的包：")
+        print("pip install pyobjc")
         input("按回车退出")
         sys.exit()
-    else:
-        os.umask(0o000)
+
+            # 仍然需要管理员权限的检查
+        if os.getuid() != 0:
+            print("在 MacOS 上需要以管理员启动客户端才能监听键盘活动，请 sudo 启动")
+            input("按回车退出")
+            sys.exit()
+        else:
+            os.umask(0o000)
+
+
 # 定义信号处理函数
 def signal_handler(signum, frame):
-    console.print("\n[yellow]接收到退出信号，正在关闭...[/yellow]")
+    console.print("\n[yellow]signal_handler 接收到退出信号，正在关闭...[/yellow]")
+    sys.exit(0)
+
     if Cosmic.stream:
         print("关闭音频流")
         stream_close(signum, frame)
@@ -94,19 +123,22 @@ async def main_mic():
     print(
         f"连接服务端...  （服务端载入模块时长约 50 秒，请耐心等待。若好几分钟了还无响应 -> 服务端软件 start_server_gui.exe 启动了吗？ 服务端地址当前设置 {Config.addr}:{Config.speech_recognition_port} 是正确的吗？）"
     )
-    while True:
-        await recv_result()
+    await recv_result()
+    # while True:
+    #     await recv_result()
 
 
 async def main_file(files: List[Path]):
-    pdb.set_trace()
     print("main_file")
+
+    pdb.set_trace()
     show_file_tips()
 
     for file in files:
         if file.suffix in [".txt", ".json", "srt"]:
             adjust_srt(file)
         else:
+            print(f"正在转录文件 {file}")
             await transcribe_check(file)
             await asyncio.gather(transcribe_send(file), transcribe_recv(file))
 

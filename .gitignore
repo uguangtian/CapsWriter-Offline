@@ -6,5 +6,6 @@ runtime
 python3.11
 **/*.swp
 *.swp
+util/__pycache__
 
 

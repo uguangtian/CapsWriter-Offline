@@ -3,7 +3,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 from platform import system
-
+import sys
 import keyboard
 from flask import sessions
 if system() == 'Windows':
@@ -282,7 +282,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             key_pressed = False
             return
 
-        # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
+        # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀態
         elif not double_clicked and not is_short_duration:
             translate_needed()
             if system() == 'Windows':
@@ -441,13 +441,70 @@ def click_handler(e: keyboard.KeyboardEvent) -> None:
 
 def bond_shortcut():
     print(f'Config.hold_mode: {Config.hold_mode}')
-    if Config.hold_mode:
-        keyboard.hook_key(
-            Config.speech_recognition_shortcut, hold_handler, suppress=Config.suppress
-        )
+    
+    # 在 macOS 上使用 pynput 代替 keyboard
+    if system() == 'Darwin':
+        try:
+            from pynput import keyboard as pynput_keyboard
+            
+            # 将配置的快捷键转换为 pynput 格式
+            shortcut_key = Config.speech_recognition_shortcut.lower()
+            print(f'shortcut_key: {shortcut_key}')
+            if 'ctrl' in shortcut_key:
+                key = pynput_keyboard.Key.ctrl
+            elif 'cmd' in shortcut_key or 'command' in shortcut_key:
+                key = pynput_keyboard.Key.cmd
+            elif 'alt' in shortcut_key:
+                key = pynput_keyboard.Key.alt
+            elif 'right shift' in shortcut_key:
+                key = pynput_keyboard.Key.shift_r
+            elif 'left shift' in shortcut_key:
+                key = pynput_keyboard.Key.shift
+            elif 'shift' in shortcut_key:
+                key = pynput_keyboard.Key.shift            
+            else:
+                # 如果是单个字符键
+                key = shortcut_key
+            
+            # 创建监听器
+            def on_press(k):
+                if hasattr(k, 'char') and k.char == key or k == key:
+                    if Config.hold_mode:
+                        # 模拟 keyboard 事件
+                        e = type('obj', (object,), {'event_type': 'down', 'name': Config.speech_recognition_shortcut})
+                        hold_handler(e)
+                    else:
+                        e = type('obj', (object,), {'event_type': keyboard.KEY_DOWN, 'name': Config.speech_recognition_shortcut})
+                        click_handler(e)
+            
+            def on_release(k):
+                if hasattr(k, 'char') and k.char == key or k == key:
+                    if Config.hold_mode:
+                        # 模拟 keyboard 事件
+                        e = type('obj', (object,), {'event_type': 'up', 'name': Config.speech_recognition_shortcut})
+                        hold_handler(e)
+                    else:
+                        e = type('obj', (object,), {'event_type': keyboard.KEY_UP, 'name': Config.speech_recognition_shortcut})
+                        click_handler(e)
+            
+            # 启动监听
+            listener = pynput_keyboard.Listener(on_press=on_press, on_release=on_release)
+            listener.start()
+            
+            print("使用 pynput 监听键盘事件，无需管理员权限")
+            
+        except ImportError:
+            print("请安装 pynput 库: pip install pynput")
+            sys.exit(1)
     else:
-        # 单击模式，必须得阻塞快捷键
-        # 收到长按时，再模拟发送按键
-        keyboard.hook_key(
-            Config.speech_recognition_shortcut, click_handler, suppress=True
-        )
+        # 在其他系统上继续使用 keyboard 库
+        if Config.hold_mode:
+            keyboard.hook_key(
+                Config.speech_recognition_shortcut, hold_handler, suppress=Config.suppress
+            )
+        else:
+            # 单击模式，必须得阻塞快捷键
+            # 收到长按时，再模拟发送按键
+            keyboard.hook_key(
+                Config.speech_recognition_shortcut, click_handler, suppress=True
+            )
