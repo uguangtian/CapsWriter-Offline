@@ -30,6 +30,7 @@ def record_callback(
 
 def stream_close(signum, frame):
     # Mac上无法退出
+    print("system():",system())
     if system() == 'darwin':
         return
 
