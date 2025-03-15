@@ -7,12 +7,14 @@ from platform import system
 import websockets
 
 from util.config import ServerConfig as Config
+from util.config import DeepSeekConfig
 from util.empty_working_set import empty_current_working_set
 from util.server_check_model import check_model
 from util.server_cosmic import Cosmic, console
 from util.server_init_recognizer import init_recognizer
 from util.server_ws_recv import ws_recv
 from util.server_ws_send import ws_send
+from util.server_android_connection import start_android_connection_service
 
 # 确保 os.getcwd() 位置正确，用相对路径加载模型
 BASE_DIR = os.getcwd()
@@ -69,6 +71,20 @@ async def main():
         )
 
         run_online_translate_service()
+        
+    # 启动DeepSeek API服务
+    if DeepSeekConfig.start_deepseek_server:
+        console.print("启动DeepSeek API服务...")
+        from util.server_run_deepseek_service import (
+            run_deepseek_service,
+        )
+
+        deepseek_server_process = Process(target=run_deepseek_service)
+        deepseek_server_process.start()
+    
+    # 启动Android连接服务
+    console.print("启动Android连接服务...")
+    discovery_thread = start_android_connection_service()
 
     console.rule("[green3]开始服务")
     console.line()

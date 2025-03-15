@@ -3,6 +3,10 @@ import json
 import opencc
 import websockets
 
+import asyncio
+from util.server_run_deepseek_service import call_deepseek_api
+from util.server_run_doubao_service import call_doubao_api
+
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
 from util.client_hot_sub import hot_sub
@@ -31,9 +35,10 @@ async def recv_result():
             message = json.loads(message)
             text = message["text"]
             delay = message["time_complete"] - message["time_submit"]
-
             # 如果非最终结果，继续等待
             if not message["is_final"]:
+                print("not final text:",text)
+
                 continue
 
             # 消除末尾标点
@@ -81,6 +86,9 @@ async def recv_result():
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
             console.print(f"    识别结果：[green]{text}")
+
+
+
             if offline_translate_done:
                 console.print(f"    离线翻译结果：[green]{offline_translated_text}")
             if online_translate_done:
@@ -111,6 +119,8 @@ async def recv_result():
                             await type_result(text)
                 convert_to_traditional_chinese_done = False
             Cosmic.opposite_state = False
+            # result = await call_deepseek_api(text, action="polish")
+            # asyncio.create_task(polish_text_async(text))
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
     except websockets.ConnectionClosedOK:
@@ -124,6 +134,15 @@ async def recv_result():
     finally:
         return
 
+async def polish_text_async(text):
+    """异步处理文本润色，不阻塞主流程"""
+    try:
+        # result = await call_deepseek_api(text, action="polish")
+        result = await call_doubao_api(text, action="polish")
+
+        console.print(f"    润色结果：[green]{result}")
+    except Exception as e:
+        console.print(f"    润色处理出错：[red]{str(e)}")
 
 if __name__ == "__main__":
     None

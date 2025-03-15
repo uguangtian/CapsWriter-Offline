@@ -25,9 +25,13 @@ async def message_handler(websocket, message, cache: Cache):
 
     queue_in = Cosmic.queue_in
 
+    # 声明使用全局的状态指示器变量
     global status_mic
+    # 从消息中获取音频来源（麦克风或文件）
     source = message["source"]
+    # 获取是否为最后一段音频的标志
     is_final = message["is_final"]
+    # 判断是否为第一段音频（通过检查缓存是否为空）
     is_start = not bool(cache.chunks)
 
     # 获取 id
@@ -100,6 +104,18 @@ async def message_handler(websocket, message, cache: Cache):
 async def ws_recv(websocket):
     global status_mic
 
+    # 获取WebSocket路径
+    path = websocket.path if hasattr(websocket, 'path') else '/'
+    console.print(f"[DEBUG] 新的WebSocket连接，路径: {path}", style="cyan")
+    
+    # 检查是否是Android客户端
+    if path == '/android':
+        console.print(f"[DEBUG] 检测到Android客户端连接", style="green")
+        # 如果是Android客户端，使用专门的处理函数
+        from util.server_android_connection import handle_android_websocket
+        await handle_android_websocket(websocket, path)
+        return
+
     # 登记 socket 到字典，以 socket id 字符串为索引
     sockets = Cosmic.sockets
     sockets_id = Cosmic.sockets_id
@@ -120,7 +136,7 @@ async def ws_recv(websocket):
         async for message in websocket:
             # json 解码字符串
             message = json.loads(message)
-            # print("接收消息",message) base64编码json
+            # console.print(f"[DEBUG] 收到消息类型: {message.get('source', 'unknown')}", style="cyan")
             # 处理数据
             await message_handler(websocket, message, cache)
 
@@ -136,9 +152,11 @@ async def ws_recv(websocket):
     except websockets.InvalidState:
         console.print("InvalidState...")
     except Exception as e:
-        console.print("Exception:", e)
+        console.print(f"Exception: {e}", style="red")
+        console.print(f"[DEBUG] 处理WebSocket连接时出错: {e}", style="red")
     finally:
         status_mic.stop()
         status_mic.on = False
         sockets.pop(str(websocket.id))
         sockets_id.remove(str(websocket.id))
+        console.print(f"[DEBUG] WebSocket连接已关闭，ID: {websocket.id}", style="yellow")

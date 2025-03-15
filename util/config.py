@@ -101,6 +101,8 @@ class ClientConfig:
     only_enable_microphones_when_pressed_record_shortcut: bool = config["client"][
         "only_enable_microphones_when_pressed_record_shortcut"
     ]
+    microphone_device_index: int = config["client"]["microphone_device_index"]
+    microphone_device_name: str = config["client"]["microphone_device_name"]
     vscode_exe_path: str = config["client"]["vscode_exe_path"]
     play_start_music: bool = config["client"]["play_start_music"]
     start_music_path: Path = Path(config["client"]["start_music_path"])
@@ -129,6 +131,17 @@ class DeepLXConfig:
     online_translate_port: str = config["deeplx"]["online_translate_port"]
     exe_path: Path = Path(config["deeplx"]["exe_path"])
     api: str = config["deeplx"]["api"]
+
+
+# DeepSeek 配置
+class DeepSeekConfig:
+    start_deepseek_server: bool = config.get("deepseek", {}).get("start_deepseek_server", False)
+    deepseek_port: str = config.get("deepseek", {}).get("deepseek_port", "6018")
+    api_key: str = config.get("deepseek", {}).get("api_key", "")
+    api_endpoint: str = config.get("deepseek", {}).get("api_endpoint", "https://api.deepseek.com/v1/chat/completions")
+    model: str = config.get("deepseek", {}).get("model", "deepseek-chat")
+    temperature: float = config.get("deepseek", {}).get("temperature", 0.7)
+    max_tokens: int = config.get("deepseek", {}).get("max_tokens", 2000)
 
 
 # 模型路径配置
@@ -167,6 +180,28 @@ class ParaformerArgs:
     feature_dim: int = config["paraformer_args"]["feature_dim"]
     decoding_method: str = config["paraformer_args"]["decoding_method"]
     debug: bool = config["paraformer_args"]["debug"]
+
+
+# 豆包配置（需要添加到现有配置文件中）
+class DoubaoConfig:
+    # 豆包API密钥
+    api_key = "68f3d74d-7e12-4577-83e9-e64f787c28f0"
+    
+    # 豆包API端点
+    api_endpoint = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+    
+    # 豆包模型
+    # model = "doubao-1-5-pro-256k-250115"
+    model = "doubao-1-5-lite-32k-250115"
+    
+    # 温度参数
+    temperature = 0.7
+    
+    # 最大生成token数
+    max_tokens = 1024
+    
+    # 豆包服务端口
+    doubao_port = 6019
 
 
 def print_config():

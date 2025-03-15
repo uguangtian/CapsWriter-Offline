@@ -3,6 +3,7 @@ import json
 from util.asyncio_to_thread import to_thread
 from util.server_classes import Result
 from util.server_cosmic import Cosmic, console
+from util.server_android_connection import send_result_to_android_client, AndroidClients
 
 
 async def ws_send():
@@ -31,17 +32,22 @@ async def ws_send():
                 "is_final": result.is_final,
             }
 
-            # 获得 socket
-            websocket = next(
-                (ws for ws in sockets.values() if str(ws.id) == result.socket_id),
-                None,
-            )
+            # 检查是否是Android客户端
+            if result.socket_id.startswith("android_"):
+                # 发送结果给Android客户端
+                send_result_to_android_client(result)
+            else:
+                # 获得 WebSocket
+                websocket = next(
+                    (ws for ws in sockets.values() if str(ws.id) == result.socket_id),
+                    None,
+                )
 
-            if not websocket:
-                continue
+                if not websocket:
+                    continue
 
-            # 发送消息
-            await websocket.send(json.dumps(message))
+                # 发送消息
+                await websocket.send(json.dumps(message))
 
             if result.source == "mic":
                 console.print(f"识别结果：\n    [green]{result.text}")
@@ -49,6 +55,8 @@ async def ws_send():
                 console.print(f"    转录进度：{result.duration:.2f}s", end="\r")
                 if result.is_final:
                     console.print("\n    [green]转录完成")
+            elif result.source == "android":
+                console.print(f"Android识别结果：\n    [green]{result.text}")
 
         except Exception as e:
             print(e)

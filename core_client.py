@@ -5,6 +5,7 @@ import os
 import signal
 import sys
 import pdb
+import argparse
 
 from pathlib import Path
 from platform import system
@@ -68,7 +69,7 @@ if system() == "Darwin" and not sys.argv[1:]:
         sys.exit()
 
             # 仍然需要管理员权限的检查
-        if os.getuid() != 0:
+        if os.getuid() != 0: #获取用户 ID
             print("在 MacOS 上需要以管理员启动客户端才能监听键盘活动，请 sudo 启动")
             input("按回车退出")
             sys.exit()
@@ -103,9 +104,12 @@ async def main_mic():
     # 实时更新热词
     observer = observe_hot()
 
+
+  
+        
     # 打开音频流
     Cosmic.stream = stream_open()
-
+    
     # Ctrl-C 关闭音频流，触发自动重启
     # signal.signal(signal.SIGINT, stream_close)
 
@@ -123,9 +127,9 @@ async def main_mic():
     print(
         f"连接服务端...  （服务端载入模块时长约 50 秒，请耐心等待。若好几分钟了还无响应 -> 服务端软件 start_server_gui.exe 启动了吗？ 服务端地址当前设置 {Config.addr}:{Config.speech_recognition_port} 是正确的吗？）"
     )
-    await recv_result()
-    # while True:
-    #     await recv_result()
+    # await recv_result()
+    while True:
+        await recv_result()
 
 
 async def main_file(files: List[Path]):
@@ -170,9 +174,17 @@ def init_file(files: List[Path]):
 
 
 if __name__ == "__main__":
+     # 添加命令行参数解析
+    parser = argparse.ArgumentParser(description="CapsWriter 客户端")
+    parser.add_argument("--channels", type=int, default=None, help="指定录音的声道数 (1 或 2)")
+    parser.add_argument("--device", type=int, default=None, help="指定录音设备的索引")
+    parser.add_argument("--device-name", type=str, default=None, help="指定录音设备的名称（支持部分匹配）")
+    parser.add_argument("--file", type=str, default=None, help="指定文件（目录）")
+    args = parser.parse_args()
+
     # 如果参数传入文件，那就转录文件
     # 如果没有多余参数，就从麦克风输入
-    if sys.argv[1:]:
+    if args.file is not None:
         print("typer.run", sys.argv[1:])
         
         # 检查输入是否为文件夹
@@ -213,87 +225,9 @@ if __name__ == "__main__":
             print("未找到任何媒体文件")
         #     sys.exit(1)
     else:
+              # 如果命令行指定了设备索引或名称，更新配置
+        if args.device is not None:
+            Config.microphone_device_index = args.device
+        if args.device_name is not None:
+            Config.microphone_device_name = args.device_name
         init_mic()
-
-
-
-# 有一个下载工具，类似这样的一个调用方法，直接传入url
-#  yt-dlp --cookies-from-browser 'Chrome' 'https://www.youtube.com/watch?v=dXAkywP0DdU'
-# 实现下载完视频之后调用相应函数的解析视频功能来处理视频，跟下面类似
-#    asyncio.run(main_file(file_paths))
-
-import subprocess
-import tempfile
-import shutil
-from pathlib import Path
-
-async def download_and_transcribe(url, browser='Chrome', output_dir=None):
-    """
-    下载YouTube视频并进行转录
-    
-    参数:
-        url: YouTube视频URL
-        browser: 从哪个浏览器获取cookies，默认为Chrome
-        output_dir: 输出目录，默认为临时目录
-    """
-    print(f"开始下载视频: {url}")
-    
-    # 创建临时目录用于存放下载的视频
-    if output_dir is None:
-        temp_dir = tempfile.mkdtemp()
-        output_path = Path(temp_dir)
-    else:
-        output_path = Path(output_dir)
-        output_path.mkdir(exist_ok=True)
-    
-    try:
-        # 构建yt-dlp命令
-        cmd = [
-            'yt-dlp',
-            '--cookies-from-browser', browser,
-            '-o', str(output_path / '%(title)s.%(ext)s'),
-            '--restrict-filenames',  # 避免特殊字符
-            url
-        ]
-        
-        # 执行下载命令
-        print("执行下载命令...")
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            print(f"下载失败: {result.stderr}")
-            return
-        
-        print("下载完成，开始查找下载的视频文件...")
-        
-        # 查找下载的视频文件
-        media_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.webm', '.mp3', '.wav']
-        downloaded_files = []
-        
-        for ext in media_extensions:
-            files = list(output_path.glob(f'*{ext}'))
-            if files:
-                downloaded_files.extend(files)
-        
-        if not downloaded_files:
-            print("未找到下载的媒体文件")
-            return
-        
-        print(f"找到 {len(downloaded_files)} 个媒体文件，开始转录...")
-        
-        # 转录下载的视频
-        await main_file(downloaded_files)
-        
-        print("转录完成")
-        
-    except Exception as e:
-        print(f"处理过程中出错: {e}")
-    finally:
-        # 如果使用临时目录，则在完成后清理
-        # 只有在使用临时目录且temp_dir存在时才清理
-        if output_dir is None and 'temp_dir' in locals():
-            print("清理临时文件...")
-            shutil.rmtree(temp_dir, ignore_errors=True)
-
-# 使用示例
-# asyncio.run(download_and_transcribe('https://www.youtube.com/watch?v=dXAkywP0DdU'))
