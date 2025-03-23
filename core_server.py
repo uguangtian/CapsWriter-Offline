@@ -1,8 +1,10 @@
 import asyncio
 import os
 import sys
+import atexit
 from multiprocessing import Manager, Process
 from platform import system
+import json
 
 import websockets
 
@@ -15,6 +17,29 @@ from util.server_init_recognizer import init_recognizer
 from util.server_ws_recv import ws_recv
 from util.server_ws_send import ws_send
 from util.server_android_connection import start_android_connection_service
+
+# 存储所有需要清理的进程
+processes = []
+
+def cleanup_processes():
+    """清理所有子进程"""
+    console.print("\n[yellow]正在清理进程...[/yellow]")
+    for p in processes:
+        if p.is_alive():
+            p.terminate()
+            p.join(timeout=1)
+    console.print("[green]进程清理完成[/green]")
+
+def run_chat_ui():
+    """运行chat ui服务"""
+    try:
+        from agent.model_services.chat_ui import app
+        app.run(host='0.0.0.0', port=5001)
+    except Exception as e:
+        console.print(f"[red]Chat UI 服务启动失败: {str(e)}[/red]")
+
+# 注册退出时的清理函数
+atexit.register(cleanup_processes)
 
 # 确保 os.getcwd() 位置正确，用相对路径加载模型
 BASE_DIR = os.getcwd()
@@ -51,6 +76,7 @@ async def main():
         daemon=True,
     )
     recognize_process.start()
+    processes.append(recognize_process)
     Cosmic.queue_out.get()
 
     # 启动离线翻译 WebSocket服务器
@@ -62,6 +88,7 @@ async def main():
 
         translate_offline_server_process = Process(target=run_offline_translate_service)
         translate_offline_server_process.start()
+        processes.append(translate_offline_server_process)
 
     # 启动在线翻译 DeepLX服务器
     if Config.start_online_translate_server:
@@ -73,18 +100,29 @@ async def main():
         run_online_translate_service()
         
     # 启动DeepSeek API服务
-    if DeepSeekConfig.start_deepseek_server:
-        console.print("启动DeepSeek API服务...")
-        from util.server_run_deepseek_service import (
-            run_deepseek_service,
-        )
+    # if DeepSeekConfig.start_deepseek_server:
+    #     console.print("启动DeepSeek API服务...")
+    #     from util.server_run_deepseek_service import (
+    #         run_deepseek_service,
+    #     )
 
-        deepseek_server_process = Process(target=run_deepseek_service)
-        deepseek_server_process.start()
+    #     deepseek_server_process = Process(target=run_deepseek_service)
+    #     deepseek_server_process.start()
+    #     processes.append(deepseek_server_process)
     
     # 启动Android连接服务
     console.print("启动Android连接服务...")
     discovery_thread = start_android_connection_service()
+
+    # 启动 chat_ui.py 服务
+    console.print("启动 Chat UI 服务...")
+    chat_ui_process = Process(
+        target=run_chat_ui,
+        daemon=True
+    )
+    chat_ui_process.start()
+    processes.append(chat_ui_process)
+    console.print("[green]Chat UI 服务已启动在 http://localhost:5001")
 
     console.rule("[green3]开始服务")
     console.line()
@@ -100,7 +138,6 @@ async def main():
         Config.speech_recognition_port,
         # subprotocols=["binary"],
         subprotocols=None,  # 移除子协议要求
-
         max_size=None,
     )
 
@@ -121,6 +158,7 @@ def init():
         print(e)
     finally:
         Cosmic.queue_out.put(None)
+        cleanup_processes()  # 确保在退出前清理进程
         sys.exit(0)
         # os._exit(0)
 

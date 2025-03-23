@@ -74,22 +74,53 @@ async def call_doubao_api(text, action="polish"):
 
 # 定义WebSocket处理函数
 async def doubao_server(websocket, path):
-    async for message in websocket:
-        try:
-            data = json.loads(message)
-            text_to_process = data.get("text", "")
-            action = data.get("action", "polish")
+    print(f"[豆包] 新的WebSocket连接已建立")
+    try:
+        async for message in websocket:
+            try:
+                # 解析请求数据
+                data = json.loads(message)
+                text_to_process = data.get("text", "")
+                action = data.get("action", "polish")
+                save_to_file = data.get("save_to_file", False)
+                output_filename = data.get("output_filename", None)
+                
+                print(f"[豆包] 收到请求: action={action}, text长度={len(text_to_process)}")
+                
+                # 使用文本润色服务处理文本
+                from util.text_polish_service import TextPolishService
+                polish_service = TextPolishService(model_type='doubao')
+                
+                if save_to_file:
+                    # 处理文本并保存到文件
+                    processed_text, file_path = await polish_service.polish_text(
+                        text_to_process, action, output_filename
+                    )
+                    # 将处理结果和文件路径发送回客户端
+                    await websocket.send(json.dumps({
+                        "processed_text": processed_text,
+                        "file_path": file_path
+                    }))
+                else:
+                    # 只处理文本，不保存到文件
+                    processed_text = await call_doubao_api(text_to_process, action)
+                    # 将处理结果发送回客户端
+                    await websocket.send(json.dumps({"processed_text": processed_text}))
+                
+                print(f"[豆包] 请求处理完成: action={action}")
             
-            # 调用豆包 API
-            processed_text = await call_doubao_api(text_to_process, action)
-            
-            # 将处理结果发送回客户端
-            await websocket.send(json.dumps({"processed_text": processed_text}))
-        
-        except json.JSONDecodeError:
-            await websocket.send(json.dumps({"error": "无效的JSON格式"}))
-        except Exception as e:
-            await websocket.send(json.dumps({"error": str(e)}))
+            except json.JSONDecodeError:
+                error_msg = "无效的JSON格式"
+                print(f"[豆包] 错误: {error_msg}")
+                await websocket.send(json.dumps({"error": error_msg}))
+            except Exception as e:
+                error_msg = str(e)
+                print(f"[豆包] 错误: {error_msg}")
+                await websocket.send(json.dumps({"error": error_msg}))
+    except Exception as e:
+        print(f"[豆包] WebSocket连接异常: {str(e)}")
+    finally:
+        print(f"[豆包] WebSocket连接已关闭")
 
 
 def run_doubao_service():
@@ -103,5 +134,6 @@ def run_doubao_service():
 
 if __name__ == "__main__":
     # 启动豆包 WebSocket服务器
+    print(f"[豆包] 正在启动服务，监听地址: {ClientConfig.addr}:{DoubaoConfig.doubao_port}")
     server_process = Process(target=run_doubao_service)
     server_process.start()

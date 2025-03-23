@@ -1,6 +1,7 @@
 .env
 .vscode
 2025/03
+util/__pycache__
 build
 dist
 models
@@ -8,6 +9,16 @@ runtime
 python3.11
 **/*.swp
 *.swp
-<<<<<<< HEAD
 util/__pycache__
+util/__pycache__/**/*
+**/*.log
+polished
+ustom_output
+config.toml
+.DS_Store
+__pycache__
+**/*.log
+**/ __pycache__
+custom_output
+data/chat_history.json
 util/__pycache__/**/*

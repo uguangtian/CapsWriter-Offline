@@ -114,19 +114,25 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     while True:
         # 从队列中获取任务消息
         # 阻塞最多1秒，便于中断退出
+        print('init_recognizer 等待音频任务')
         try:
+            #console.print("[DEBUG] 等待音频任务...", style="cyan")
             task = queue_in.get(timeout=1)
-        except:
+        except Exception as e:
+            print('接收音频任务, error:',e)
             continue
 
         if task.socket_id not in sockets_id:  # 检查任务所属的连接是否存活
+            console.print(f"[DEBUG] 任务所属连接已断开，跳过处理: {task.socket_id}", style="yellow")
             continue
 
         if Config.model == "Paraformer":
-            print("模型：Paraformer")
+            console.print("[DEBUG] 使用 Paraformer 模型处理音频", style="cyan")
             result = recognize(recognizer, punc_model, task)  # 执行识别
         else:
-            print("模型：",Config.model )
+            console.print(f"[DEBUG] 使用 {Config.model} 模型处理音频", style="cyan")
             result = recognize(recognizer, task)  # 执行识别
 
+        console.print(f"[DEBUG] 识别完成，结果长度: {len(result.text)}", style="green")
         queue_out.put(result)  # 返回结果
+        console.print(f"[DEBUG] 已将结果放入输出队列", style="green")

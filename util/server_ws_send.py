@@ -35,7 +35,7 @@ async def ws_send():
             # 检查是否是Android客户端
             if result.socket_id.startswith("android_"):
                 # 发送结果给Android客户端
-                send_result_to_android_client(result)
+                await send_result_to_android_client(result)
             else:
                 # 获得 WebSocket
                 websocket = next(

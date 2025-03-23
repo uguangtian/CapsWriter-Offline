@@ -38,7 +38,7 @@ async def translate_text(text):
 
 
 # 定义WebSocket处理函数
-async def offline_translate_server(websocket, path):
+async def offline_translate_server(websocket, path, any):
     async for message in websocket:
         data = json.loads(message)
         text_to_translate = data.get("text", "")

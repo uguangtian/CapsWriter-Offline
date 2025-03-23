@@ -1010,6 +1010,7 @@ class ClientConfigPage(SiPage):
             self.hot_kwd_linear_attaching.addWidget(self.hot_kwd)
 
             # 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
+            print("写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果")
             self.paste = SiSwitch(self)
             self.paste.setChecked(self.config["client"]["paste"])
             self.paste_linear_attaching = SiOptionCardLinear(self)

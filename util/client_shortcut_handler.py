@@ -43,7 +43,7 @@ class KeyManager:
         self.last_press_time = 0
         
     def on_press(self, key):
-        print('on_press')
+        print('on_press, is_pressed:',self.is_pressed)
         # 将配置的快捷键转换为 pynput 格式
         shortcut_key = Config.speech_recognition_shortcut.lower()
         target_key = None  
@@ -51,7 +51,7 @@ class KeyManager:
             target_key = key
         elif 'ctrl' in shortcut_key and key == pynput_keyboard.Key.ctrl:
             target_key = key
-        elif ('cmd' in shortcut_key or 'command' in shortcut_key) and key == pynput_keyboard.Key.cmd:
+        elif ('left cmd' in shortcut_key or 'command' in shortcut_key) and key == pynput_keyboard.Key.cmd_l:
             target_key = key
         elif 'alt' in shortcut_key and key == pynput_keyboard.Key.alt:
             target_key = key
@@ -63,21 +63,26 @@ class KeyManager:
             target_key = key
         
         # 如果是目标按键且当前未被按下
+        print("on_press, target_key:",target_key, "is_pressed:",self.is_pressed)
         if target_key and not self.is_pressed:
             self.is_pressed = True
             self.last_press_time = time.time()
-            print(f"按键按下: {key}")
-            return
+            # print(f"按键按下: {key}")
+            
+            # 直接调用处理函数，不再发送按键
             if Config.hold_mode:
-                # 模拟 keyboard 事件
+                print("on_press, hold_mode")
                 e = type('obj', (object,), {'event_type': 'down', 'name': Config.speech_recognition_shortcut})
                 hold_handler(e)
             else:
+                print("on_press, click_mode")
                 e = type('obj', (object,), {'event_type': keyboard.KEY_DOWN, 'name': Config.speech_recognition_shortcut})
                 click_handler(e)
                 
     
     def on_release(self, key):
+        print("on_release")
+        # 释放时触发
         # 将配置的快捷键转换为 pynput 格式
         shortcut_key = Config.speech_recognition_shortcut.lower()
         target_key = None
@@ -99,9 +104,10 @@ class KeyManager:
         
         # 如果是目标按键且当前被按下
         if target_key and self.is_pressed:
-            print(f"按键释放: {key}")
-            return
+            print("on_release, target_key:",target_key, "is_pressed:",self.is_pressed)
+            # 删除 return 语句
             if Config.hold_mode:
+                print("on_release, hold_mode")
                 # 模拟 keyboard 事件
                 e = type('obj', (object,), {'event_type': 'up', 'name': Config.speech_recognition_shortcut})
                 hold_handler(e)
@@ -241,7 +247,18 @@ def launch_task():
 def cancel_task():
     # 通知停止录音，关掉滚动条
     Cosmic.on = False
-    status.stop()
+    
+    # 使用非阻塞方式调用 status.stop()
+    print('准备停止状态指示器，当前状态:', status.started)
+    try:
+        # 在单独的线程中调用 status.stop()
+        import threading
+        threading.Thread(target=status.stop).start()
+        print('status.stop() 在后台线程中执行')
+    except Exception as e:
+        print(f'status.stop() 出错: {e}')
+    
+    print('继续执行 cancel_task 的其余部分')
 
     # 取消音频静音
     if Config.mute_other_audio:
@@ -252,33 +269,51 @@ def cancel_task():
     if Config.pause_other_audio and unpause_needed:
         keyboard.send("play/pause")
         unpause_needed = False
-
+    
+    print('准备发送取消任务的消息到队列')
     # 发送取消任务的消息到队列
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put({"type": "cancel", "time": time.time(), "data": None}),
         Cosmic.loop,
     )
-
+    print('取消任务的消息已发送到队列')
+    
     if Config.only_enable_microphones_when_pressed_record_shortcut:
-        # 结束音频流
-        Cosmic.stream.stop()
-        Cosmic.stream.close()
+        print('准备结束音频流')
+        try:
+            # 结束音频流
+            Cosmic.stream.stop()
+            print('音频流已停止')
+            Cosmic.stream.close()
+            print('音频流已关闭')
+        except Exception as e:
+            print(f'结束音频流时出错: {e}')
+
+    print('end cancel_task')
+
 
 
 def finish_task():
+    print('start finish_task')
     global task
 
     # 通知停止录音，关掉滚动条
+    # print('通知停止录音，关掉滚动条')
     Cosmic.on = False
+    print('start stop, state:',status.started)
     status.stop()
+    print('end stop')
+    # print('start run_coroutine_threadsafe')
 
     # 通知结束任务
+    print('finish_task, put finish')
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put(
             {"type": "finish", "time": time.time(), "data": None},
         ),
         Cosmic.loop,
     )
+    print('run_coroutine_threadsafe end')
 
     # 取消音频静音
     if Config.mute_other_audio:
@@ -301,6 +336,7 @@ def finish_task():
         # 结束音频流
         Cosmic.stream.stop()
         Cosmic.stream.close()
+    # print('finish_task end')
 
 
 # =================单击模式======================
@@ -313,6 +349,7 @@ def finish_task():
     # unpause_needed: 标记是否需要取消暂停其他音频
 
 def click_mode(e: keyboard.KeyboardEvent):
+    # 点按模式是第一次按并弹出会触发两次调用，第二次调用时开始任务，再次点按仍然会触发两次调用。第二次调用是结束任务
     # log
     global \
         last_time_pressed, \
@@ -325,7 +362,6 @@ def click_mode(e: keyboard.KeyboardEvent):
     # 如果key_pressed已被按下，不执行
     # if key_pressed:
         # return
-    return
     # 0. 原来的设计甚是巧妙巧妙, 但是我的功力有限，消化不良.
     # 1. 这里的设计思路是: 按下`录音键`只记录`按下时的时间标记`，然后根据`弹起来时的时间标记`和前面`按下时的时间标记`的 长短 进行判断应该进行哪一种行为.
 
@@ -346,78 +382,33 @@ def click_mode(e: keyboard.KeyboardEvent):
             True if time.time() - last_time_released < Config.threshold else False
         )
         
-        print(f'DEBUG - 按键按下: last_time_released={last_time_released}, 当前时间={time.time()}, 时间差={time.time() - last_time_released}, 阈值={Config.threshold}, is_short_duration={is_short_duration}')
+        # print(f'DEBUG - 按键按下: last_time_released={last_time_released}, 当前时间={time.time()}, 时间差={time.time() - last_time_released}, 阈值={Config.threshold}, is_short_duration={is_short_duration}')
 
         last_time_pressed = time.time()
         key_pressed = True
-        print(f'DEBUG - 设置 key_pressed={key_pressed}, last_time_pressed={last_time_pressed}')
+        # print(f'DEBUG - 设置 key_pressed={key_pressed}, last_time_pressed={last_time_pressed}')
 
     elif e.event_type == keyboard.KEY_UP:
         last_time_released = time.time()
-        print(f'DEBUG - 按键释放: last_time_pressed={last_time_pressed}, 当前时间={time.time()}, 按下持续时间={time.time() - last_time_pressed}, 阈值={Config.threshold}')
-        print(f'DEBUG - 当前状态: double_clicked={double_clicked}, is_short_duration={is_short_duration}')
+        # print(f'DEBUG - 按键释放: last_time_pressed={last_time_pressed}, 当前时间={time.time()}, 按下持续时间={time.time() - last_time_pressed}, 阈值={Config.threshold}')
+        # print(f'DEBUG - 当前状态: double_clicked={double_clicked}, is_short_duration={is_short_duration}')
 
         # 记录是否有任务; 此处已改用变量:`double_clicked` 来判断任务是否进行中
         # on = Cosmic.on
 
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
         if last_time_released - last_time_pressed >= Config.threshold:
-            print(f'DEBUG - 进入长按分支: 按下持续时间={last_time_released - last_time_pressed} >= {Config.threshold}')
-            # 函数`cancel_task()` : 他和我想象中的功能可能不一样
-            # 我想象中的功能: `長按` = 进行大小写切换
-            # 原来的功能: 可能是 中断并且不输出 已经录入的语音文字
-            # 如果启动以下的函数`cancel_task()` : Bug 复现方法是 按一次`录音键`进入录音状态, 随后进行一次长按, 就会进入错乱状态.
-            # 如果没有特殊的需求, 现在的状况可以满足 `長按` = 进行大小写切换 的功能
-            # 否则需要进入函数`cancel_task()` 修改
+            # print(f'DEBUG - 进入长按分支: 按下持续时间={last_time_released - last_time_pressed} >= {Config.threshold}')
+            # 取消任务
             cancel_task()
 
-            # 判定为`長按`，发送原來的按键功能
-            if system() == 'Darwin':
-                print(f'DEBUG - 在 macOS 上使用 pynput 发送按键: {Config.speech_recognition_shortcut}')
-                # 在 macOS 上使用 pynput 发送按键
-                try:
-                    from pynput.keyboard import Controller, Key
-                    keyboard_controller = Controller()
-                    
-                    # 解析快捷键
-                    shortcut_key = Config.speech_recognition_shortcut.lower()
-                    print(f'DEBUG - 解析快捷键: {shortcut_key}')
-                    if 'right cmd' in shortcut_key:
-                        print(f'DEBUG - 发送 right cmd 键')
-                        keyboard_controller.press(Key.cmd_r)
-                        keyboard_controller.release(Key.cmd_r)
-                    elif 'cmd' in shortcut_key or 'command' in shortcut_key:
-                        print(f'DEBUG - 发送 cmd 键')
-                        keyboard_controller.press(Key.cmd)
-                        keyboard_controller.release(Key.cmd)
-                    elif 'ctrl' in shortcut_key:
-                        print(f'DEBUG - 发送 ctrl 键')
-                        keyboard_controller.press(Key.ctrl)
-                        keyboard_controller.release(Key.ctrl)
-                    elif 'alt' in shortcut_key:
-                        print(f'DEBUG - 发送 alt 键')
-                        keyboard_controller.press(Key.alt)
-                        keyboard_controller.release(Key.alt)
-                    elif 'shift' in shortcut_key:
-                        print(f'DEBUG - 发送 shift 键')
-                        keyboard_controller.press(Key.shift)
-                        keyboard_controller.release(Key.shift)
-                    else:
-                        # 如果是单个字符键
-                        print(f'DEBUG - 发送单个字符键: {shortcut_key}')
-                        keyboard_controller.press(shortcut_key)
-                        keyboard_controller.release(shortcut_key)
-                except ImportError:
-                    print("请安装 pynput 库: pip install pynput")
-                except Exception as e:
-                    print(f"DEBUG - 发送按键时出错: {e}")
-            else:
-                # 在其他系统上使用 keyboard 库
-                print(f'DEBUG - 在其他系统上使用 keyboard 库发送按键: {Config.speech_recognition_shortcut}')
-                keyboard.send(Config.speech_recognition_shortcut)
-            
-            # key_pressed = False
-            print(f'DEBUG - 长按分支结束, 设置 key_pressed={key_pressed}')
+            # 在长按模式下，我们不需要再发送原始按键
+            # 这会导致按键事件的循环触发
+            # 只需要重置按键状态即可
+            double_clicked = False
+
+            key_pressed = False
+            # print(f'DEBUG - 长按分支结束, 设置 key_pressed={key_pressed}')
             return
 
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀態
@@ -433,13 +424,13 @@ def click_mode(e: keyboard.KeyboardEvent):
                     Cosmic.online_translate_needed,
                     Config.hold_mode,
                 )
-            print(f'DEBUG - 启动任务')
+            # print(f'DEBUG - 启动任务')
             launch_task()
             # `double_clicked`变量 在此处函数中 改为常駐 因此不需要以下的config判断
             # if Config.enable_double_click_opposite_state:
             double_clicked = True
             key_pressed = False
-            print(f'DEBUG - 开始任务分支结束, 设置 double_clicked={double_clicked}, key_pressed={key_pressed}')
+            # print(f'DEBUG - 开始任务分支结束, 设置 double_clicked={double_clicked}, key_pressed={key_pressed}')
             
 
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
@@ -458,7 +449,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             # if Config.enable_double_click_opposite_state:
             double_clicked = False
             key_pressed = False
-            print(f'DEBUG - 完成任务分支结束, 设置 double_clicked={double_clicked}, key_pressed={key_pressed}')
+            # print(f'DEBUG - 完成任务分支结束, 设置 double_clicked={double_clicked}, key_pressed={key_pressed}')
             return
 
         # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
@@ -483,7 +474,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             print(f'DEBUG - 切换简繁分支结束, 设置 key_pressed={key_pressed}')
             # return
 
-        print(f'DEBUG - click_mode 函数执行完毕')
+        # print(f'DEBUG - click_mode 函数执行完毕')
         # print(f'世界的尽头!')
 
 
@@ -492,6 +483,7 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 def hold_mode(e: keyboard.KeyboardEvent):
     # log   
+    print('hold_mode',e.event_type)
     """像对讲机一样，按下录音，松开停止"""
     global \
         task, \
@@ -538,10 +530,10 @@ def hold_mode(e: keyboard.KeyboardEvent):
         # 取消或停止任务
         if duration < Config.threshold and not double_clicked:
             hold_mode_first_time_cancel_task = True
-
+            print("hold_mode, cancel_task, duration:",duration)
             cancel_task()
-
         else:
+            print("hold_mode, finish_task, duration:",duration)
             finish_task()
             # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
             if not double_clicked and Config.restore_key:
@@ -567,6 +559,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
 def hold_handler(e: keyboard.KeyboardEvent) -> None:
     # 验证按键名正确
     if not shortcut_correct(e):
+        print('hold_handler, ont shortcut_correct')
         return
 
     # 长按模式
