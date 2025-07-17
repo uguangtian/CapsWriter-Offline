@@ -84,6 +84,7 @@ Apple
 Audition
 AutoCAD
 App
+API
 
 
 # B开头
@@ -107,12 +108,15 @@ Creative Cloud
 Cubase
 ChatGPT
 CapsWriter
+Claude
+
 
 # D开头
 Dell
 Dolby
 Dropbox
 Directory OPUS
+DeepSeek
 
 # E开头
 Edge
@@ -177,6 +181,7 @@ Lua
 Maya
 Microsoft
 Markdown
+MES
 
 # N开头
 NASA
@@ -224,6 +229,7 @@ Snapchat
 SolidWorks
 SSD
 Steam
+SRM
 
 # T开头
 Teams

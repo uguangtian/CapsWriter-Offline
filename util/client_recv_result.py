@@ -3,6 +3,10 @@ import json
 import opencc
 import websockets
 
+import asyncio
+# from util.server_run_deepseek_service import call_deepseek_api
+# from util.server_run_doubao_service import call_doubao_api
+
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
 from util.client_hot_sub import hot_sub
@@ -21,33 +25,77 @@ warnings.filterwarnings("ignore")
 
 
 async def recv_result():
-    if not await check_websocket():
-        return
+    # 添加重试机制
+    max_retries = 3
+    retry_count = 0
+    retry_delay = 5  # 秒
+    
+    while retry_count < max_retries:
+        if not await check_websocket():
+            retry_count += 1
+            if retry_count < max_retries:
+                console.print(f"[yellow]连接失败，{retry_delay}秒后重试 ({retry_count}/{max_retries})...")
+                await asyncio.sleep(retry_delay)
+                # 增加重试延迟
+                retry_delay *= 1.5
+            else:
+                console.print("[red]连接失败次数过多，放弃重试")
+                return
+            continue
+        else:
+            # 连接成功，重置重试计数
+            retry_count = 0
+            break
+    
     console.print("[green]连接成功\n")
+    
+    # 导入内存监控模块
     try:
+        from util.memory_monitor import cleanup_memory
+    except ImportError:
+        cleanup_memory = None
+        
+    try:
+        message_count = 0
         while True:
             # 接收消息
-            message = await Cosmic.websocket.recv()
-            message = json.loads(message)
-            text = message["text"]
-            delay = message["time_complete"] - message["time_submit"]
-
-            # 如果非最终结果，继续等待
-            if not message["is_final"]:
-                continue
-
+            try:
+                #message = await asyncio.wait_for(Cosmic.websocket.recv(), timeout=30)
+                message = await asyncio.wait_for(Cosmic.websocket.recv(), None)
+                message = json.loads(message)
+                text = message["text"]
+                delay = message["time_complete"] - message["time_submit"]
+                print('message:',message)
+                # 计数器增加
+                message_count += 1
+                
+                # 每处理10条消息，执行一次内存清理
+                if message_count % 10 == 0 and cleanup_memory:
+                    await asyncio.to_thread(cleanup_memory)
+                
+                # 如果非最终结果，继续等待
+                if not message["is_final"]:
+                    print("not final text:",text)
+                    continue
+            except asyncio.TimeoutError:
+                console.print("[yellow]等待消息超时，重新连接...")
+                await Cosmic.websocket.close()
+                await recv_result()
+                return
+            except json.JSONDecodeError:
+                console.print("[red]无效的JSON格式")
+                return
             # 消除末尾标点
             text = strip_punc(text)
 
             # 热词替换
             text = hot_sub(text)
-
-            # 简繁转换
             convert_to_traditional_chinese_done = False
-            converter = opencc.OpenCC(Config.opencc_converter)
-            traditional_text = converter.convert(text)
-            convert_to_traditional_chinese_done = True
-
+            if False:
+                # 简繁转换
+                converter = opencc.OpenCC(Config.opencc_converter)
+                traditional_text = converter.convert(text)
+                
             # 离线翻译
             offline_translate_done = False
             if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
@@ -81,6 +129,8 @@ async def recv_result():
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
             console.print(f"    识别结果：[green]{text}")
+
+
             if offline_translate_done:
                 console.print(f"    离线翻译结果：[green]{offline_translated_text}")
             if online_translate_done:
@@ -88,7 +138,6 @@ async def recv_result():
             if convert_to_traditional_chinese_done and Cosmic.opposite_state:
                 console.print(f"    简繁转换结果：[green]{traditional_text}")
             console.line()
-
             # 打字
             if offline_translate_done:
                 await type_result(offline_translated_text)
@@ -109,8 +158,12 @@ async def recv_result():
                             await type_result(traditional_text)
                         else:
                             await type_result(text)
-                convert_to_traditional_chinese_done = False
+            else:
+                await type_result(text)
+            convert_to_traditional_chinese_done = False
             Cosmic.opposite_state = False
+            # result = await call_deepseek_api(text, action="polish")
+            # asyncio.create_task(polish_text_async(text))
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
     except websockets.ConnectionClosedOK:
@@ -124,6 +177,15 @@ async def recv_result():
     finally:
         return
 
+async def polish_text_async(text):
+    """异步处理文本润色，不阻塞主流程"""
+    try:
+        result = await call_deepseek_api(text, action="polish")
+        result = await call_doubao_api(text, action="polish")
+
+        console.print(f"    润色结果：[green]{result}")
+    except Exception as e:
+        console.print(f"    润色处理出错：[red]{str(e)}")
 
 if __name__ == "__main__":
     None

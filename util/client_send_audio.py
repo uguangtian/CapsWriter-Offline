@@ -2,9 +2,11 @@ import asyncio
 import base64
 import json
 import uuid
+import time
 
 import numpy as np
 import websockets
+from pynput import keyboard
 
 from util.client_cosmic import Cosmic, console
 from util.client_create_file import create_file
@@ -12,6 +14,35 @@ from util.client_finish_file import finish_file
 from util.client_write_file import write_file
 from util.config import ClientConfig as Config
 
+# 添加音频缓冲区大小常量
+BUFFER_SIZE = 48000 * 1  # 1秒的音频数据，减少延迟
+MAX_CHUNK_SIZE = 32 * 1024  # 32KB，适合WebSocket传输的大小
+
+class AudioBuffer:
+    def __init__(self):
+        self.buffer = []
+        self.total_duration = 0
+        self.current_size = 0
+        self.last_send_time = 0  # 添加最后发送时间记录
+
+    def add_data(self, data):
+        self.buffer.append(data)
+        self.current_size += len(data)
+        self.total_duration += len(data) / 48000
+
+    def get_data(self):
+        if not self.buffer:
+            return None
+        data = np.concatenate(self.buffer)
+        self.buffer = []
+        self.current_size = 0
+        return data
+
+    def clear(self):
+        self.buffer = []
+        self.current_size = 0
+        self.total_duration = 0
+        self.last_send_time = 0
 
 async def send_message(message):
     # 发送数据
@@ -23,109 +54,251 @@ async def send_message(message):
                 console.print("    服务端未连接，无法发送\n")
             else:
                 console.print(f"    无法找到任务ID：{task_id}，无法移除\n")
-    else:
-        try:
+        return
+
+    try:
+        # 对大数据进行分块发送
+        await Cosmic.websocket.send(json.dumps(message))
+        """
+        if len(message.get("data", "")) > MAX_CHUNK_SIZE:
+            chunks = [message["data"][i:i+MAX_CHUNK_SIZE] 
+                     for i in range(0, len(message["data"]), MAX_CHUNK_SIZE)]
+            for i, chunk in enumerate(chunks):
+                chunk_message = message.copy()
+                chunk_message["data"] = chunk
+                chunk_message["chunk_index"] = i
+                chunk_message["total_chunks"] = len(chunks)
+                await Cosmic.websocket.send(json.dumps(chunk_message))
+        else:
             await Cosmic.websocket.send(json.dumps(message))
-        except websockets.ConnectionClosedError:
-            if message["is_final"]:
-                console.print("[red]连接中断了")
-        except Exception as e:
-            print("出错了")
-            print(e)
+        """
+    except websockets.ConnectionClosedError:
+        if message["is_final"]:
+            console.print("[red]连接中断了")
+    except Exception as e:
+        console.print(f"[red]发送错误: {str(e)}")
 
-
+        
+   
 async def send_audio():
     try:
-        # 生成唯一任务 ID
         task_id = str(uuid.uuid1())
-
-        # 任务起始时间
         time_start = 0
-
-        # 音频数据临时存放处
+        #audio_buffer = AudioBuffer()
         cache = []
         duration = 0
-
-        # 保存音频文件
         file_path, file = "", None
+        #MIN_SEND_INTERVAL = 0.1  # 最小发送间隔（秒）
 
-        # 开始取数据
-        # task: {'type', 'time', 'data'}
         while task := await Cosmic.queue_in.get():
             Cosmic.queue_in.task_done()
+            
+            print('task, type:',task["type"])
             if task["type"] == "begin":
                 time_start = task["time"]
+                #continue
             elif task["type"] == "data":
                 # 在阈值之前积攒音频数据
                 if task["time"] - time_start < Config.threshold:
                     cache.append(task["data"])
                     continue
-
-                # 创建音频文件
+                    #audio_buffer.add_data(task["data"])
+                    #current_time = time.time()
+                    # 创建音频文件（如果需要）
                 if Config.save_audio and not file_path:
-                    file_path, file = create_file(task["data"].shape[1], time_start)
+                    file_path, file = create_file(data.shape[1], time_start)
                     Cosmic.audio_files[task_id] = file_path
-
-                # 获取音频数据
+                    
+                    # 当缓冲区达到指定大小或距离上次发送超过最小间隔时处理
+                #if task["time"] - time_start < Config.threshold:
                 if cache:
                     data = np.concatenate(cache)
+                    #cache = []
                     cache.clear()
                 else:
                     data = task["data"]
-
-                # 保存音频至本地文件
-                duration += len(data) / 48000
+                duration += len(data) / 48000    
+                    # 保存音频
                 if Config.save_audio:
                     write_file(file, data)
+                #if (audio_buffer.current_size >= BUFFER_SIZE or 
+                #    (current_time - audio_buffer.last_send_time >= MIN_SEND_INTERVAL and audio_buffer.current_size > 0)):
+                if (True):
+                    
+                    #data = audio_buffer.get_data()
+                    #audio_buffer.last_send_time = current_time
+                    
+                    
+                    
+                    # 优化：使用numpy的mean操作一次性处理
+                    # 将48kHz降采样到16kHz，保持音频质量
+                    # 1. 首先转换为float32类型进行处理
+                    # data = data.astype(np.float32)
+                    # 3. 从48kHz降采样到16kHz (每3个样本取1个)
+                    #processed_data = data[::3]
+                    # 2. 如果是立体声，转换为单声道
+                    #if len(data.shape) > 1:
+                    #    processed_data = np.mean(processed_data, axis=1)
 
-                # 发送音频数据用于识别
-                message = {
-                    "task_id": task_id,  # 任务 ID
-                    "seg_duration": Config.mic_seg_duration,  # 分段长度
-                    "seg_overlap": Config.mic_seg_overlap,  # 分段重叠
-                    "is_final": False,  # 是否结束
-                    "time_start": time_start,  # 录音起始时间
-                    "time_frame": task["time"],  # 该帧时间
-                    "source": "mic",  # 数据来源：从麦克风收到的数据
-                    "data": base64.b64encode(  # 数据
-                        np.mean(data[::3], axis=1).tobytes()
-                    ).decode("utf-8"),
-                }
-                task = asyncio.create_task(send_message(message))
+                    
+                    # 发送音频数据
+                    message = {
+                        "task_id": task_id,
+                        "seg_duration": Config.mic_seg_duration,
+                        "seg_overlap": Config.mic_seg_overlap,
+                        "is_final": False,
+                        "time_start": time_start,
+                        "time_frame": task["time"],
+                        "source": "mic",
+                        #"data": base64.b64encode(processed_data.tobytes()).decode("utf-8"),
+                        "data": base64.b64encode(  # 数据
+                            np.mean(data[::3], axis=1).tobytes()
+                        ).decode("utf-8"),
+                        #"samplerate": 16000,
+                    }
+                    #await send_message(message)
+                    task = asyncio.create_task(send_message(message))
+
+            #elif task["type"] in ["finish", "cancel"]:
+                print('case 1, type finish:',task_id)
             elif task["type"] == "finish":
-                # 完成写入本地文件
+                print('case 2, type finish:',task_id)
+                # 处理剩余的缓冲数据
+                #if audio_buffer.buffer:
+                #data = []
+                #if task["type"] in ["finish"]:
+                #data = audio_buffer.get_data()
                 if Config.save_audio:
-                    finish_file(file)
-
-                console.print(f"任务标识：{task_id}")
-                console.print(f"    录音时长：{duration:.2f}s")
-
-                # 告诉服务端音频片段结束了
+                   write_file(file, data)
+                
+                # 发送最后的音频数据
+                # 处理最后的音频数据
+                #data = data.astype(np.float32)
+                #processed_data = data[::3]
+                #if len(data.shape) > 1:
+                #    data = np.mean(processed_data, axis=1)
+                
+                print('start send_audio, finish, task_id:',task_id)
                 message = {
                     "task_id": task_id,
-                    "seg_duration": 15,
-                    "seg_overlap": 2,
+                    "seg_duration": Config.mic_seg_duration,
+                    "seg_overlap": Config.mic_seg_overlap,
+                    #"is_final": False,
                     "is_final": True,
                     "time_start": time_start,
                     "time_frame": task["time"],
                     "source": "mic",
+                    #"data": base64.b64encode(processed_data.tobytes()).decode("utf-8"),
                     "data": "",
+                    #"samplerate": 16000,
                 }
+                print('send_audio, finish, message:',message)
+                #await send_message(message)
                 task = asyncio.create_task(send_message(message))
                 break
+
+                
+               # if Config.save_audio:
+               #     finish_file(file)
+                
             elif task["type"] == "cancel":
-                # 告诉服务端任务已取消
+            #console.print(f"任务标识：{task_id}")
+            #console.print(f"    录音时长：{duration:.2f}s")
+            #console.print(f"    录音时长：{audio_buffer.total_duration:.2f}s")
+            
+                # 发送结束消息
                 message = {
                     "task_id": task_id,
-                    "seg_duration": 15,
-                    "seg_overlap": 2,
+                    "seg_duration": Config.mic_seg_duration,
+                    "seg_overlap": Config.mic_seg_overlap,
                     "is_final": True,
                     "time_start": time_start,
                     "time_frame": task["time"],
                     "source": "mic",
                     "data": "",
+                    #"samplerate": 16000,
                 }
+                #await send_message(message)
                 task = asyncio.create_task(send_message(message))
                 break
+            else:
+                print('case 3, type:',task["type"])
     except Exception as e:
-        console.print(e)
+        console.print(f"[red]错误: {str(e)}")
+        console.print(f"[red]错误堆栈: {e.__traceback__}")  # 添加更详细的错误信息
+
+
+# 新增键盘监听函数
+def on_press(key):
+    try:
+        if key.char == 's':  # 按下 's' 键开始录音
+            console.print("开始录音...")
+            # 在这里添加开始录音的逻辑
+        elif key.char == 'e':  # 按下 'e' 键结束录音
+            console.print("结束录音...")
+            # 在这里添加结束录音的逻辑
+    except AttributeError:
+        pass
+
+
+def on_release(key):
+    if key == keyboard.Key.esc:  # 按下 'esc' 键退出程序
+        console.print("退出程序...")
+        return False
+
+
+# 启动键盘监听
+def start_keyboard_listener():
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
+
+
+async def heartbeat():
+    """客户端心跳处理"""
+    try:
+        while True:
+            if Cosmic.websocket and not Cosmic.websocket.closed:
+                try:
+                    # 等待服务器的ping
+                    pong_waiter = await Cosmic.websocket.ping()
+                    await asyncio.wait_for(pong_waiter, timeout=20)
+                    console.print(f"[DEBUG] 心跳成功", style="dim")
+                except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
+                    console.print(f"[yellow]心跳失败，连接可能已断开[/yellow]")
+                    break
+                except Exception as e:
+                    console.print(f"[yellow]心跳异常: {e}[/yellow]")
+            await asyncio.sleep(30)  # 30秒间隔
+    except Exception as e:
+        console.print(f"[red]心跳任务异常: {e}[/red]")
+
+
+# 主函数
+if __name__ == "__main__":
+    console.print("始监听按键")
+    console.print("使用 pynput 监听键盘事件，无需管理员权限")
+    console.print("连接服务端...  （服务端载入模块时长约 50 秒，请耐心等待。若好几分钟了还无响应 -> 服务端软件 start_server_gui.exe 启动了吗？ 服务端地址当前设置 127.0.0.1:6016 是正确的吗？）")
+    console.print("连接成功")
+
+    # 创建事件循环
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    # 启动心跳任务
+    heartbeat_task = loop.create_task(heartbeat())
+
+    try:
+        # 启动键盘监听
+        start_keyboard_listener()
+
+        # 启动音频发送任务
+        loop.run_until_complete(send_audio())
+    finally:
+        # 取消心跳任务
+        if heartbeat_task:
+            heartbeat_task.cancel()
+            try:
+                loop.run_until_complete(heartbeat_task)
+            except asyncio.CancelledError:
+                pass
+        loop.close()

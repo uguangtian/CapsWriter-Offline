@@ -25,7 +25,7 @@ offline_translate_port = "6017"
 format_num = true
 # 是否将中文数字转为阿拉伯数字
 
-format_punc = true
+format_punc = false
 # 使用 'Paraformer' 模型时，输出时是否启用标点符号引擎
 
 format_spell = true
@@ -57,7 +57,7 @@ in_the_meantime_start_the_client_and_run_as_admin = true
 [client]
 addr = "127.0.0.1"
 # 要连接的服务端地址
-
+port = 8081
 speech_recognition_port = "6016"
 # 语音识别服务端口
 
@@ -67,12 +67,13 @@ offline_translate_port = "6017"
 offline_translate_port_gemma2b = "11434"
 # Gemma 2B 离线翻译端口
 
-speech_recognition_shortcut = "right shift"
+speech_recognition_shortcut = "right cmd"
 # 控制录音的快捷键，默认是 "caps lock"
 
 use_offline_translate_function = false
 # 是否启用离线翻译功能
-
+microphone_device_index = -1 #-1表示自动
+microphone_device_name = "input"
 offline_translate_shortcut = "left shift"
 # 控制离线翻译的快捷键，默认是 "left shift"，按住 Left Shift 再按 CapsLock 进行离线翻译
 
@@ -121,7 +122,7 @@ restore_key = false
 threshold = 0.0
 # 按下快捷键后，触发语音识别的时间阈值
 
-paste = false
+paste = true
 # 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
 
 restore_clipboard_after_paste = true
@@ -270,6 +271,75 @@ exe_path = "deeplx_windows_amd64.exe"
 api = "http://127.0.0.1:1188/translate"
 # DeepLX API 地址
 
+
+# ======================DeepSeek 配置==================================
+
+[deepseek]
+start_deepseek_server = false
+# 是否启动DeepSeek服务
+
+deepseek_port = "6018"
+# DeepSeek服务端口
+
+api_key = "sk-eb9bb5f2093d40cd8cd7cf7531fe9029"
+# DeepSeek API密钥，请在此处填入您的API密钥
+
+api_endpoint = "https://api.deepseek.com/v1/chat/completions"
+# DeepSeek API端点URL
+
+model = "deepseek-chat"
+# 使用的模型名称
+
+temperature = 0.7
+# 生成文本的随机性，值越高随机性越大
+
+max_tokens = 2000
+# 生成文本的最大长度
+
+
+
+#class LMStudioConfig:
+ #   start_lmstudio_server: bool = config["lmstudio"]["start_lmstudio_server"]
+#    lmstudio_port: int = config["lmstudio"]["lmstudio_port"]
+ #   lmstudio_api: str = config["lmstudio"]["lmstudio_api"]
+ #   lmstudio_model: str = config["lmstudio"]["lmstudio_model"]
+ #   temperature: float = config["lmstudio"]["temperature"]
+ #   max_tokens: int = config["lmstudio"]["max_tokens"]
+ #   api_endpoint: str = config["lmstudio"]["api_endpoint"]
+
+# for LMStudioConfig
+[lmstudio]
+start_lmstudio_server = false
+lmstudio_port = 1234
+lmstudio_api =  "http://localhost:1234/v1"
+lmstudio_model = ""
+temperature = 0.7
+max_tokens = 400
+api_endpoint = "http://localhost:1234/v1/chat/completions"
+
+# ======================Claude 配置==================================
+
+[claude]
+start_claude_server = false
+# 是否启动Claude服务
+
+claude_port = "6019"
+# Claude服务端口
+
+api_key = "sk-pGA2lBTqXL1hRh948j646qvQkMwQA11tcCIpxvqEjeo4igFV"
+# Claude API密钥，请在此处填入您的API密钥
+
+api_endpoint = "https://api.aiclaude.site/v1/messages"
+# Claude API端点URL
+
+model = "claude-3-7-sonnet-20250219-thinking"
+# 使用的模型名称
+
+temperature = 0.7
+# 生成文本的随机性，值越高随机性越大
+
+max_tokens = 2000
+# 生成文本的最大长度
 
 # ======================模型路径配置==================================
 

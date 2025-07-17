@@ -9,6 +9,7 @@ from util.config import ClientConfig as Config
 
 async def type_result(text):
     # 模拟粘贴
+    print("模拟粘贴",Config.paste)
     if Config.paste:
         # 保存剪切板
         try:
@@ -20,6 +21,7 @@ async def type_result(text):
             print(e)
 
         # 复制结果
+        print("模拟粘贴",text)
         clipman.set(text)
 
         # 粘贴结果
@@ -34,6 +36,7 @@ async def type_result(text):
             if keyboard.is_pressed(Config.online_translate_shortcut):
                 keyboard.release(Config.online_translate_shortcut)
             keyboard.send("ctrl + v")
+            print("模拟粘贴2",Config.paste)
 
         # 还原剪贴板
         if Config.restore_clipboard_after_paste:

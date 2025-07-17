@@ -7,7 +7,8 @@ class Task:
                  socket_id: str,
                  is_final: bool,
                  time_start: float,
-                 time_submit: float) -> None:
+                 time_submit: float,
+                 samplerate: int = 16000) -> None:
         self.source = source
         self.data = data
         self.offset = offset
@@ -17,7 +18,7 @@ class Task:
         self.is_final = is_final
         self.time_start = time_start
         self.time_submit = time_submit
-        self.samplerate = 16000
+        self.samplerate = samplerate
 
 
 class Result:
