@@ -59,20 +59,17 @@ def format_text(text: str, punc_model) -> str:
         
     return text
 
-def recognize(recognizer, punc_model, task: Task) -> Result:
+def paraformerRecognize(recognizer, punc_model, task: Task) -> Result:
     """优化的语音识别处理函数"""
     try:
         # 添加调试日志
+  
         console.print(f"[DEBUG] 开始处理识别任务: task_id={task.task_id}, is_final={task.is_final}")
-        
         # 获取或创建结果容器
-        #result = results.get(task.task_id)
-        #if not result:
-        if task.task_id not in results:
-            result = Result(task.task_id, task.socket_id, task.source)
-            results[task.task_id] = result
-            console.print(f"[DEBUG] 创建新的结果容器: task_id={task.task_id}")
-
+        if task.task_id  not in results:
+             console.print(f"[DEBUG]  新任务, 创建新的结果容器: task_id={task.task_id}, is_final={task.is_final}")
+             results[task.task_id] = Result(task.task_id, task.socket_id, task.source)
+        result = results[task.task_id]
         # 高效处理音频数据
         samples = np.frombuffer(task.data, dtype=np.float32)
         # 检查音频数据的有效性

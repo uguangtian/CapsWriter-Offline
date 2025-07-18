@@ -85,7 +85,7 @@ async def message_handler(websocket, message, cache: Cache):
     """处理得到的音频流数据"""
     queue_in = Cosmic.queue_in
     global status_mic
-    print('message_handler 处理得到的音频')
+    # print('message_handler 处理得到的音频')
     try:
         source = message["source"]
         is_final = message["is_final"]
@@ -106,7 +106,7 @@ async def message_handler(websocket, message, cache: Cache):
         seg_threshold = seg_duration + seg_overlap * 2  # 总阈值
         
         # 添加调试日志
-        console.print(f"[DEBUG] 接收到音频数据: task_id={task_id}, is_final={is_final}, data_size={len(message.get('data', ''))}，socket_id={socket_id}")
+        # console.print(f"[DEBUG] 接收到音频数据: task_id={task_id}, is_final={is_final}, data_size={len(message.get('data', ''))}，socket_id={socket_id}")
 
         
         # base64解码音频数据
@@ -122,7 +122,7 @@ async def message_handler(websocket, message, cache: Cache):
                 status_mic.start()
             elif source == "file" and is_start:
                 console.print("正在接收音频文件...")
-            print(f"接收音频 追加到缓存: task_id={task_id}, offset={cache.offset}, data_size={len(data)},ache.chunks={len(cache.chunks)} cache_size={len(cache.chunks) / 4 / 16000},seg_threshold={seg_threshold}")
+            # print(f"接收音频 追加到缓存: task_id={task_id}, offset={cache.offset}, data_size={len(data)},ache.chunks={len(cache.chunks)} cache_size={len(cache.chunks) / 4 / 16000},seg_threshold={seg_threshold}")
             # 若缓冲已达到分段长度，将片段作为任务提交
             while len(cache.chunks) / 4 / 16000 >= seg_threshold:
                 data = cache.chunks[: 4 * 16000 * (seg_duration + seg_overlap)]
@@ -139,9 +139,9 @@ async def message_handler(websocket, message, cache: Cache):
                     time_submit=time.time(),
                 )
                 cache.offset += seg_duration
-                console.print(f"[DEBUG] 准备发送分段任务到队列: task_id={task_id}, offset={cache.offset}, data_size={len(data)}", style="yellow")
+                # console.print(f"[DEBUG] 准备发送分段任务到队列: task_id={task_id}, offset={cache.offset}, data_size={len(data)}", style="yellow")
                 queue_in.put(task)
-                console.print(f"[DEBUG] 分段任务已成功放入队列: task_id={task_id}", style="green")
+                console.print(f"[DEBUG] 分段任务已成功放入队列: task_id={task_id}, lenth={len(cache.chunks)}, socket_id={socket_id}", style="green")
 
         elif is_final:
             # 打印消息
@@ -164,13 +164,12 @@ async def message_handler(websocket, message, cache: Cache):
             )
             console.print(f"[DEBUG] 准备发送最终任务到队列: task_id={task_id}, offset={cache.offset}, data_size={len(task.data)}", style="yellow")
             queue_in.put(task)
-            console.print(f"[DEBUG] 最终任务已成功放入队列: task_id={task_id}", style="green")
+            console.print(f"[DEBUG] 最终任务已成功放入队列, 任务完成，清理缓存: task_id={task_id}, lenth={len(cache.chunks)}, socket_id={socket_id}", style="green")
 
             # 还原缓冲区、偏移时长
             cache.chunks = b""
             cache.offset = 0
             cache.frame_num = 0
-            console.print(f"[DEBUG] 任务完成，清理缓存: task_id={task_id}")
             
     except Exception as e:
         console.print(f"[DEBUG] 处理音频数据时出错: {e}", style="yellow")
@@ -371,7 +370,7 @@ async def ws_recv(websocket):
                 # json 解码字符串
                 message = json.loads(message)
                 # 处理数据
-                print('start message_handler 处理得到的音频')
+                # print('start message_handler 处理得到的音频')
                 await message_handler(websocket, message, cache)
             except json.JSONDecodeError as e:
                 console.print(f"[DEBUG] JSON解析错误: {e}", style="yellow")

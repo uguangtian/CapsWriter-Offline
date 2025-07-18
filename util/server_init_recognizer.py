@@ -7,27 +7,23 @@ from util.config import ModelPaths, ParaformerArgs, SenseVoiceArgs
 from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
 from util.server_cosmic import console
+import logging
 
-if Config.model == "Paraformer":
-    from util.server_recognize_paraformer import recognize
-else:
-    from util.server_recognize_sensevoice import recognize
+import jieba
+import sherpa_onnx
+
+from util.server_recognize_paraformer import paraformerRecognize
+from util.server_recognize_sensevoice import recognize
 
 
 def disable_jieba_debug():
     # 关闭 jieba 的 debug
-    import logging
-
-    import jieba
-
     jieba.setLogLevel(logging.INFO)
 
 
 def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     # 导入模块
     with console.status("载入模块中…", spinner="bouncingBall", spinner_style="yellow"):
-        import sherpa_onnx
-
         if Config.model == "Paraformer":
             from funasr_onnx import CT_Transformer
         disable_jieba_debug()
@@ -107,24 +103,22 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
         # 阻塞最多1秒，便于中断退出
         try:
             # 添加更详细的调试信息
-            console.print(f"[DEBUG] 等待音频任务... 当前活跃连接数: {len(sockets_id)}", style="cyan")
-            console.print(f"[DEBUG] 活跃连接ID列表: {list(sockets_id)}", style="cyan")
+            console.print(f"[DEBUG] 等待音频任务... 当前活跃连接数: {len(sockets_id)} 活跃连接ID列表:{list(sockets_id)}", style="cyan")
             
             # 检查队列是否为空
             if hasattr(queue_in, '_qsize'):
                 queue_size = queue_in._qsize()
                 console.print(f"[DEBUG] 队列当前大小: {queue_size}", style="cyan")
             
-            task = queue_in.get(timeout=3)  # 增加超时时间到3秒
+            task = queue_in.get(timeout=None)  # 增加超时时间到3秒
             console.print(f"[DEBUG] 成功获取音频任务! task_id: {task.task_id}, data_len: {len(task.data)}, socket_id: {task.socket_id}", style="green")
 
         except Exception as e:
             # 区分不同类型的异常
-            if "timeout" in str(e).lower() or "empty" in str(e).lower():
-                console.print(f"[DEBUG] 队列超时，继续等待... (这是正常的)", style="dim")
+            if "timeout" in str(e).lower() or "empty" in str(e).lower() or "Empty" in {type(e).__name__}:
+                console.print(f"[DEBUG] 队列 读取心跳，继续等待... ", style="dim")
             else:
-                console.print(f"[ERROR] 接收音频任务异常: {e}", style="red")
-                console.print(f"[ERROR] 异常类型: {type(e).__name__}", style="red")
+                console.print(f"[ERROR] 接收音频任务异常: {e} 异常类型: {type(e).__name__}, name low:{str(e).lower()}", style="red")
             continue
 
         if task.socket_id not in sockets_id:  # 检查任务所属的连接是否存活
@@ -133,11 +127,13 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
 
         if Config.model == "Paraformer":
             console.print("[DEBUG] 使用 Paraformer 模型处理音频", style="cyan")
-            result = recognize(recognizer, punc_model, task)  # 执行识别
+            result = paraformerRecognize(recognizer, punc_model, task)  # 执行识别
         else:
             console.print(f"[DEBUG] 使用 {Config.model} 模型处理音频", style="cyan")
             result = recognize(recognizer, task)  # 执行识别
-
-        console.print(f"[DEBUG] 识别完成，结果长度: {len(result.text)}", style="green")
+        if result is None or result.text is None or result.text == "":
+            console.print(f"[DEBUG] 识别结果为空，跳过处理", style="yellow")
+            continue
         queue_out.put(result)  # 返回结果
-        console.print(f"[DEBUG] 已将结果放入输出队列", style="green")
+        console.print(f"[DEBUG] 识别完成，结果长度: {len(result.text)} 已将结果放入输出队列", style="green")
+
