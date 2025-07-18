@@ -65,7 +65,7 @@ async def recv_result():
                 message = json.loads(message)
                 text = message["text"]
                 delay = message["time_complete"] - message["time_submit"]
-                print('message:',message)
+                print('响应 message:',message)
                 # 计数器增加
                 message_count += 1
                 
@@ -93,6 +93,7 @@ async def recv_result():
             convert_to_traditional_chinese_done = False
             traditional_text = None
             if Config.convert_to_traditional_chinese_main == "繁":
+                console.print(f"[DEBUG] 简繁转换开始")
                 # 简繁转换
                 converter = opencc.OpenCC(Config.opencc_converter)
                 traditional_text = converter.convert(text)
@@ -101,6 +102,7 @@ async def recv_result():
             # 离线翻译
             offline_translate_done = False
             if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
+                console.print(f"[DEBUG] 离线翻译开始")
                 offline_translated_text = await translate_offline(text)
                 offline_translate_done = True
                 Cosmic.offline_translate_needed = False
@@ -108,12 +110,14 @@ async def recv_result():
             # 在线翻译
             online_translate_done = False
             if Cosmic.online_translate_needed and not Cosmic.transcribe_subtitles:
+                console.print(f"[DEBUG] 在线翻译开始")
                 online_translated_text = translate_online(text)
                 online_translate_done = True
                 Cosmic.online_translate_needed = False
 
             if Config.save_audio:
                 # 重命名录音文件
+                console.print(f"[DEBUG] 重命名录音文件开始")
                 file_audio = rename_audio(
                     message["task_id"], text, message["time_start"]
                 )
@@ -122,6 +126,8 @@ async def recv_result():
 
             if Config.save_markdown:
                 # 记录写入 md 文件
+                console.print(f"[DEBUG] 记录写入 md 文件开始")
+
                 if Config.convert_to_traditional_chinese_main == "繁" and traditional_text:
                     write_md(traditional_text, message["time_start"], file_audio)
                 else:
