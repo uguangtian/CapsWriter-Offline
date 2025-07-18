@@ -22,3 +22,7 @@ __pycache__
 custom_output
 data/chat_history.json
 util/__pycache__/**/*
+python3
+2025
+1970
+*.exe

@@ -2,6 +2,8 @@ import asyncio
 import sys
 import threading
 import time
+import subprocess
+import platform
 
 import numpy as np
 import sounddevice as sd
@@ -56,20 +58,115 @@ def stream_reopen():
     Cosmic.stream = stream_open()
 
 
-def stream_open():
-    # 显示录音所用的音频设备
+def get_macos_version():
+    """获取macOS版本号"""
+    try:
+        version_str = platform.mac_ver()[0]
+        major, minor = map(int, version_str.split('.')[:2])
+        return major, minor
+    except:
+        return 10, 15  # 默认返回较老版本
+
+
+def open_privacy_settings():
+    """打开系统隐私设置"""
+    try:
+        major, minor = get_macos_version()
+        if major >= 13:  # macOS Ventura 13.0+ 使用新的系统设置
+            # 尝试新版系统设置URL
+            subprocess.run(["open", "x-apple.systempreferences:com.apple.SystemPreferences.Extensions?Privacy_Microphone"], check=False)
+            time.sleep(0.5)  # 给系统一点时间
+            # 备用方案：直接打开隐私与安全性
+            subprocess.run(["open", "/System/Applications/System Preferences.app"], check=False)
+        else:  # 较老版本的macOS
+            subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"], check=False)
+        return True
+    except Exception as e:
+        console.print(f"[yellow]无法自动打开设置：{e}[/yellow]")
+        return False
+
+
+def check_microphone_permission():
+    """检查并请求麦克风权限"""
     if sys.platform == 'darwin':
+        console.print("[blue]正在检查麦克风权限...[/blue]")
+        
+        # 首先检查是否有可用的音频输入设备
+        try:
+            devices = sd.query_devices()
+            input_devices = [d for d in devices if d['max_input_channels'] > 0]
+            if not input_devices:
+                console.print("[red]✗ 未检测到任何音频输入设备[/red]")
+                console.print("[yellow]请确保已连接麦克风设备[/yellow]")
+                return False
+        except Exception as e:
+            console.print(f"[yellow]警告：无法查询音频设备：{e}[/yellow]")
+        
         try:
             # 尝试初始化一个临时流来触发系统权限请求
-            temp_stream = sd.InputStream(samplerate=48000, channels=1)
+            temp_stream = sd.InputStream(samplerate=48000, channels=1, blocksize=1024)
             temp_stream.start()
+            # 短暂录制以确保权限生效
+            time.sleep(0.1)
             temp_stream.stop()
             temp_stream.close()
+            console.print("[green]✓ 麦克风权限检查通过[/green]")
+            return True
         except sd.PortAudioError as e:
-            console.print(f"[red]无法访问麦克风：{e}[/red]")
-            console.print("[yellow]请在系统偏好设置中授予麦克风访问权限[/yellow]")
-            input("按回车键退出")
-            sys.exit()
+            console.print(f"[red]✗ 无法访问麦克风：{e}[/red]")
+            console.print("[yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/yellow]")
+            console.print("[yellow]🎤 需要授予麦克风访问权限[/yellow]")
+            
+            major, minor = get_macos_version()
+            console.print(f"[dim]检测到 macOS {major}.{minor}[/dim]")
+            
+            console.print("[cyan]请按照以下步骤操作：[/cyan]")
+            if major >= 13:  # macOS Ventura 13.0+
+                console.print("[white]1. 打开 系统设置 > 隐私与安全性 > 麦克风[/white]")
+            else:  # 较老版本的macOS
+                console.print("[white]1. 打开 系统偏好设置 > 安全性与隐私 > 隐私 > 麦克风[/white]")
+            console.print("[white]2. 确保此应用程序已被勾选启用[/white]")
+            console.print("[white]3. 如果没有看到此应用，请重启应用程序[/white]")
+            console.print("[yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/yellow]")
+            
+            # 提供选项
+            while True:
+                console.print("\n[cyan]请选择操作：[/cyan]")
+                console.print("[white]  o - 自动打开隐私设置[/white]")
+                console.print("[white]  r - 重新检查权限[/white]")
+                console.print("[white]  q - 退出程序[/white]")
+                
+                choice = input("请输入选择 (o/r/q): ").lower().strip()
+                
+                if choice == 'o':
+                    console.print("[blue]正在打开系统隐私设置...[/blue]")
+                    if open_privacy_settings():
+                        console.print("[green]已打开隐私设置，请授权后选择重新检查[/green]")
+                    else:
+                        console.print("[yellow]请手动打开系统设置进行授权[/yellow]")
+                elif choice == 'r':
+                    console.print("[blue]重新检查权限...[/blue]")
+                    return check_microphone_permission()  # 递归重试
+                elif choice == 'q':
+                    console.print("[yellow]用户选择退出[/yellow]")
+                    sys.exit()
+                else:
+                    console.print("[red]请输入有效选择 (o/r/q)[/red]")
+        except Exception as e:
+            console.print(f"[red]检查麦克风权限时发生未知错误：{e}[/red]")
+            return False
+    else:
+        # 非macOS系统，直接返回True
+        return True
+
+
+def stream_open():
+    # 检查麦克风权限
+    if not check_microphone_permission():
+        console.print("[red]麦克风权限检查失败，程序退出[/red]")
+        sys.exit()
+    
+    # 显示录音所用的音频设备
 
     # 从配置中获取麦克风设备索引或名称
     device_index = Config.microphone_device_index

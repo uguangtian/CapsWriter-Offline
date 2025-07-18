@@ -19,7 +19,9 @@ def create_file(
     time_month = time.strftime("%m", time.localtime(time_start))
     time_ymdhms = time.strftime("%Y%m%d-%H%M%S", time.localtime(time_start))
 
-    folder_path = Path() / time_year / time_month / "assets"
+    # 获取项目根目录的绝对路径
+    project_root = Path(__file__).parent.parent
+    folder_path = project_root / time_year / time_month / "assets"
     makedirs(folder_path, exist_ok=True)
     file_path = tempfile.mktemp(prefix=f"({time_ymdhms})", dir=folder_path)
     file_path = Path(file_path)

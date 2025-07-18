@@ -46,7 +46,9 @@ class AudioBuffer:
 
 async def send_message(message):
     # 发送数据
-    if Cosmic.websocket is None or Cosmic.websocket.closed:
+    if (Cosmic.websocket is None or 
+        (hasattr(Cosmic.websocket, 'state') and Cosmic.websocket.state.name != 'OPEN') or
+        (hasattr(Cosmic.websocket, 'closed') and Cosmic.websocket.closed)):
         if message["is_final"]:
             task_id = message["task_id"]
             if task_id in Cosmic.audio_files:
@@ -104,19 +106,19 @@ async def send_audio():
                     continue
                     #audio_buffer.add_data(task["data"])
                     #current_time = time.time()
-                    # 创建音频文件（如果需要）
-                if Config.save_audio and not file_path:
-                    file_path, file = create_file(data.shape[1], time_start)
-                    Cosmic.audio_files[task_id] = file_path
-                    
-                    # 当缓冲区达到指定大小或距离上次发送超过最小间隔时处理
-                #if task["time"] - time_start < Config.threshold:
+                
+                # 首先处理音频数据
                 if cache:
                     data = np.concatenate(cache)
                     #cache = []
                     cache.clear()
                 else:
                     data = task["data"]
+                
+                # 创建音频文件（如果需要）
+                if Config.save_audio and not file_path:
+                    file_path, file = create_file(data.shape[1], time_start)
+                    Cosmic.audio_files[task_id] = file_path
                 duration += len(data) / 48000    
                     # 保存音频
                 if Config.save_audio:
@@ -168,8 +170,16 @@ async def send_audio():
                 #data = []
                 #if task["type"] in ["finish"]:
                 #data = audio_buffer.get_data()
-                if Config.save_audio:
-                   write_file(file, data)
+                
+                # 处理剩余的缓存数据
+                if cache:
+                    data = np.concatenate(cache)
+                    cache.clear()
+                    if Config.save_audio and file:
+                        write_file(file, data)
+                elif Config.save_audio and file:
+                    # 如果没有缓存数据但需要保存音频，确保文件正确关闭
+                    pass
                 
                 # 发送最后的音频数据
                 # 处理最后的音频数据
@@ -257,7 +267,9 @@ async def heartbeat():
     """客户端心跳处理"""
     try:
         while True:
-            if Cosmic.websocket and not Cosmic.websocket.closed:
+            if (Cosmic.websocket and 
+                not ((hasattr(Cosmic.websocket, 'state') and Cosmic.websocket.state.name != 'OPEN') or
+                     (hasattr(Cosmic.websocket, 'closed') and Cosmic.websocket.closed))):
                 try:
                     # 等待服务器的ping
                     pong_waiter = await Cosmic.websocket.ping()

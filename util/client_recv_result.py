@@ -91,10 +91,12 @@ async def recv_result():
             # 热词替换
             text = hot_sub(text)
             convert_to_traditional_chinese_done = False
-            if False:
+            traditional_text = None
+            if Config.convert_to_traditional_chinese_main == "繁":
                 # 简繁转换
                 converter = opencc.OpenCC(Config.opencc_converter)
                 traditional_text = converter.convert(text)
+                convert_to_traditional_chinese_done = True
                 
             # 离线翻译
             offline_translate_done = False
@@ -120,11 +122,10 @@ async def recv_result():
 
             if Config.save_markdown:
                 # 记录写入 md 文件
-                match Config.convert_to_traditional_chinese_main:
-                    case "繁":
-                        write_md(traditional_text, message["time_start"], file_audio)
-                    case _:
-                        write_md(text, message["time_start"], file_audio)
+                if Config.convert_to_traditional_chinese_main == "繁" and traditional_text:
+                    write_md(traditional_text, message["time_start"], file_audio)
+                else:
+                    write_md(text, message["time_start"], file_audio)
 
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
@@ -145,19 +146,18 @@ async def recv_result():
             elif online_translate_done:
                 await type_result(online_translated_text)
                 online_translate_done = False
-            elif convert_to_traditional_chinese_done:
+            elif convert_to_traditional_chinese_done and traditional_text:
                 # 根据'简/繁'转换设定,来选择输出内容的逻辑
-                match Config.convert_to_traditional_chinese_main:
-                    case "繁":
-                        if Cosmic.opposite_state:
-                            await type_result(text)
-                        else:
-                            await type_result(traditional_text)
-                    case _:
-                        if Cosmic.opposite_state:
-                            await type_result(traditional_text)
-                        else:
-                            await type_result(text)
+                if Config.convert_to_traditional_chinese_main == "繁":
+                    if Cosmic.opposite_state:
+                        await type_result(text)
+                    else:
+                        await type_result(traditional_text)
+                else:
+                    if Cosmic.opposite_state:
+                        await type_result(traditional_text)
+                    else:
+                        await type_result(text)
             else:
                 await type_result(text)
             convert_to_traditional_chinese_done = False

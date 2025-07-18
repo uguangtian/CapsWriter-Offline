@@ -83,15 +83,6 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
         # 通知主进程加载失败
         queue_out.put(False)
         return
-    else:
-        recognizer = sherpa_onnx.OfflineRecognizer.from_sense_voice(
-            **{
-                key: value
-                for key, value in SenseVoiceArgs.__dict__.items()
-                if not key.startswith("_")
-            }
-        )
-    console.print("[green4]语音模型载入完成", end="\n\n")
 
     if Config.model == "Paraformer":
         # 载入标点模型
@@ -114,16 +105,30 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     while True:
         # 从队列中获取任务消息
         # 阻塞最多1秒，便于中断退出
-        print('init_recognizer 等待音频任务')
         try:
-            #console.print("[DEBUG] 等待音频任务...", style="cyan")
-            task = queue_in.get(timeout=1)
+            # 添加更详细的调试信息
+            console.print(f"[DEBUG] 等待音频任务... 当前活跃连接数: {len(sockets_id)}", style="cyan")
+            console.print(f"[DEBUG] 活跃连接ID列表: {list(sockets_id)}", style="cyan")
+            
+            # 检查队列是否为空
+            if hasattr(queue_in, '_qsize'):
+                queue_size = queue_in._qsize()
+                console.print(f"[DEBUG] 队列当前大小: {queue_size}", style="cyan")
+            
+            task = queue_in.get(timeout=3)  # 增加超时时间到3秒
+            console.print(f"[DEBUG] 成功获取音频任务! task_id: {task.task_id}, data_len: {len(task.data)}, socket_id: {task.socket_id}", style="green")
+
         except Exception as e:
-            print('接收音频任务, error:',e)
+            # 区分不同类型的异常
+            if "timeout" in str(e).lower() or "empty" in str(e).lower():
+                console.print(f"[DEBUG] 队列超时，继续等待... (这是正常的)", style="dim")
+            else:
+                console.print(f"[ERROR] 接收音频任务异常: {e}", style="red")
+                console.print(f"[ERROR] 异常类型: {type(e).__name__}", style="red")
             continue
 
         if task.socket_id not in sockets_id:  # 检查任务所属的连接是否存活
-            console.print(f"[DEBUG] 任务所属连接已断开，跳过处理: {task.socket_id}", style="yellow")
+            console.print(f"[DEBUG] 任务所属连接已断开，跳过处理, task.socket_id: {task.socket_id}, sockets_id: {sockets_id}", style="yellow")
             continue
 
         if Config.model == "Paraformer":

@@ -103,30 +103,67 @@ def handle_discovery_requests():
                     client_ip = addr[0]
                     console.print(f"[DEBUG] 客户端IP地址: {client_ip}", style="cyan")
                     
-                    # 获取本机所有网络接口
-                    interfaces = socket.getaddrinfo(socket.gethostname(), None)
+                    # 获取本机所有网络接口（使用更可靠的方法）
                     lan_ip = None
                     
-                    # 遍历所有接口，找到与客户端在同一网段的IP
-                    for interface in interfaces:
-                        ip = interface[4][0]
-                        # 过滤IPv6地址和回环地址
-                        if ':' not in ip and ip != '127.0.0.1':
-                            # 检查是否与客户端在同一网段
-                            if ip.split('.')[0:3] == client_ip.split('.')[0:3]:
-                                lan_ip = ip
-                                break
+                    try:
+                        # 方法1：尝试使用getaddrinfo获取网络接口
+                        try:
+                            hostname = socket.gethostname()
+                            interfaces = socket.getaddrinfo(hostname, None)
+                            
+                            # 遍历所有接口，找到与客户端在同一网段的IP
+                            for interface in interfaces:
+                                ip = interface[4][0]
+                                # 过滤IPv6地址和回环地址
+                                if ':' not in ip and ip != '127.0.0.1':
+                                    # 检查是否与客户端在同一网段
+                                    if ip.split('.')[0:3] == client_ip.split('.')[0:3]:
+                                        lan_ip = ip
+                                        break
+                            
+                            # 如果没找到匹配的IP，使用第一个非本地IPv4地址
+                            if not lan_ip:
+                                for interface in interfaces:
+                                    ip = interface[4][0]
+                                    if ':' not in ip and ip != '127.0.0.1':
+                                        lan_ip = ip
+                                        break
+                        except (socket.gaierror, OSError) as e:
+                            console.print(f"[DEBUG] getaddrinfo失败: {e}，尝试备用方法", style="yellow")
+                        
+                        # 方法2：如果getaddrinfo失败，使用连接测试方法
+                        if not lan_ip:
+                            try:
+                                # 创建一个临时socket连接到客户端，获取本地IP
+                                temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                                temp_socket.connect((client_ip, 80))
+                                lan_ip = temp_socket.getsockname()[0]
+                                temp_socket.close()
+                                console.print(f"[DEBUG] 通过连接测试获取到本地IP: {lan_ip}", style="cyan")
+                            except Exception as e:
+                                console.print(f"[DEBUG] 连接测试方法失败: {e}", style="yellow")
+                        
+                        # 方法3：如果以上都失败，使用gethostbyname
+                        if not lan_ip:
+                            try:
+                                lan_ip = socket.gethostbyname(socket.gethostname())
+                                console.print(f"[DEBUG] 通过gethostbyname获取到IP: {lan_ip}", style="cyan")
+                            except Exception as e:
+                                console.print(f"[DEBUG] gethostbyname失败: {e}", style="yellow")
+                        
+                        # 方法4：最后的备用方案，使用配置中的地址
+                        if not lan_ip:
+                            if Config.addr != '0.0.0.0':
+                                lan_ip = Config.addr
+                                console.print(f"[DEBUG] 使用配置中的地址: {lan_ip}", style="cyan")
+                            else:
+                                lan_ip = '127.0.0.1'
+                                console.print(f"[DEBUG] 使用默认回环地址: {lan_ip}", style="yellow")
                     
-                    # 如果没找到匹配的IP，使用第一个非本地IPv4地址
-                    if not lan_ip:
-                        for interface in interfaces:
-                            ip = interface[4][0]
-                            if ':' not in ip and ip != '127.0.0.1':
-                                lan_ip = ip
-                                break
-                    
-                    if not lan_ip:
-                        lan_ip = socket.gethostbyname(socket.gethostname())
+                    except Exception as e:
+                        console.print(f"[DEBUG] 获取本地IP时出现未预期错误: {e}", style="red")
+                        lan_ip = '127.0.0.1'
                     
                     # 构造响应
                     response = f"{lan_ip}:{WS_PORT}"
@@ -451,27 +488,81 @@ def start_android_connection_service():
     discovery_thread = threading.Thread(target=handle_discovery_requests, daemon=True)
     discovery_thread.start()
 
-    # 获取所有网络接口的IP地址
+    # 获取所有网络接口的IP地址（使用更可靠的方法）
     def get_all_ip_addresses():
         ip_list = []
-        interfaces = socket.getaddrinfo(socket.gethostname(), None)
-        for interface in interfaces:
-            ip = interface[4][0]
-            # 过滤掉IPv6地址和回环地址
-            if ':' not in ip and ip != '127.0.0.1':
-                ip_list.append(ip)
-        return list(set(ip_list))  # 去重
+        try:
+            # 方法1：尝试使用getaddrinfo
+            try:
+                hostname = socket.gethostname()
+                interfaces = socket.getaddrinfo(hostname, None)
+                for interface in interfaces:
+                    ip = interface[4][0]
+                    # 过滤掉IPv6地址和回环地址
+                    if ':' not in ip and ip != '127.0.0.1':
+                        ip_list.append(ip)
+            except (socket.gaierror, OSError) as e:
+                console.print(f"[DEBUG] getaddrinfo在获取IP列表时失败: {e}，尝试备用方法", style="yellow")
+            
+            # 方法2：如果getaddrinfo失败，使用netifaces或其他方法
+            if not ip_list:
+                try:
+                    import netifaces
+                    for interface in netifaces.interfaces():
+                        addrs = netifaces.ifaddresses(interface)
+                        if netifaces.AF_INET in addrs:
+                            for addr in addrs[netifaces.AF_INET]:
+                                ip = addr['addr']
+                                if ip != '127.0.0.1':
+                                    ip_list.append(ip)
+                except ImportError:
+                    console.print(f"[DEBUG] netifaces模块未安装，跳过此方法", style="yellow")
+                except Exception as e:
+                    console.print(f"[DEBUG] netifaces方法失败: {e}", style="yellow")
+            
+            # 方法3：使用socket连接测试方法
+            if not ip_list:
+                try:
+                    # 连接到一个外部地址来获取本地IP
+                    temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    temp_socket.connect(("8.8.8.8", 80))
+                    local_ip = temp_socket.getsockname()[0]
+                    temp_socket.close()
+                    if local_ip != '127.0.0.1':
+                        ip_list.append(local_ip)
+                    console.print(f"[DEBUG] 通过连接测试获取到IP: {local_ip}", style="cyan")
+                except Exception as e:
+                    console.print(f"[DEBUG] 连接测试方法失败: {e}", style="yellow")
+            
+            # 方法4：使用配置中的地址作为备用
+            if not ip_list and Config.addr != '0.0.0.0':
+                ip_list.append(Config.addr)
+                console.print(f"[DEBUG] 使用配置中的地址: {Config.addr}", style="cyan")
+        
+        except Exception as e:
+            console.print(f"[DEBUG] 获取IP地址列表时出现未预期错误: {e}", style="red")
+        
+        return list(set(ip_list)) if ip_list else ['127.0.0.1']  # 去重，如果没有找到任何IP则返回回环地址
 
     # 打印所有局域网IP地址
-    ip_addresses = get_all_ip_addresses()
-    console.print("\n[bold green]可用的局域网IP地址:")
-    for ip in ip_addresses:
-        console.print(f"[cyan]http://{ip}:{WS_PORT}[/cyan]")
-    console.print()  # 空行
+    try:
+        ip_addresses = get_all_ip_addresses()
+        console.print("\n[bold green]可用的局域网IP地址:")
+        for ip in ip_addresses:
+            console.print(f"[cyan]http://{ip}:{WS_PORT}[/cyan]")
+        console.print()  # 空行
 
-    # 打印主机名对应的IP
-    local_ip = socket.gethostbyname(socket.gethostname())
-    console.print(f"[bold green]主机名解析IP地址: [cyan]http://{local_ip}:{WS_PORT}[/cyan]\n")
+        # 打印主机名对应的IP（使用安全的方法）
+        try:
+            local_ip = socket.gethostbyname(socket.gethostname())
+            console.print(f"[bold green]主机名解析IP地址: [cyan]http://{local_ip}:{WS_PORT}[/cyan]\n")
+        except (socket.gaierror, OSError) as e:
+            console.print(f"[DEBUG] 主机名解析失败: {e}，使用第一个可用IP地址", style="yellow")
+            if ip_addresses:
+                console.print(f"[bold green]使用第一个可用IP地址: [cyan]http://{ip_addresses[0]}:{WS_PORT}[/cyan]\n")
+    except Exception as e:
+        console.print(f"[DEBUG] 打印IP地址信息时出错: {e}", style="red")
+        console.print(f"[bold green]使用默认地址: [cyan]http://127.0.0.1:{WS_PORT}[/cyan]\n")
     
     # 只返回线程对象，不要尝试解包
     return discovery_thread

@@ -106,7 +106,8 @@ async def message_handler(websocket, message, cache: Cache):
         seg_threshold = seg_duration + seg_overlap * 2  # 总阈值
         
         # 添加调试日志
-        console.print(f"[DEBUG] 接收到音频数据: task_id={task_id}, is_final={is_final}, data_size={len(message.get('data', ''))}")
+        console.print(f"[DEBUG] 接收到音频数据: task_id={task_id}, is_final={is_final}, data_size={len(message.get('data', ''))}，socket_id={socket_id}")
+
         
         # base64解码音频数据
         #data = b64decode(message["data"]) if message["data"] else b""
@@ -121,7 +122,7 @@ async def message_handler(websocket, message, cache: Cache):
                 status_mic.start()
             elif source == "file" and is_start:
                 console.print("正在接收音频文件...")
-
+            print(f"接收音频 追加到缓存: task_id={task_id}, offset={cache.offset}, data_size={len(data)},ache.chunks={len(cache.chunks)} cache_size={len(cache.chunks) / 4 / 16000},seg_threshold={seg_threshold}")
             # 若缓冲已达到分段长度，将片段作为任务提交
             while len(cache.chunks) / 4 / 16000 >= seg_threshold:
                 data = cache.chunks[: 4 * 16000 * (seg_duration + seg_overlap)]
@@ -138,7 +139,9 @@ async def message_handler(websocket, message, cache: Cache):
                     time_submit=time.time(),
                 )
                 cache.offset += seg_duration
+                console.print(f"[DEBUG] 准备发送分段任务到队列: task_id={task_id}, offset={cache.offset}, data_size={len(data)}", style="yellow")
                 queue_in.put(task)
+                console.print(f"[DEBUG] 分段任务已成功放入队列: task_id={task_id}", style="green")
 
         elif is_final:
             # 打印消息
@@ -159,7 +162,9 @@ async def message_handler(websocket, message, cache: Cache):
                 time_start=message["time_start"],
                 time_submit=time.time(),
             )
+            console.print(f"[DEBUG] 准备发送最终任务到队列: task_id={task_id}, offset={cache.offset}, data_size={len(task.data)}", style="yellow")
             queue_in.put(task)
+            console.print(f"[DEBUG] 最终任务已成功放入队列: task_id={task_id}", style="green")
 
             # 还原缓冲区、偏移时长
             cache.chunks = b""
@@ -291,7 +296,8 @@ async def message_handler(websocket, message, cache: Cache):
 
 async def ws_recv(websocket):
     global status_mic
-
+    console.print(f"[DEBUG] 新的WebSocket连接", style="cyan")
+    
     # 获取WebSocket路径
     path = websocket.path if hasattr(websocket, 'path') else '/'
     console.print(f"[DEBUG] 新的WebSocket连接，路径: {path}", style="cyan")
@@ -307,9 +313,14 @@ async def ws_recv(websocket):
     # 登记 socket 到字典，以 socket id 字符串为索引
     sockets = Cosmic.sockets
     sockets_id = Cosmic.sockets_id
-    sockets[str(websocket.id)] = websocket
-    sockets_id.append(str(websocket.id))
-    console.print(f"接客了：{websocket}\n", style="yellow")
+    # 使用内存地址作为唯一标识符
+    # socket_id = str(id(websocket))
+    socket_id = str(websocket.id)
+
+    sockets[socket_id] = websocket
+    sockets_id.append(socket_id)
+    console.print(f"[DEBUG] 新客户端连接成功: {websocket}, socket_id: {socket_id}", style="yellow")
+    console.print(f"[DEBUG] 当前活跃连接数: {len(sockets_id)}", style="yellow")
 
     # 设定分段长度
     seg_duration = 5   # 减小分片时长到5秒
@@ -340,9 +351,9 @@ async def ws_recv(websocket):
                     # 发送ping并等待pong响应
                     pong_waiter = await websocket.ping()
                     await asyncio.wait_for(pong_waiter, timeout=20)  # 增加超时时间到20秒
-                    console.print(f"[DEBUG] 心跳成功: {websocket.id}", style="dim")
+                    console.print(f"[DEBUG] 心跳成功: {socket_id}", style="dim")
                 except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
-                    console.print(f"[DEBUG] 心跳失败，连接可能已断开: {websocket.id}", style="yellow")
+                    console.print(f"[DEBUG] 心跳失败，连接可能已断开: {socket_id}", style="yellow")
                     return  # 不要立即中断，让主循环处理断开
                 except Exception as e:
                     console.print(f"[DEBUG] 心跳异常: {e}", style="yellow")
@@ -384,6 +395,17 @@ async def ws_recv(websocket):
         console.print(f"Exception: {e}", style="red")
         console.print(f"[DEBUG] 处理WebSocket连接时出错: {e}", style="red")
     finally:
+        # 清理连接
+        try:
+            if socket_id in sockets:
+                del sockets[socket_id]
+            if socket_id in sockets_id:
+                sockets_id.remove(socket_id)
+            console.print(f"[DEBUG] 客户端连接已断开并清理: socket_id: {socket_id}", style="red")
+            console.print(f"[DEBUG] 剩余活跃连接数: {len(sockets_id)}", style="red")
+        except Exception as e:
+            console.print(f"[DEBUG] 清理连接时出错: {e}", style="red")
+        
         # 取消心跳任务
         if heartbeat_task:
             heartbeat_task.cancel()
@@ -394,6 +416,6 @@ async def ws_recv(websocket):
                 
         status_mic.stop()
         status_mic.on = False
-        sockets.pop(str(websocket.id))
-        sockets_id.remove(str(websocket.id))
-        console.print(f"[DEBUG] WebSocket连接已关闭，ID: {websocket.id}", style="yellow")
+        sockets.pop(socket_id)
+        sockets_id.remove(socket_id)
+        console.print(f"[DEBUG] WebSocket连接已关闭，ID: {socket_id}", style="yellow")

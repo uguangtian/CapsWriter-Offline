@@ -68,6 +68,7 @@ async def main():
 
     # 跨进程列表，用于保存 socket 的 id，用于让识别进程查看连接是否中断
     Cosmic.sockets_id = Manager().list()
+    console.print(f"[DEBUG] 初始化 recognizer 进程..., socket_id:{Cosmic.sockets_id}", style="cyan")
 
     # 负责识别的子进程
     recognize_process = Process(
@@ -111,8 +112,8 @@ async def main():
     #     processes.append(deepseek_server_process)
     
     # 启动Android连接服务
-    console.print("启动Android连接服务...")
-    discovery_thread = start_android_connection_service()
+    # console.print("启动Android连接服务...")
+    # discovery_thread = start_android_connection_service()
 
     # 启动 chat_ui.py 服务
     console.print("启动 Chat UI 服务...")
@@ -132,18 +133,29 @@ async def main():
         empty_current_working_set()
 
     # 负责接收客户端数据的 coroutine
-    recv = websockets.serve(
-        ws_recv,
-        Config.addr,
-        Config.speech_recognition_port,
-        # subprotocols=["binary"],
-        subprotocols=None,  # 移除子协议要求
-        max_size=None,
-    )
+    console.print("[green]websocket 服务即将启动 ",Config.addr,":",Config.speech_recognition_port)
 
-    # 负责发送结果的 coroutine
-    send = ws_send()
-    await asyncio.gather(recv, send)
+
+    try:
+        # 负责接收客户端数据的 WebSocket 服务器
+        async with websockets.serve(
+            ws_recv,
+            Config.addr,
+            Config.speech_recognition_port,
+            subprotocols=None,  # 移除子协议要求
+            max_size=None,
+        ) as recv_server:
+            console.print("[green]websocket 服务已启动在 ",Config.addr,":",Config.speech_recognition_port)
+            
+            # 负责发送结果的 coroutine
+            send = ws_send()
+            
+            # 同时运行接收和发送服务
+            await asyncio.gather(asyncio.Future(), send)  # 使用Future()保持服务器运行
+        
+    except Exception as e:
+        console.print(f"[red]websocket 服务启动失败: {str(e)}[/red]")
+        return
 
 
 def init():
