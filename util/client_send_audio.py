@@ -95,7 +95,7 @@ async def send_audio():
         while task := await Cosmic.queue_in.get():
             Cosmic.queue_in.task_done()
             
-            print('task, type:',task["type"])
+            # print('task, type:',task["type"])
             if task["type"] == "begin":
                 time_start = task["time"]
                 #continue
@@ -162,9 +162,9 @@ async def send_audio():
                     task = asyncio.create_task(send_message(message))
 
             #elif task["type"] in ["finish", "cancel"]:
-                print('case 1, type finish:',task_id)
+                # print('case 1, type finish:',task_id)
             elif task["type"] == "finish":
-                print('case 2, type finish:',task_id)
+                # print('case 2, type finish:',task_id)
                 # 处理剩余的缓冲数据
                 #if audio_buffer.buffer:
                 #data = []
@@ -188,7 +188,7 @@ async def send_audio():
                 #if len(data.shape) > 1:
                 #    data = np.mean(processed_data, axis=1)
                 
-                print('start send_audio, finish, task_id:',task_id)
+                # print('start send_audio, finish, task_id:',task_id)
                 message = {
                     "task_id": task_id,
                     "seg_duration": Config.mic_seg_duration,

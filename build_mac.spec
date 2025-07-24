@@ -32,7 +32,7 @@ a_1 = Analysis(
     excludes=['IPython', 'PIL', 
               'PySide6', 'PySide2', 'PyQt5', 
               'matplotlib', 'wx', 
-              'funasr', 'pydantic', 'torch', 
+              'pydantic', 'torch', 
               ],
     noarchive=False,
 )

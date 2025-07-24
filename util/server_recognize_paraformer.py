@@ -31,23 +31,31 @@ def format_text(text: str, punc_model) -> str:
         if cache_key in punc_cache:
             text = punc_cache[cache_key]
         else:
-            print('start punc_result 01:')
+            # print('start punc_result 01:')
             try:
-                print('start punc_result:')
+                # print('start punc_result:')
                 punc_result = punc_model(text)
-                print('punc_result:')
-                if punc_result and isinstance(punc_result, list):
-                    print('punc_result2:')
-                    text = punc_result[0]
-                    # 更新缓存
-                    if len(punc_cache) >= PUNC_CACHE_SIZE:
-                        # 如果缓存已满，清除一半的旧条目
-                        old_keys = list(punc_cache.keys())[:PUNC_CACHE_SIZE//2]
-                        for k in old_keys:
-                            punc_cache.pop(k)
-                    punc_cache[cache_key] = text
+                # print('punc_result:punc_result:', punc_result)
+                # 处理标点模型返回的不同格式：列表或元组
+                if punc_result:
+                    if isinstance(punc_result, (list, tuple)) and len(punc_result) > 0:
+                        # print('punc_result2:')
+                        text = punc_result[0]  # 取第一个元素作为带标点的文本
+                        # 更新缓存
+                        if len(punc_cache) >= PUNC_CACHE_SIZE:
+                            # 如果缓存已满，清除一半的旧条目
+                            old_keys = list(punc_cache.keys())[:PUNC_CACHE_SIZE//2]
+                            for k in old_keys:
+                                punc_cache.pop(k)
+                        punc_cache[cache_key] = text
+                    elif isinstance(punc_result, str):
+                        # 如果直接返回字符串
+                        text = punc_result
+                        punc_cache[cache_key] = text
+                    else:
+                        console.print(f"[yellow]标点模型返回值格式未知: {type(punc_result)}，跳过标点处理。[/yellow]")
                 else:
-                    console.print("[red]标点模型返回值无效，跳过标点处理。[/red]")
+                    console.print("[red]标点模型返回值为空，跳过标点处理。[/red]")
             except Exception as e:
                 console.print(f"[red]标点模型处理出错：{e}，跳过标点处理。[/red]")
                 

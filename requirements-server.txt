@@ -2,16 +2,17 @@ rich==13.9.3
 websockets==13.1
 numpy==1.26.4
 typeguard==4.3.0
-sherpa-onnx==1.10.43
-funasr-onnx==0.4.1
-kaldi-native-fbank==1.20.1
+sherpa-onnx==1.12.6
+# funasr-onnx==0.4.1  # 临时注释，避免与 sherpa-onnx 的 onnxruntime 冲突
+# 如需使用 funasr，建议使用 sherpa-onnx 的 FunASR 模型支持
+kaldi-native-fbank==1.18.7
 jieba==0.42.1
 PySide6==6.7.1
 qt-material==2.14
 torch==2.5.0
 sacremoses==0.1.1
 Flask==3.0.3
-gevent==24.10.3
+gevent==25.5.1
 transformers==4.46.0
 sentencepiece==0.2.0
 tomlkit==0.13.2

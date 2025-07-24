@@ -43,7 +43,7 @@ class KeyManager:
         self.last_press_time = 0
         
     def on_press(self, key):
-        print('on_press, is_pressed:',self.is_pressed)
+        # print('on_press, is_pressed:',self.is_pressed)
         # 将配置的快捷键转换为 pynput 格式
         shortcut_key = Config.speech_recognition_shortcut.lower()
         target_key = None  
@@ -63,7 +63,7 @@ class KeyManager:
             target_key = key
         
         # 如果是目标按键且当前未被按下
-        print("on_press, target_key:",target_key, "is_pressed:",self.is_pressed)
+        # print("on_press, target_key:",target_key, "is_pressed:",self.is_pressed)
         if target_key and not self.is_pressed:
             self.is_pressed = True
             self.last_press_time = time.time()
@@ -71,17 +71,17 @@ class KeyManager:
             
             # 直接调用处理函数，不再发送按键
             if Config.hold_mode:
-                print("on_press, hold_mode")
+                # print("on_press, hold_mode")
                 e = type('obj', (object,), {'event_type': 'down', 'name': Config.speech_recognition_shortcut})
                 hold_handler(e)
             else:
-                print("on_press, click_mode")
+                # print("on_press, click_mode")
                 e = type('obj', (object,), {'event_type': keyboard.KEY_DOWN, 'name': Config.speech_recognition_shortcut})
                 click_handler(e)
                 
     
     def on_release(self, key):
-        print("on_release")
+        # print("on_release")
         # 释放时触发
         # 将配置的快捷键转换为 pynput 格式
         shortcut_key = Config.speech_recognition_shortcut.lower()
@@ -104,10 +104,10 @@ class KeyManager:
         
         # 如果是目标按键且当前被按下
         if target_key and self.is_pressed:
-            print("on_release, target_key:",target_key, "is_pressed:",self.is_pressed)
+            # print("on_release, target_key:",target_key, "is_pressed:",self.is_pressed)
             # 删除 return 语句
             if Config.hold_mode:
-                print("on_release, hold_mode")
+                # print("on_release, hold_mode")
                 # 模拟 keyboard 事件
                 e = type('obj', (object,), {'event_type': 'up', 'name': Config.speech_recognition_shortcut})
                 hold_handler(e)
@@ -294,26 +294,21 @@ def cancel_task():
 
 
 def finish_task():
-    print('start finish_task')
+    # print('start finish_task')
     global task
 
     # 通知停止录音，关掉滚动条
     # print('通知停止录音，关掉滚动条')
     Cosmic.on = False
-    print('start stop, state:',status.started)
     status.stop()
-    print('end stop')
-    # print('start run_coroutine_threadsafe')
 
     # 通知结束任务
-    print('finish_task, put finish')
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put(
             {"type": "finish", "time": time.time(), "data": None},
         ),
         Cosmic.loop,
     )
-    print('run_coroutine_threadsafe end')
 
     # 取消音频静音
     if Config.mute_other_audio:
@@ -483,7 +478,7 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 def hold_mode(e: keyboard.KeyboardEvent):
     # log   
-    print('hold_mode',e.event_type)
+    # print('hold_mode',e.event_type)
     """像对讲机一样，按下录音，松开停止"""
     global \
         task, \

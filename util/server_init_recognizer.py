@@ -24,8 +24,13 @@ def disable_jieba_debug():
 def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     # 导入模块
     with console.status("载入模块中…", spinner="bouncingBall", spinner_style="yellow"):
+        CT_Transformer = None
         if Config.model == "Paraformer":
-            from funasr_onnx import CT_Transformer
+            try:
+                from funasr_onnx import CT_Transformer
+            except ImportError as e:
+                console.print(f"[yellow]警告: funasr_onnx 未安装，标点功能将被禁用, e: {e}")
+                CT_Transformer = None
         disable_jieba_debug()
 
     console.print("[green4]模块加载完成", end="\n\n")
@@ -83,12 +88,18 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     if Config.model == "Paraformer":
         # 载入标点模型
         punc_model = None
-        if Config.format_punc:
+        if Config.format_punc and CT_Transformer is not None:
             console.print(
                 "[yellow]标点模型载入中，载入时长约 50 秒，请耐心等待...", end="\r"
             )
-            punc_model = CT_Transformer(ModelPaths.punc_model_dir, quantize=True)
-            console.print("[green4]标点模型载入完成", end="\n\n")
+            try:
+                punc_model = CT_Transformer(ModelPaths.punc_model_dir, quantize=True)
+                console.print("[green4]标点模型载入完成", end="\n\n")
+            except Exception as e:
+                console.print(f"[yellow]标点模型加载失败: {e}，将跳过标点处理", end="\n\n")
+                punc_model = None
+        elif Config.format_punc and CT_Transformer is None:
+            console.print("[yellow]funasr_onnx 不可用，跳过标点模型加载", end="\n\n")
 
     console.print(f"模型加载耗时 {time.time() - t1 :.2f}s", end="\n\n")
 

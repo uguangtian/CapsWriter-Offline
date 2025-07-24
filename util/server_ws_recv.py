@@ -318,7 +318,7 @@ async def ws_recv(websocket):
 
     sockets[socket_id] = websocket
     sockets_id.append(socket_id)
-    console.print(f"[DEBUG] 新客户端连接成功: {websocket}, socket_id: {socket_id}", style="yellow")
+    console.print(f"[DEBUG] 新客户端连接成功  socket_id: {socket_id}", style="yellow")
     console.print(f"[DEBUG] 当前活跃连接数: {len(sockets_id)}", style="yellow")
 
     # 设定分段长度
@@ -413,8 +413,11 @@ async def ws_recv(websocket):
             except asyncio.CancelledError:
                 pass
                 
-        status_mic.stop()
-        status_mic.on = False
-        sockets.pop(socket_id)
-        sockets_id.remove(socket_id)
-        console.print(f"[DEBUG] WebSocket连接已关闭，ID: {socket_id}", style="yellow")
+        try:
+            status_mic.stop()
+            status_mic.on = False
+            sockets.pop(socket_id)
+            sockets_id.remove(socket_id)
+            console.print(f"[DEBUG] WebSocket连接已关闭，ID: {socket_id}", style="yellow")
+        except Exception as e:
+            console.print(f"[DEBUG] 清理连接时出错: {e}", style="red")
