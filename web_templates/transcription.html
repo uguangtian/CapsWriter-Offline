@@ -1,0 +1,1019 @@
+{% extends "base.html" %}
+
+{% block title %}语音转录 - CapsWriter-Offline 网页版{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 拖拽上传区域样式 */
+.drag-drop-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.drag-drop-area:hover {
+    border-color: #0d6efd;
+    background-color: #e7f3ff;
+}
+
+.drag-drop-area.drag-over {
+    border-color: #198754;
+    background-color: #d1e7dd;
+    transform: scale(1.02);
+}
+
+.drag-drop-content {
+    pointer-events: none;
+}
+
+/* 确保拖拽区域可以接收拖拽事件 */
+.drag-drop-area {
+    pointer-events: auto;
+}
+
+.drag-drop-area * {
+    pointer-events: none;
+}
+
+.drag-drop-area input[type="file"] {
+    pointer-events: auto;
+}
+
+.drag-drop-area.drag-over .drag-drop-content {
+    color: #198754;
+}
+
+/* 文件信息显示样式 */
+.file-info {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.file-info .fas.fa-file-audio {
+    font-size: 1.5rem;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.file-info {
+    animation: fadeIn 0.3s ease;
+}
+
+/* 路径输入区域拖拽样式 */
+.path-input-area {
+    position: relative;
+}
+
+.path-drag-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 110, 253, 0.1);
+    border: 2px dashed #0d6efd;
+    border-radius: 6px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.path-drag-overlay.active {
+    display: flex;
+}
+
+.path-drag-content {
+    text-align: center;
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.path-input-area.drag-over {
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+}
+
+.path-input-area.drag-over .form-control {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-microphone me-2"></i>语音转录
+        </h2>
+    </div>
+</div>
+
+<!-- 录音控制面板 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-record-vinyl me-2"></i>录音控制
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <button id="start-recording-btn" class="btn btn-success btn-lg">
+                                <i class="fas fa-microphone me-2"></i>开始录音
+                            </button>
+                            <button id="stop-recording-btn" class="btn btn-danger btn-lg" disabled>
+                                <i class="fas fa-stop me-2"></i>停止录音
+                            </button>
+                            <button id="pause-recording-btn" class="btn btn-warning btn-lg" disabled>
+                                <i class="fas fa-pause me-2"></i>暂停
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="continuous-mode">
+                                <label class="form-check-label" for="continuous-mode">
+                                    连续监听模式
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="auto-transcribe" checked>
+                                <label class="form-check-label" for="auto-transcribe">
+                                    自动转录
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 录音状态和音量指示器 -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary" id="recording-status">未录音</span>
+                            <span id="recording-time" class="text-muted">00:00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-volume-up"></i>
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div id="volume-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 音频文件上传 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>音频文件上传
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- 拖拽上传区域 -->
+                <div id="drag-drop-area" class="drag-drop-area mb-3">
+                    <div class="drag-drop-content">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">拖拽音频文件到此处</h5>
+                        <p class="text-muted mb-3">或者</p>
+                        <label for="audio-file-input" class="btn btn-outline-primary">
+                            <i class="fas fa-folder-open me-2"></i>选择文件
+                        </label>
+                        <input type="file" class="d-none" id="audio-file-input" accept=".wav,.mp3,.m4a,.flac,.ogg,.mp4,.avi,.mov,.mkv,.webm,.3gp,.m3u8,.ts,.vob,.ogv,.divx,.xvid,.rm,.rmvb,.mpg,.mpeg,.3gp,.mxf,.asf,.dat">
+                        <div class="form-text mt-2">支持格式: WAV, MP3, M4A, FLAC, OGG, MP4, AVI, MOV, MKV, WEBM, 3GP, M3U8, TS, VOB, OGV, DIVX, XVID, RM, RMVB, MPG, MPEG, MXF, ASF, DAT</div>
+                    </div>
+                </div>
+                
+                <!-- 文件信息显示 -->
+                <div id="file-info" class="file-info mb-3" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-audio text-primary me-2"></i>
+                            <div>
+                                <div class="fw-bold" id="file-name"></div>
+                                <small class="text-muted" id="file-size"></small>
+                            </div>
+                        </div>
+                        <div>
+                            <button id="upload-transcribe-btn" class="btn btn-primary me-2">
+                                <i class="fas fa-play me-2"></i>开始转录
+                            </button>
+                            <button id="clear-file-btn" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>清除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文件路径输入 -->
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="border-top pt-3">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fas fa-folder me-2"></i>或者输入本地文件路径
+                                </h6>
+                                <div id="path-input-area" class="path-input-area mb-2">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="file-path-input" 
+                                               placeholder="输入完整的文件路径，或拖拽文件到此处获取路径">
+                                        <button class="btn btn-primary" type="button" id="path-transcribe-btn">
+                                            <i class="fas fa-play me-2"></i>转录
+                                        </button>
+                                    </div>
+                                    <div class="path-drag-overlay" id="path-drag-overlay">
+                                        <div class="path-drag-content">
+                                            <i class="fas fa-file-import fa-2x mb-2"></i>
+                                            <div>拖拽文件到此处获取路径</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    支持包含空格和特殊字符的路径，系统会自动处理转义字符。也可以直接拖拽文件到输入框获取完整路径。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 上传进度 -->
+                <div id="upload-progress" class="mt-3" style="display: none;">
+                    <div class="progress">
+                        <div id="upload-progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-1 d-block" id="upload-status">准备上传...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 转录结果 -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>转录结果
+                </h5>
+                <div>
+                    <button id="copy-text-btn" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-copy me-1"></i>复制
+                    </button>
+                    <button id="clear-text-btn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-trash me-1"></i>清空
+                    </button>
+                    <button id="save-text-btn" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-save me-1"></i>保存
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <textarea id="transcription-text" class="form-control" rows="15" placeholder="转录结果将显示在这里..."></textarea>
+                
+                <!-- 字数统计 -->
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">
+                        字数: <span id="char-count">0</span> | 词数: <span id="word-count">0</span>
+                    </small>
+                    <small class="text-muted" id="last-update-time"></small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- 转录设置 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>转录设置
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="language-select" class="form-label">语言</label>
+                    <select id="language-select" class="form-select">
+                        <option value="auto">自动检测</option>
+                        <option value="zh" selected>中文</option>
+                        <option value="en">英文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="model-select" class="form-label">模型</label>
+                    <select id="model-select" class="form-select">
+                        <option value="sensevoice">SenseVoice</option>
+                        <option value="paraformer" selected>Paraformer</option>
+                    </select>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="enable-vad" checked>
+                    <label class="form-check-label" for="enable-vad">
+                        启用语音活动检测(VAD)
+                    </label>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="enable-punctuation" checked>
+                    <label class="form-check-label" for="enable-punctuation">
+                        自动添加标点符号
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 转录历史 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>转录历史
+                </h6>
+                <button id="clear-history-btn" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="transcription-history" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-muted text-center">暂无历史记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 转录页面特定的变量和函数
+// 注意：全局变量已在app.js中声明，这里不重复声明
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 等待app.js初始化完成后再执行转录页面特定的初始化
+    setTimeout(function() {
+        initializeTranscriptionPage();
+    }, 100);
+});
+
+// 转录页面特定的初始化
+function initializeTranscriptionPage() {
+    initializeTranscriptionSocket();
+    setupTranscriptionDragAndDrop();
+    setupTranscriptionPathInputDragAndDrop();
+    bindTranscriptionEventListeners();
+    loadTranscriptionHistory();
+    updateCharCount();
+}
+
+// 初始化Socket.IO连接（转录页面特定）
+function initializeTranscriptionSocket() {
+    // 使用全局socket变量，如果不存在则创建
+    if (!window.socket) {
+        window.socket = io();
+    }
+    
+    window.socket.on('transcription_start', function(data) {
+        if (window.showAlert) {
+            window.showAlert('开始转录文件: ' + data.filename, 'info');
+        }
+        // 显示转录进度
+        const progressContainer = document.getElementById('upload-progress');
+        const statusElement = document.getElementById('upload-status');
+        if (progressContainer && statusElement) {
+            progressContainer.style.display = 'block';
+            statusElement.textContent = '正在转录: ' + data.filename;
+            document.getElementById('upload-progress-bar').style.width = '50%';
+        }
+    });
+    
+    window.socket.on('transcription_result', function(data) {
+        // 检查转录结果是否有效
+        if (data.text && typeof data.text === 'string' && data.text.trim()) {
+            appendTranscriptionResult(data.text);
+            addToHistory(data.text, new Date(), data.filename);
+        } else {
+            console.warn('收到无效的转录结果:', data);
+            if (window.showAlert) {
+                window.showAlert('转录完成，但未生成有效文本内容', 'warning');
+            }
+        }
+        
+        // 隐藏进度条
+        const progressContainer = document.getElementById('upload-progress');
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+        
+        let message = '转录完成: ' + (data.filename || '未知文件');
+        if (data.has_srt) {
+            message += ' (已生成SRT字幕文件)';
+        }
+        if (window.showAlert) {
+            window.showAlert(message, 'success');
+        }
+    });
+    
+    window.socket.on('transcription_error', function(data) {
+        // 隐藏进度条
+        const progressContainer = document.getElementById('upload-progress');
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+        
+        let errorMessage = '转录错误: ' + data.error;
+        if (data.filename) {
+            errorMessage += ' (文件: ' + data.filename + ')';
+        }
+        if (window.showAlert) {
+            window.showAlert(errorMessage, 'danger');
+        }
+    });
+}
+
+// 绑定转录页面特定的事件监听器
+function bindTranscriptionEventListeners() {
+    // 录音控制按钮 - 使用全局函数
+    const startBtn = document.getElementById('start-recording-btn');
+    const stopBtn = document.getElementById('stop-recording-btn');
+    const pauseBtn = document.getElementById('pause-recording-btn');
+    
+    if (startBtn && window.startRecording) {
+        startBtn.addEventListener('click', window.startRecording);
+    }
+    if (stopBtn && window.stopRecording) {
+        stopBtn.addEventListener('click', window.stopRecording);
+    }
+    if (pauseBtn && window.pauseRecording) {
+        pauseBtn.addEventListener('click', window.pauseRecording);
+    }
+    
+    // 文件上传
+    const fileInput = document.getElementById('audio-file-input');
+    const uploadBtn = document.getElementById('upload-transcribe-btn');
+    const clearBtn = document.getElementById('clear-file-btn');
+    
+    if (fileInput && window.handleFileSelect) {
+        fileInput.addEventListener('change', window.handleFileSelect);
+    }
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', uploadAndTranscribe);
+    }
+    if (clearBtn && window.clearSelectedFile) {
+        clearBtn.addEventListener('click', window.clearSelectedFile);
+    }
+    
+    // 文件路径输入
+    const pathBtn = document.getElementById('path-transcribe-btn');
+    const pathInput = document.getElementById('file-path-input');
+    
+    if (pathBtn) {
+        pathBtn.addEventListener('click', transcribeFromPath);
+    }
+    if (pathInput) {
+        pathInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                transcribeFromPath();
+            }
+        });
+    }
+    
+    // 文本操作按钮
+    const copyBtn = document.getElementById('copy-text-btn');
+    const clearTextBtn = document.getElementById('clear-text-btn');
+    const saveBtn = document.getElementById('save-text-btn');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    
+    if (copyBtn) copyBtn.addEventListener('click', copyText);
+    if (clearTextBtn) clearTextBtn.addEventListener('click', clearText);
+    if (saveBtn) saveBtn.addEventListener('click', saveText);
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', clearHistory);
+    
+    // 文本框变化监听
+    const textArea = document.getElementById('transcription-text');
+    if (textArea) {
+        textArea.addEventListener('input', updateCharCount);
+    }
+    
+    // 连续监听模式
+    const continuousMode = document.getElementById('continuous-mode');
+    if (continuousMode) {
+        continuousMode.addEventListener('change', function() {
+            if (this.checked && window.isRecording !== undefined && !window.isRecording && window.startRecording) {
+                window.startRecording();
+            } else if (!this.checked && window.isRecording && window.stopRecording) {
+                window.stopRecording();
+            }
+        });
+    }
+}
+
+// 录音相关功能已移至 app.js 中，这里不再重复定义
+
+// 设置转录页面的拖拽上传功能
+function setupTranscriptionDragAndDrop() {
+    const dragDropArea = document.getElementById('drag-drop-area');
+    const fileInput = document.getElementById('audio-file-input');
+    
+    // 点击拖拽区域触发文件选择
+    dragDropArea.addEventListener('click', function(e) {
+        // 只有点击在拖拽区域本身时才触发文件选择
+        if (e.target === dragDropArea || e.target.closest('.drag-drop-content')) {
+            fileInput.click();
+        }
+    });
+    
+    // 防止页面默认的拖拽行为
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // 拖拽进入和悬停事件
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    // 拖拽离开事件
+    ['dragleave', 'drop'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dragDropArea.classList.add('drag-over');
+    }
+    
+    function unhighlight(e) {
+        dragDropArea.classList.remove('drag-over');
+    }
+    
+    // 文件放置事件
+    dragDropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            const file = files[0];
+            console.log('拖拽文件:', file.name, file.type);
+            
+            // 验证文件类型
+            if (window.isValidAudioFile && window.isValidAudioFile(file)) {
+                // 将文件设置到input元素
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                // 显示文件信息
+                if (window.displayFileInfo) {
+                    window.displayFileInfo(file);
+                }
+            } else {
+                if (window.showAlert) {
+                    window.showAlert('请选择有效的音频文件格式', 'warning');
+                }
+            }
+        }
+    }
+}
+
+// 设置转录页面路径输入区域的拖拽功能
+function setupTranscriptionPathInputDragAndDrop() {
+    const pathInputArea = document.getElementById('path-input-area');
+    const pathInput = document.getElementById('file-path-input');
+    const dragOverlay = document.getElementById('path-drag-overlay');
+    
+    if (!pathInputArea || !pathInput || !dragOverlay) {
+        console.warn('路径输入拖拽元素未找到');
+        return;
+    }
+    
+    // 防止页面默认的拖拽行为
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        pathInputArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // 拖拽进入事件
+    pathInputArea.addEventListener('dragenter', function(e) {
+        pathInputArea.classList.add('drag-over');
+        dragOverlay.classList.add('active');
+    });
+    
+    // 拖拽悬停事件
+    pathInputArea.addEventListener('dragover', function(e) {
+        pathInputArea.classList.add('drag-over');
+        dragOverlay.classList.add('active');
+    });
+    
+    // 拖拽离开事件
+    pathInputArea.addEventListener('dragleave', function(e) {
+        // 检查是否真的离开了区域
+        if (!pathInputArea.contains(e.relatedTarget)) {
+            pathInputArea.classList.remove('drag-over');
+            dragOverlay.classList.remove('active');
+        }
+    });
+    
+    // 文件放置事件
+    pathInputArea.addEventListener('drop', function(e) {
+        pathInputArea.classList.remove('drag-over');
+        dragOverlay.classList.remove('active');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            console.log('拖拽文件到路径输入:', file.name, file.path);
+            
+            // 验证文件类型
+            if (window.isValidAudioFile && window.isValidAudioFile(file)) {
+                // 获取文件的完整路径
+                let filePath = file.path || file.webkitRelativePath || file.name;
+                
+                // 如果是从浏览器拖拽，可能无法获取完整路径
+                if (!filePath || filePath === file.name) {
+                    // 尝试使用File API获取路径信息
+                    if (file.webkitRelativePath) {
+                        filePath = file.webkitRelativePath;
+                    } else {
+                        // 浏览器安全限制，无法获取完整路径
+                        if (window.showAlert) {
+                            window.showAlert('由于浏览器安全限制，无法获取文件完整路径。请手动输入路径或使用上方的文件上传功能。', 'warning');
+                        }
+                        return;
+                    }
+                }
+                
+                // 设置路径到输入框
+                pathInput.value = filePath;
+                pathInput.focus();
+                
+                if (window.showAlert) {
+                    window.showAlert(`已获取文件路径: ${file.name}`, 'success');
+                }
+            } else {
+                if (window.showAlert) {
+                    window.showAlert('请选择有效的音频文件格式', 'warning');
+                }
+            }
+        }
+    });
+}
+
+// 文件处理相关功能已移至 app.js 中，这里不再重复定义
+
+// 直接转录本地文件
+function uploadAndTranscribe() {
+    const fileInput = document.getElementById('audio-file-input');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        if (window.showAlert) {
+            window.showAlert('请先选择音频文件', 'warning');
+        }
+        return;
+    }
+    
+    // 显示转录进度
+    const progressContainer = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const statusText = document.getElementById('upload-status');
+    
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '10%';
+    statusText.textContent = '正在上传文件...';
+    
+    // 创建FormData对象，使用新的双模式API
+    const formData = new FormData();
+    formData.append('audio', file);
+    formData.append('use_local_path', 'false'); // 明确指定使用文件上传模式
+    formData.append('language', document.getElementById('language-select').value);
+    formData.append('model', document.getElementById('model-select').value);
+    formData.append('enable_vad', document.getElementById('enable-vad').checked);
+    formData.append('enable_punctuation', document.getElementById('enable-punctuation').checked);
+    
+    // 使用fetch上传文件并转录
+    fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            progressBar.style.width = '50%';
+            statusText.textContent = '文件上传成功，正在转录...';
+            if (window.showAlert) {
+                window.showAlert(`开始转录文件: ${file.name}`, 'info');
+            }
+        } else {
+            throw new Error(data.error || '上传失败');
+        }
+    })
+    .catch(error => {
+        progressContainer.style.display = 'none';
+        if (window.showAlert) {
+            window.showAlert(`上传失败: ${error.message}`, 'danger');
+        }
+        console.error('Upload error:', error);
+    });
+}
+
+// 通过文件路径转录
+function transcribeFromPath() {
+    const pathInput = document.getElementById('file-path-input');
+    const filePath = pathInput.value.trim();
+    
+    if (!filePath) {
+        if (window.showAlert) {
+            window.showAlert('请输入文件路径', 'warning');
+        }
+        pathInput.focus();
+        return;
+    }
+    
+    // 从路径中提取文件名
+    const filename = filePath.split('/').pop() || filePath.split('\\').pop() || '未知文件';
+    
+    // 显示转录进度
+    const progressContainer = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const statusText = document.getElementById('upload-status');
+    
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '10%';
+    statusText.textContent = '正在处理文件路径...';
+    
+    // 使用新的双模式API进行本地文件转录
+    const formData = new FormData();
+    formData.append('use_local_path', 'true'); // 明确指定使用本地路径模式
+    formData.append('local_path', filePath);
+    formData.append('language', document.getElementById('language-select').value);
+    formData.append('model', document.getElementById('model-select').value);
+    formData.append('enable_vad', document.getElementById('enable-vad').checked);
+    formData.append('enable_punctuation', document.getElementById('enable-punctuation').checked);
+    
+    fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            progressBar.style.width = '50%';
+            statusText.textContent = '文件路径验证成功，正在转录...';
+            if (window.showAlert) {
+                window.showAlert(`开始转录本地文件: ${filename}`, 'info');
+            }
+        } else {
+            throw new Error(data.error || '转录失败');
+        }
+    })
+    .catch(error => {
+        progressContainer.style.display = 'none';
+        if (window.showAlert) {
+            window.showAlert(`转录失败: ${error.message}`, 'danger');
+        }
+        console.error('Transcribe error:', error);
+    });
+    
+    // 清空输入框
+    pathInput.value = '';
+}
+
+// 添加转录结果
+function appendTranscriptionResult(text) {
+    // 检查text是否有效
+    if (!text || typeof text !== 'string') {
+        console.warn('appendTranscriptionResult: text参数无效', text);
+        return;
+    }
+    
+    const textArea = document.getElementById('transcription-text');
+    if (textArea.value) {
+        textArea.value += '\n' + text;
+    } else {
+        textArea.value = text;
+    }
+    updateCharCount();
+    updateLastUpdateTime();
+}
+
+// 复制文本
+function copyText() {
+    const textArea = document.getElementById('transcription-text');
+    textArea.select();
+    document.execCommand('copy');
+    if (window.showAlert) {
+        window.showAlert('文本已复制到剪贴板', 'success');
+    }
+}
+
+// 清空文本
+function clearText() {
+    if (confirm('确定要清空转录结果吗？')) {
+        document.getElementById('transcription-text').value = '';
+        updateCharCount();
+        if (window.showAlert) {
+            window.showAlert('转录结果已清空', 'info');
+        }
+    }
+}
+
+// 保存文本
+function saveText() {
+    const text = document.getElementById('transcription-text').value;
+    if (!text.trim()) {
+        if (window.showAlert) {
+            window.showAlert('没有可保存的内容', 'warning');
+        }
+        return;
+    }
+    
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transcription_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    if (window.showAlert) {
+        window.showAlert('文件已保存', 'success');
+    }
+}
+
+// 更新字数统计
+function updateCharCount() {
+    const text = document.getElementById('transcription-text').value;
+    const charCount = text.length;
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    
+    document.getElementById('char-count').textContent = charCount;
+    document.getElementById('word-count').textContent = wordCount;
+}
+
+// 更新最后更新时间
+function updateLastUpdateTime() {
+    document.getElementById('last-update-time').textContent = 
+        '最后更新: ' + new Date().toLocaleTimeString();
+}
+
+// 添加到历史记录
+function addToHistory(text, timestamp, filename = null) {
+    // 检查text是否存在且不为空
+    if (!text || typeof text !== 'string') {
+        console.warn('addToHistory: text参数无效', text);
+        return;
+    }
+    
+    const history = getTranscriptionHistory();
+    const entry = {
+        id: Date.now(),
+        text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+        fullText: text,
+        timestamp: timestamp,
+        filename: filename
+    };
+    
+    history.unshift(entry);
+    
+    // 限制历史记录数量
+    if (history.length > 50) {
+        history.splice(50);
+    }
+    
+    localStorage.setItem('transcriptionHistory', JSON.stringify(history));
+    renderTranscriptionHistory();
+}
+
+// 获取转录历史
+function getTranscriptionHistory() {
+    const history = localStorage.getItem('transcriptionHistory');
+    return history ? JSON.parse(history) : [];
+}
+
+// 加载转录历史
+function loadTranscriptionHistory() {
+    renderTranscriptionHistory();
+}
+
+// 渲染转录历史
+function renderTranscriptionHistory() {
+    const history = getTranscriptionHistory();
+    const container = document.getElementById('transcription-history');
+    
+    if (history.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center">暂无历史记录</div>';
+        return;
+    }
+    
+    let html = '';
+    history.forEach(entry => {
+        const time = new Date(entry.timestamp).toLocaleString();
+        html += `
+            <div class="border-bottom pb-2 mb-2 history-entry" data-id="${entry.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1" style="cursor: pointer;" onclick="loadHistoryEntry(${entry.id})">
+                        <div class="text-truncate">${entry.text}</div>
+                        <small class="text-muted">${time}</small>
+                        ${entry.filename ? `<br><small class="text-info">${entry.filename}</small>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHistoryEntry(${entry.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 加载历史记录条目
+function loadHistoryEntry(id) {
+    const history = getTranscriptionHistory();
+    const entry = history.find(item => item.id === id);
+    
+    if (entry) {
+        document.getElementById('transcription-text').value = entry.fullText;
+        updateCharCount();
+        if (window.showAlert) {
+            window.showAlert('已加载历史记录', 'info');
+        }
+    }
+}
+
+// 删除历史记录条目
+function deleteHistoryEntry(id) {
+    if (confirm('确定要删除这条历史记录吗？')) {
+        let history = getTranscriptionHistory();
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('transcriptionHistory', JSON.stringify(history));
+        renderTranscriptionHistory();
+        if (window.showAlert) {
+            window.showAlert('历史记录已删除', 'info');
+        }
+    }
+}
+
+// 清空历史记录
+function clearHistory() {
+    if (confirm('确定要清空所有历史记录吗？')) {
+        localStorage.removeItem('transcriptionHistory');
+        renderTranscriptionHistory();
+        if (window.showAlert) {
+            window.showAlert('历史记录已清空', 'info');
+        }
+    }
+}
+
+// showAlert函数已移至 app.js 中，这里不再重复定义
+</script>
+{% endblock %}

@@ -1,12 +1,18 @@
+import sys
 import threading
 import time
-import winreg
 from pathlib import Path
+
+if sys.platform == "win32":
+    import winreg
 
 from util.config import ClientConfig as Config
 
 
 def read_qword_value(root_key, sub_path, value_name):
+    if sys.platform != "win32":
+        return None
+        
     try:
         reg_key = winreg.OpenKey(root_key, sub_path)
         value, reg_type = winreg.QueryValueEx(reg_key, value_name)
@@ -27,16 +33,19 @@ def is_microphone_in_use():
     if not Config.only_enable_microphones_when_pressed_record_shortcut:
         return assume_by_keypress()
     else:
-        match Config.check_microphone_usage_by:
-            case "注册表":
-                return check_by_registry()
-            case "按键":
-                return assume_by_keypress()
-            case _:
-                return check_by_registry()
+        if Config.check_microphone_usage_by == "注册表":
+            return check_by_registry()
+        elif Config.check_microphone_usage_by == "按键":
+            return assume_by_keypress()
+        else:
+            return check_by_registry()
 
 
 def check_by_registry():
+    if sys.platform != "win32":
+        # On macOS/Linux, fallback to keypress detection
+        return assume_by_keypress()
+        
     # Static variables
     if not hasattr(is_microphone_in_use, "last_check_time"):
         is_microphone_in_use.last_check_time = 0

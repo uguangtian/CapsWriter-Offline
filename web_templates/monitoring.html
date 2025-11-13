@@ -1,0 +1,1029 @@
+{% extends "base.html" %}
+
+{% block title %}系统监控{% endblock %}
+
+{% block extra_css %}
+<style>
+.monitoring-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    transition: box-shadow 0.15s ease-in-out;
+    height: 100%;
+}
+
+.monitoring-card:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-change {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.metric-change.positive {
+    color: #28a745;
+}
+
+.metric-change.negative {
+    color: #dc3545;
+}
+
+.metric-change.neutral {
+    color: #6c757d;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dasharray 0.35s;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.service-status {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.service-status:hover {
+    background-color: #f8f9fa;
+}
+
+.service-status.online {
+    border-left: 4px solid #28a745;
+}
+
+.service-status.offline {
+    border-left: 4px solid #dc3545;
+}
+
+.service-status.warning {
+    border-left: 4px solid #ffc107;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.status-indicator.online {
+    background-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+}
+
+.status-indicator.offline {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+.status-indicator.warning {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.25);
+}
+
+.log-container {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.log-entry {
+    margin-bottom: 0.25rem;
+    padding: 0.125rem 0;
+}
+
+.log-entry.error {
+    color: #f48771;
+}
+
+.log-entry.warning {
+    color: #dcdcaa;
+}
+
+.log-entry.info {
+    color: #9cdcfe;
+}
+
+.log-entry.debug {
+    color: #808080;
+}
+
+.process-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    transition: all 0.15s ease-in-out;
+}
+
+.process-item:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.process-info {
+    flex: 1;
+}
+
+.process-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.process-details {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.process-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-top: 1rem;
+}
+
+.refresh-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.auto-refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #28a745;
+    font-size: 0.875rem;
+}
+
+.auto-refresh-indicator.paused {
+    color: #6c757d;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+}
+
+.alert-item.critical {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.alert-item.warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.alert-item.info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+.alert-icon {
+    margin-right: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.alert-message {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.alert-time {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题和控制 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">系统监控</h1>
+            <p class="text-muted mb-0">实时监控 CapsWriter-Offline 系统状态</p>
+        </div>
+        <div class="refresh-controls">
+            <div class="auto-refresh-indicator" id="auto-refresh-indicator">
+                <i class="fas fa-sync-alt fa-spin"></i>
+                <span>自动刷新</span>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="auto-refresh-toggle" checked>
+                <label class="form-check-label" for="auto-refresh-toggle">自动刷新</label>
+            </div>
+            <select class="form-select form-select-sm" id="refresh-interval" style="width: auto;">
+                <option value="1000">1秒</option>
+                <option value="5000" selected>5秒</option>
+                <option value="10000">10秒</option>
+                <option value="30000">30秒</option>
+            </select>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="refreshAll()">
+                <i class="fas fa-sync-alt"></i> 立即刷新
+            </button>
+        </div>
+    </div>
+
+    <!-- 系统指标概览 -->
+    <div class="metric-grid">
+        <!-- CPU 使用率 -->
+        <div class="monitoring-card p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-value text-primary" id="cpu-usage">0%</div>
+                    <div class="metric-label">CPU 使用率</div>
+                    <div class="metric-change neutral" id="cpu-change">--</div>
+                </div>
+                <div>
+                    <svg width="60" height="60" class="progress-ring">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="4" fill="transparent"></circle>
+                        <circle cx="30" cy="30" r="25" stroke="#007bff" stroke-width="4" fill="transparent" 
+                                stroke-dasharray="0 157" class="progress-ring-circle" id="cpu-progress"></circle>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内存使用率 -->
+        <div class="monitoring-card p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-value text-success" id="memory-usage">0%</div>
+                    <div class="metric-label">内存使用率</div>
+                    <div class="metric-change neutral" id="memory-change">--</div>
+                </div>
+                <div>
+                    <svg width="60" height="60" class="progress-ring">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="4" fill="transparent"></circle>
+                        <circle cx="30" cy="30" r="25" stroke="#28a745" stroke-width="4" fill="transparent" 
+                                stroke-dasharray="0 157" class="progress-ring-circle" id="memory-progress"></circle>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 磁盘使用率 -->
+        <div class="monitoring-card p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-value text-warning" id="disk-usage">0%</div>
+                    <div class="metric-label">磁盘使用率</div>
+                    <div class="metric-change neutral" id="disk-change">--</div>
+                </div>
+                <div>
+                    <svg width="60" height="60" class="progress-ring">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="4" fill="transparent"></circle>
+                        <circle cx="30" cy="30" r="25" stroke="#ffc107" stroke-width="4" fill="transparent" 
+                                stroke-dasharray="0 157" class="progress-ring-circle" id="disk-progress"></circle>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 网络流量 -->
+        <div class="monitoring-card p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-value text-info" id="network-speed">0 KB/s</div>
+                    <div class="metric-label">网络流量</div>
+                    <div class="metric-change neutral" id="network-change">--</div>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-network-wired fa-2x text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 服务状态 -->
+        <div class="col-lg-6 mb-4">
+            <div class="monitoring-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">服务状态</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshServices()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div id="services-list">
+                    <!-- 服务状态将通过 JavaScript 动态加载 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统警报 -->
+        <div class="col-lg-6 mb-4">
+            <div class="monitoring-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">系统警报</h5>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="clearAlerts()">
+                            <i class="fas fa-trash"></i> 清空
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshAlerts()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="alerts-list" style="max-height: 300px; overflow-y: auto;">
+                    <!-- 警报列表将通过 JavaScript 动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 运行进程 -->
+        <div class="col-lg-6 mb-4">
+            <div class="monitoring-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">运行进程</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshProcesses()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div id="processes-list" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 进程列表将通过 JavaScript 动态加载 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 实时日志 -->
+        <div class="col-lg-6 mb-4">
+            <div class="monitoring-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">实时日志</h5>
+                    <div>
+                        <select class="form-select form-select-sm me-2" id="log-level-filter" style="width: auto; display: inline-block;">
+                            <option value="all">所有级别</option>
+                            <option value="error">错误</option>
+                            <option value="warning">警告</option>
+                            <option value="info">信息</option>
+                            <option value="debug">调试</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> 清空
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLogAutoScroll()">
+                            <i class="fas fa-arrow-down" id="auto-scroll-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="log-container" id="log-container">
+                    <!-- 日志内容将通过 JavaScript 动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 性能图表 -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="monitoring-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">性能趋势</h5>
+                    <div>
+                        <select class="form-select form-select-sm me-2" id="chart-timerange" style="width: auto; display: inline-block;">
+                            <option value="1h">最近1小时</option>
+                            <option value="6h" selected>最近6小时</option>
+                            <option value="24h">最近24小时</option>
+                            <option value="7d">最近7天</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshChart()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performance-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let autoRefreshEnabled = true;
+let refreshInterval = 5000;
+let autoRefreshTimer = null;
+let logAutoScroll = true;
+let performanceChart = null;
+let previousMetrics = {};
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMonitoring();
+    setupEventListeners();
+    startAutoRefresh();
+});
+
+// 初始化监控
+function initializeMonitoring() {
+    refreshAll();
+    initializeChart();
+}
+
+// 设置事件监听器
+function setupEventListeners() {
+    // 自动刷新开关
+    document.getElementById('auto-refresh-toggle').addEventListener('change', function() {
+        autoRefreshEnabled = this.checked;
+        updateAutoRefreshIndicator();
+        if (autoRefreshEnabled) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+    
+    // 刷新间隔选择
+    document.getElementById('refresh-interval').addEventListener('change', function() {
+        refreshInterval = parseInt(this.value);
+        if (autoRefreshEnabled) {
+            stopAutoRefresh();
+            startAutoRefresh();
+        }
+    });
+    
+    // 日志级别过滤
+    document.getElementById('log-level-filter').addEventListener('change', function() {
+        filterLogs(this.value);
+    });
+    
+    // 图表时间范围
+    document.getElementById('chart-timerange').addEventListener('change', function() {
+        refreshChart();
+    });
+}
+
+// 开始自动刷新
+function startAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+    }
+    
+    autoRefreshTimer = setInterval(() => {
+        if (autoRefreshEnabled) {
+            refreshMetrics();
+            refreshServices();
+            refreshProcesses();
+            refreshLogs();
+            refreshAlerts();
+        }
+    }, refreshInterval);
+    
+    updateAutoRefreshIndicator();
+}
+
+// 停止自动刷新
+function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+    }
+    updateAutoRefreshIndicator();
+}
+
+// 更新自动刷新指示器
+function updateAutoRefreshIndicator() {
+    const indicator = document.getElementById('auto-refresh-indicator');
+    const icon = indicator.querySelector('i');
+    const text = indicator.querySelector('span');
+    
+    if (autoRefreshEnabled) {
+        indicator.classList.remove('paused');
+        icon.classList.add('fa-spin');
+        text.textContent = '自动刷新';
+    } else {
+        indicator.classList.add('paused');
+        icon.classList.remove('fa-spin');
+        text.textContent = '已暂停';
+    }
+}
+
+// 刷新所有数据
+function refreshAll() {
+    refreshMetrics();
+    refreshServices();
+    refreshProcesses();
+    refreshLogs();
+    refreshAlerts();
+    refreshChart();
+}
+
+// 刷新系统指标
+function refreshMetrics() {
+    fetch('/api/monitoring/metrics')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMetrics(data.metrics);
+            }
+        })
+        .catch(error => {
+            console.error('获取系统指标失败:', error);
+        });
+}
+
+// 更新系统指标显示
+function updateMetrics(metrics) {
+    // CPU 使用率
+    updateMetricDisplay('cpu', metrics.cpu_percent, '%');
+    updateProgressRing('cpu-progress', metrics.cpu_percent);
+    
+    // 内存使用率
+    updateMetricDisplay('memory', metrics.memory_percent, '%');
+    updateProgressRing('memory-progress', metrics.memory_percent);
+    
+    // 磁盘使用率
+    updateMetricDisplay('disk', metrics.disk_percent, '%');
+    updateProgressRing('disk-progress', metrics.disk_percent);
+    
+    // 网络流量
+    const networkSpeed = formatBytes(metrics.network_bytes_sent + metrics.network_bytes_recv);
+    document.getElementById('network-speed').textContent = networkSpeed + '/s';
+    updateMetricChange('network', metrics.network_bytes_sent + metrics.network_bytes_recv, 'bytes');
+    
+    // 保存当前指标用于计算变化
+    previousMetrics = metrics;
+}
+
+// 更新单个指标显示
+function updateMetricDisplay(type, value, unit) {
+    const element = document.getElementById(`${type}-usage`);
+    element.textContent = value.toFixed(1) + unit;
+    
+    // 更新变化指示
+    updateMetricChange(type, value, unit);
+}
+
+// 更新指标变化显示
+function updateMetricChange(type, currentValue, unit) {
+    const changeElement = document.getElementById(`${type}-change`);
+    
+    if (previousMetrics[`${type}_percent`] !== undefined) {
+        const previousValue = type === 'network' ? 
+            (previousMetrics.network_bytes_sent + previousMetrics.network_bytes_recv) :
+            previousMetrics[`${type}_percent`];
+        
+        const change = currentValue - previousValue;
+        const changeText = unit === 'bytes' ? 
+            formatBytes(Math.abs(change)) :
+            Math.abs(change).toFixed(1) + unit;
+        
+        if (change > 0) {
+            changeElement.className = 'metric-change positive';
+            changeElement.innerHTML = `<i class="fas fa-arrow-up"></i> +${changeText}`;
+        } else if (change < 0) {
+            changeElement.className = 'metric-change negative';
+            changeElement.innerHTML = `<i class="fas fa-arrow-down"></i> -${changeText}`;
+        } else {
+            changeElement.className = 'metric-change neutral';
+            changeElement.innerHTML = `<i class="fas fa-minus"></i> ${changeText}`;
+        }
+    }
+}
+
+// 更新进度环
+function updateProgressRing(elementId, percentage) {
+    const circle = document.getElementById(elementId);
+    const radius = 25;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+    
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = offset;
+}
+
+// 刷新服务状态
+function refreshServices() {
+    fetch('/api/monitoring/services')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateServicesDisplay(data.services);
+            }
+        })
+        .catch(error => {
+            console.error('获取服务状态失败:', error);
+        });
+}
+
+// 更新服务状态显示
+function updateServicesDisplay(services) {
+    const container = document.getElementById('services-list');
+    
+    if (services.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3">暂无服务信息</div>';
+        return;
+    }
+    
+    let html = '';
+    services.forEach(service => {
+        const statusClass = service.status === 'running' ? 'online' : 
+                           service.status === 'stopped' ? 'offline' : 'warning';
+        const statusText = service.status === 'running' ? '运行中' :
+                          service.status === 'stopped' ? '已停止' : '未知';
+        
+        html += `
+            <div class="service-status ${statusClass}">
+                <div class="status-indicator ${statusClass}"></div>
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${service.name}</div>
+                    <div class="text-muted small">${service.description || ''}</div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-${statusClass === 'online' ? 'success' : statusClass === 'offline' ? 'danger' : 'warning'}">
+                        ${statusText}
+                    </span>
+                    <div class="text-muted small mt-1">
+                        端口: ${service.port || 'N/A'}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 刷新进程列表
+function refreshProcesses() {
+    fetch('/api/monitoring/processes')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateProcessesDisplay(data.processes);
+            }
+        })
+        .catch(error => {
+            console.error('获取进程列表失败:', error);
+        });
+}
+
+// 更新进程列表显示
+function updateProcessesDisplay(processes) {
+    const container = document.getElementById('processes-list');
+    
+    if (processes.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3">暂无运行进程</div>';
+        return;
+    }
+    
+    let html = '';
+    processes.forEach(process => {
+        html += `
+            <div class="process-item">
+                <div class="process-info">
+                    <div class="process-name">${process.name}</div>
+                    <div class="process-details">
+                        PID: ${process.pid} | 
+                        CPU: ${process.cpu_percent.toFixed(1)}% | 
+                        内存: ${formatBytes(process.memory_info.rss)} |
+                        状态: ${process.status}
+                    </div>
+                </div>
+                <div class="process-actions">
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="showProcessDetails(${process.pid})">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="terminateProcess(${process.pid})">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 刷新日志
+function refreshLogs() {
+    fetch('/api/monitoring/logs')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateLogsDisplay(data.logs);
+            }
+        })
+        .catch(error => {
+            console.error('获取日志失败:', error);
+        });
+}
+
+// 更新日志显示
+function updateLogsDisplay(logs) {
+    const container = document.getElementById('log-container');
+    const shouldScroll = logAutoScroll && 
+        (container.scrollTop + container.clientHeight >= container.scrollHeight - 10);
+    
+    let html = '';
+    logs.forEach(log => {
+        const timestamp = new Date(log.timestamp).toLocaleString();
+        html += `<div class="log-entry ${log.level}">[${timestamp}] [${log.level.toUpperCase()}] ${log.message}</div>`;
+    });
+    
+    container.innerHTML = html;
+    
+    if (shouldScroll) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+// 过滤日志
+function filterLogs(level) {
+    const entries = document.querySelectorAll('.log-entry');
+    entries.forEach(entry => {
+        if (level === 'all' || entry.classList.contains(level)) {
+            entry.style.display = 'block';
+        } else {
+            entry.style.display = 'none';
+        }
+    });
+}
+
+// 清空日志
+function clearLogs() {
+    if (confirm('确定要清空日志吗？')) {
+        fetch('/api/monitoring/logs/clear', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('log-container').innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('清空日志失败:', error);
+            });
+    }
+}
+
+// 切换日志自动滚动
+function toggleLogAutoScroll() {
+    logAutoScroll = !logAutoScroll;
+    const icon = document.getElementById('auto-scroll-icon');
+    
+    if (logAutoScroll) {
+        icon.className = 'fas fa-arrow-down';
+        icon.style.color = '#28a745';
+    } else {
+        icon.className = 'fas fa-pause';
+        icon.style.color = '#6c757d';
+    }
+}
+
+// 刷新警报
+function refreshAlerts() {
+    fetch('/api/monitoring/alerts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateAlertsDisplay(data.alerts);
+            }
+        })
+        .catch(error => {
+            console.error('获取警报失败:', error);
+        });
+}
+
+// 更新警报显示
+function updateAlertsDisplay(alerts) {
+    const container = document.getElementById('alerts-list');
+    
+    if (alerts.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3">暂无系统警报</div>';
+        return;
+    }
+    
+    let html = '';
+    alerts.forEach(alert => {
+        const iconClass = alert.level === 'critical' ? 'fa-exclamation-triangle' :
+                         alert.level === 'warning' ? 'fa-exclamation-circle' : 'fa-info-circle';
+        
+        html += `
+            <div class="alert-item ${alert.level}">
+                <div class="alert-icon">
+                    <i class="fas ${iconClass}"></i>
+                </div>
+                <div class="alert-content">
+                    <div class="alert-title">${alert.title}</div>
+                    <div class="alert-message">${alert.message}</div>
+                    <div class="alert-time">${new Date(alert.timestamp).toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 清空警报
+function clearAlerts() {
+    if (confirm('确定要清空所有警报吗？')) {
+        fetch('/api/monitoring/alerts/clear', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('alerts-list').innerHTML = 
+                        '<div class="text-muted text-center py-3">暂无系统警报</div>';
+                }
+            })
+            .catch(error => {
+                console.error('清空警报失败:', error);
+            });
+    }
+}
+
+// 显示进程详情
+function showProcessDetails(pid) {
+    fetch(`/api/monitoring/processes/${pid}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`进程详情:\n\nPID: ${data.process.pid}\n名称: ${data.process.name}\nCPU: ${data.process.cpu_percent}%\n内存: ${formatBytes(data.process.memory_info.rss)}\n状态: ${data.process.status}\n创建时间: ${new Date(data.process.create_time * 1000).toLocaleString()}`);
+            }
+        })
+        .catch(error => {
+            console.error('获取进程详情失败:', error);
+        });
+}
+
+// 终止进程
+function terminateProcess(pid) {
+    if (confirm(`确定要终止进程 ${pid} 吗？`)) {
+        fetch(`/api/monitoring/processes/${pid}/terminate`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('进程已终止');
+                    refreshProcesses();
+                } else {
+                    alert('终止进程失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('终止进程失败: ' + error.message);
+            });
+    }
+}
+
+// 初始化性能图表
+function initializeChart() {
+    const ctx = document.getElementById('performance-chart').getContext('2d');
+    
+    performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'CPU 使用率 (%)',
+                    data: [],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: '内存使用率 (%)',
+                    data: [],
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: '磁盘使用率 (%)',
+                    data: [],
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+}
+
+// 刷新性能图表
+function refreshChart() {
+    const timeRange = document.getElementById('chart-timerange').value;
+    
+    fetch(`/api/monitoring/chart-data?range=${timeRange}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateChart(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('获取图表数据失败:', error);
+        });
+}
+
+// 更新图表数据
+function updateChart(data) {
+    performanceChart.data.labels = data.labels;
+    performanceChart.data.datasets[0].data = data.cpu;
+    performanceChart.data.datasets[1].data = data.memory;
+    performanceChart.data.datasets[2].data = data.disk;
+    performanceChart.update();
+}
+
+// 格式化字节数
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 页面离开时清理定时器
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}

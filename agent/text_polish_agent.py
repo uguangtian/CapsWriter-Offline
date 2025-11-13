@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Tuple, List, Dict, Any, Optional
 
-from agent.base_agent import BaseAgent
+from .base_agent import BaseAgent
 
 
 class TextPolishAgent(BaseAgent):
@@ -30,7 +30,7 @@ class TextPolishAgent(BaseAgent):
                  model_type: str = "deepseek",
                  config: Dict[str, Any] = {},
                  output_dir: str = "./polished",
-                 max_segment_length: int = 4000, 
+                 max_segment_length: int = 40000, 
                  overlap_length: int = 100):
         """初始化文本润色智能体
         

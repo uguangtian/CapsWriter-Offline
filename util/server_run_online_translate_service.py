@@ -5,21 +5,29 @@
 
 
 import subprocess
+import sys
 
 from util.config import DeepLXConfig as DeepLX
 
 
 def run_online_translate_service():
     # 启动在线翻译服务端
-    # 设置启动信息，用于隐藏窗口
-    info = subprocess.STARTUPINFO()
-    info.dwFlags = subprocess.STARTF_USESHOWWINDOW
-    info.wShowWindow = subprocess.SW_HIDE
-    deeplx_translate_server_proc = subprocess.Popen(
-        [DeepLX.exe_path, "-port", DeepLX.online_translate_port],
-        creationflags=subprocess.CREATE_NO_WINDOW,
-        startupinfo=info,
-    )  # https://github.com/OwO-Network/DeepLX/releases
+    if sys.platform == "win32":
+        # Windows 平台：设置启动信息，用于隐藏窗口
+        info = subprocess.STARTUPINFO()
+        info.dwFlags = subprocess.STARTF_USESHOWWINDOW
+        info.wShowWindow = subprocess.SW_HIDE
+        deeplx_translate_server_proc = subprocess.Popen(
+            [DeepLX.exe_path, "-port", DeepLX.online_translate_port],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            startupinfo=info,
+        )
+    else:
+        # macOS/Linux 平台：不使用 Windows 特有的参数
+        deeplx_translate_server_proc = subprocess.Popen(
+            [DeepLX.exe_path, "-port", DeepLX.online_translate_port]
+        )
+    # https://github.com/OwO-Network/DeepLX/releases
 
 
 if __name__ == "__main__":

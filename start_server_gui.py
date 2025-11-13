@@ -102,24 +102,25 @@ class GUI(QMainWindow):
         QApplication.quit()
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
-        if Config.start_online_translate_server:
-            subprocess.Popen(
-                "taskkill /IM pythonw_CapsWriter_Server.exe /IM deeplx_windows_amd64.exe /F",
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,
-                text=True,
-            )
-        else:
-            subprocess.Popen(
-                "taskkill /IM pythonw_CapsWriter_Server.exe /F",
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,
-                text=True,
-            )
+        if sys.platform == "win32":
+            if Config.start_online_translate_server:
+                subprocess.Popen(
+                    "taskkill /IM pythonw_CapsWriter_Server.exe /IM deeplx_windows_amd64.exe /F",
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                    text=True,
+                )
+            else:
+                subprocess.Popen(
+                    "taskkill /IM pythonw_CapsWriter_Server.exe /F",
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                    text=True,
+                )
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
@@ -132,14 +133,23 @@ class GUI(QMainWindow):
 
     def start_script(self):
         # Start core_server.py and redirect output to the server queue
-        self.core_server_process = subprocess.Popen(
-            [".\\runtime\\pythonw_CapsWriter_Server.exe", "core_server.py"],
-            creationflags=subprocess.CREATE_NO_WINDOW,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
-        )
+        if sys.platform == "win32":
+            self.core_server_process = subprocess.Popen(
+                [".\\runtime\\pythonw_CapsWriter_Server.exe", "core_server.py"],
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+            )
+        else:
+            self.core_server_process = subprocess.Popen(
+                ["python", "core_server.py"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+            )
         threading.Thread(
             target=self.enqueue_output,
             args=(self.core_server_process.stdout, self.output_queue_server),
@@ -180,17 +190,21 @@ if __name__ == "__main__":
         or check_process("start_client_gui_admin.exe")
     ):
         # 设置了启动服务端的同时启动客户端且客户端未在运行
-        if Config.in_the_meantime_start_the_client_and_run_as_admin:
-            # 以用管理员权限启动客户端...
-            subprocess.Popen(
-                ["start_client_gui_admin.exe"],
-                creationflags=subprocess.CREATE_NO_WINDOW,
-            )
+        if sys.platform == "win32":
+            if Config.in_the_meantime_start_the_client_and_run_as_admin:
+                # 以用管理员权限启动客户端...
+                subprocess.Popen(
+                    ["start_client_gui_admin.exe"],
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+            else:
+                # 以用户权限启动客户端...
+                subprocess.Popen(
+                    ["start_client_gui.exe"], creationflags=subprocess.CREATE_NO_WINDOW
+                )
         else:
-            # 以用户权限启动客户端...
-            subprocess.Popen(
-                ["start_client_gui.exe"], creationflags=subprocess.CREATE_NO_WINDOW
-            )
+            # On macOS/Linux, use python to start the client
+            subprocess.Popen(["python", "start_client_gui.py"])
 
     app = QApplication([])
     apply_stylesheet(app, theme="dark_amber.xml")

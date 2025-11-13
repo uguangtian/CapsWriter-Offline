@@ -51,7 +51,7 @@ class BaseAgent(ABC):
         """
         pass
     
-    async def call_api(self, text: str, action: str, **kwargs) -> str:
+    async def call_api(self, text: str, action: str, system_prompt: str = None, user_prompt: str = None, **kwargs) -> str:
         """调用对应模型的API处理文本
         
         根据model_type选择不同的API进行调用
@@ -59,24 +59,33 @@ class BaseAgent(ABC):
         Args:
             text: 要处理的文本
             action: 操作类型
+            system_prompt: 系统设定提示词
+            user_prompt: 用户设定提示词
             **kwargs: 额外参数
             
         Returns:
             str: 处理后的文本
         """
         try:
+            # 将系统设定和用户设定传递给API调用
+            api_kwargs = kwargs.copy()
+            if system_prompt:
+                api_kwargs['system_prompt'] = system_prompt
+            if user_prompt:
+                api_kwargs['user_prompt'] = user_prompt
+                
             if self.model_type == 'deepseek':
-                from model_services.deepseek_service import call_deepseek_api
-                return await call_deepseek_api(text, action, **kwargs)
+                from .model_services.deepseek_service import call_deepseek_api
+                return await call_deepseek_api(text, action, **api_kwargs)
             elif self.model_type == 'doubao':
-                from model_services.doubao_service import call_doubao_api
-                return await call_doubao_api(text, action, **kwargs)
+                from .model_services.doubao_service import call_doubao_api
+                return await call_doubao_api(text, action, **api_kwargs)
             elif self.model_type == 'lmstudio':
-                from model_services.lmstudio_service import call_lmstudio_api
-                return await call_lmstudio_api(text, action, **kwargs)
+                from .model_services.lmstudio_service import call_lmstudio_api
+                return await call_lmstudio_api(text, action, **api_kwargs)
             elif self.model_type == 'claude':
-                from model_services.claude_service import call_claude_api
-                return await call_claude_api(text, action, **kwargs)
+                from .model_services.claude_service import call_claude_api
+                return await call_claude_api(text, action, **api_kwargs)
             else:
                 raise ValueError(f"不支持的模型类型: {self.model_type}")
         except Exception as e:

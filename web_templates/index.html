@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}CapsWriter-Offline 网页版 - 首页{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- 欢迎横幅 -->
+        <div class="jumbotron bg-gradient text-white rounded-3 p-5 mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="container-fluid py-5">
+                <h1 class="display-4 fw-bold">
+                    <i class="fas fa-microphone-alt me-3"></i>
+                    CapsWriter-Offline 网页版
+                </h1>
+                <p class="lead mb-4">
+                    统一的语音识别与文本处理平台，提供语音转录、AI文本润色、在线翻译等功能
+                </p>
+                <div class="d-flex gap-3">
+                    <a class="btn btn-light btn-lg" href="{{ url_for('dashboard') }}" role="button">
+                        <i class="fas fa-tachometer-alt me-2"></i>进入仪表板
+                    </a>
+                    <a class="btn btn-outline-light btn-lg" href="{{ url_for('transcription') }}" role="button">
+                        <i class="fas fa-microphone me-2"></i>开始转录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 功能卡片 -->
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-microphone fa-lg"></i>
+                </div>
+                <h5 class="card-title">语音转录</h5>
+                <p class="card-text">高精度的语音识别服务，支持实时转录和文件转录，支持多种语言。</p>
+                <a href="{{ url_for('transcription') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-1"></i>开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-edit fa-lg"></i>
+                </div>
+                <h5 class="card-title">AI文本处理</h5>
+                <p class="card-text">智能文本润色、总结、翻译等功能，支持多种AI模型。</p>
+                <a href="{{ url_for('text_processing') }}" class="btn btn-success">
+                    <i class="fas fa-arrow-right me-1"></i>开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-info bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-language fa-lg"></i>
+                </div>
+                <h5 class="card-title">在线翻译</h5>
+                <p class="card-text">支持多语言翻译，快速准确的翻译服务。</p>
+                <a href="{{ url_for('translation') }}" class="btn btn-info">
+                    <i class="fas fa-arrow-right me-1"></i>开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-warning bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-folder fa-lg"></i>
+                </div>
+                <h5 class="card-title">文件管理</h5>
+                <p class="card-text">管理转录文件、处理结果等，支持文件上传下载。</p>
+                <a href="{{ url_for('files') }}" class="btn btn-warning">
+                    <i class="fas fa-arrow-right me-1"></i>开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-secondary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-cog fa-lg"></i>
+                </div>
+                <h5 class="card-title">系统配置</h5>
+                <p class="card-text">配置服务器、客户端、AI模型等各项参数。</p>
+                <a href="{{ url_for('config_page') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right me-1"></i>开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-dark bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-tachometer-alt fa-lg"></i>
+                </div>
+                <h5 class="card-title">系统监控</h5>
+                <p class="card-text">实时监控系统状态、进程运行情况等。</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-dark">
+                    <i class="fas fa-arrow-right me-1"></i>开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作面板 -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>快速操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>系统控制</h6>
+                        <div class="d-flex gap-2 mb-3">
+                            <button id="start-system-btn" class="btn btn-success btn-sm">
+                                <i class="fas fa-play me-1"></i>启动系统
+                            </button>
+                            <button id="stop-system-btn" class="btn btn-danger btn-sm">
+                                <i class="fas fa-stop me-1"></i>停止系统
+                            </button>
+                            <button id="restart-system-btn" class="btn btn-warning btn-sm">
+                                <i class="fas fa-redo me-1"></i>重启系统
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>系统状态</h6>
+                        <div id="quick-status" class="d-flex gap-3">
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-server me-1"></i>服务端: <span id="server-status">检查中</span>
+                            </span>
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-desktop me-1"></i>客户端: <span id="client-status">检查中</span>
+                            </span>
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-robot me-1"></i>AI服务: <span id="agent-status">检查中</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 更新系统状态
+    updateSystemStatus();
+    
+    // 设置定时更新
+    setInterval(updateSystemStatus, 5000);
+    
+    // 绑定按钮事件
+    document.getElementById('start-system-btn').addEventListener('click', function() {
+        controlSystem('start');
+    });
+    
+    document.getElementById('stop-system-btn').addEventListener('click', function() {
+        controlSystem('stop');
+    });
+    
+    document.getElementById('restart-system-btn').addEventListener('click', function() {
+        controlSystem('restart');
+    });
+});
+
+// 更新系统状态
+function updateSystemStatus() {
+    fetch('/api/system/status')
+        .then(response => response.json())
+        .then(data => {
+            // 更新导航栏状态
+            const statusElement = document.getElementById('system-status');
+            if (data.server_running && data.client_running) {
+                statusElement.className = 'badge bg-success';
+                statusElement.innerHTML = '<i class="fas fa-circle me-1"></i>运行中';
+            } else if (data.server_running || data.client_running) {
+                statusElement.className = 'badge bg-warning';
+                statusElement.innerHTML = '<i class="fas fa-circle me-1"></i>部分运行';
+            } else {
+                statusElement.className = 'badge bg-danger';
+                statusElement.innerHTML = '<i class="fas fa-circle me-1"></i>已停止';
+            }
+            
+            // 更新快速状态
+            document.getElementById('server-status').textContent = data.server_running ? '运行中' : '已停止';
+            document.getElementById('client-status').textContent = data.client_running ? '运行中' : '已停止';
+            document.getElementById('agent-status').textContent = data.agent_service_running ? '运行中' : '已停止';
+        })
+        .catch(error => {
+            console.error('获取系统状态失败:', error);
+            const statusElement = document.getElementById('system-status');
+            statusElement.className = 'badge bg-secondary';
+            statusElement.innerHTML = '<i class="fas fa-circle me-1"></i>连接失败';
+        });
+}
+
+// 控制系统
+function controlSystem(action) {
+    const data = {};
+    if (action === 'start') {
+        data.background = true;
+    }
+    
+    let url = '/api/system/' + action;
+    if (action === 'restart') {
+        // 先停止再启动
+        fetch('/api/system/stop', { method: 'POST' })
+            .then(() => {
+                setTimeout(() => {
+                    fetch('/api/system/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ background: true })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        showMessage(data.message, data.success ? 'success' : 'danger');
+                        updateSystemStatus();
+                    });
+                }, 2000);
+            });
+        return;
+    }
+    
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        showMessage(data.message, data.success ? 'success' : 'danger');
+        updateSystemStatus();
+    })
+    .catch(error => {
+        showMessage('操作失败: ' + error.message, 'danger');
+    });
+}
+
+// 显示消息
+function showMessage(message, type = 'info') {
+    const container = document.getElementById('message-container');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    container.appendChild(alert);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

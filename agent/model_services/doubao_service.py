@@ -3,10 +3,13 @@
 import asyncio
 import json
 import httpx
+import time
 from typing import Dict, Any, Optional
 
 # 导入配置
 from util.config import DoubaoConfig
+# 导入日志工具
+from .logger_utils import doubao_logger
 
 
 async def call_doubao_api(text: str, action: str = "polish", **kwargs) -> str:
@@ -30,6 +33,9 @@ async def call_doubao_api(text: str, action: str = "polish", **kwargs) -> str:
     model = kwargs.get('model', DoubaoConfig.model)
     api_key = kwargs.get('api_key', DoubaoConfig.api_key)
     api_endpoint = kwargs.get('api_endpoint', DoubaoConfig.api_endpoint)
+    
+    # 记录请求开始时间
+    start_time = time.time()
     
     try:
         headers = {
@@ -59,21 +65,70 @@ async def call_doubao_api(text: str, action: str = "polish", **kwargs) -> str:
             "max_tokens": max_tokens
         }
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        # 记录API请求日志
+        request_params = {
+            "api_endpoint": api_endpoint,
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "api_key": api_key,
+            "headers": headers,
+            "payload": payload
+        }
+        request_id = doubao_logger.log_api_request(action, len(text), request_params)
+        
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 api_endpoint,
                 json=payload,
                 headers=headers
             )
             
+            # 计算请求耗时
+            duration_ms = (time.time() - start_time) * 1000
+            
             if response.status_code == 200:
                 result = response.json()
-                return result["choices"][0]["message"]["content"]
+                processed_text = result["choices"][0]["message"]["content"]
+                
+                # 记录成功响应日志
+                doubao_logger.log_api_response(
+                    request_id=request_id,
+                    success=True,
+                    response_data=result,
+                    response_length=len(processed_text),
+                    duration_ms=duration_ms
+                )
+                
+                return processed_text
             else:
-                return f"API调用失败: {response.status_code} - {response.text}"
+                error_msg = f"API调用失败: {response.status_code} - {response.text}"
+                # 记录失败响应日志
+                doubao_logger.log_api_response(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                    duration_ms=duration_ms
+                )
+                return error_msg
     
     except Exception as e:
-        return f"处理文本时出错: {str(e)}"
+        # 计算请求耗时
+        duration_ms = (time.time() - start_time) * 1000
+        error_msg = f"处理文本时出错: {str(e)}"
+        
+        # 记录异常日志
+        try:
+            doubao_logger.log_api_response(
+                request_id=request_id if 'request_id' in locals() else "unknown",
+                success=False,
+                error_message=error_msg,
+                duration_ms=duration_ms
+            )
+        except:
+            doubao_logger.error(f"记录异常日志失败: {error_msg}")
+        
+        return error_msg
 
 
 # WebSocket服务器实现
@@ -84,7 +139,7 @@ async def doubao_server(websocket):
         websocket: WebSocket连接对象
         path: 请求路径
     """
-    print(f"[豆包] 新的WebSocket连接已建立")
+    doubao_logger.log_websocket_event("connection_established")
     try:
         async for message in websocket:
             try:
@@ -95,7 +150,12 @@ async def doubao_server(websocket):
                 save_to_file = data.get("save_to_file", False)
                 output_filename = data.get("output_filename", None)
                 
-                print(f"[豆包] 收到请求: action={action}, text长度={len(text_to_process)}")
+                # 记录WebSocket消息接收日志
+                doubao_logger.log_websocket_event("message_received", {
+                    "action": action,
+                    "text_length": len(text_to_process),
+                    "save_to_file": save_to_file
+                })
                 
                 # 使用文本润色服务处理文本
                 if save_to_file:
@@ -106,17 +166,20 @@ async def doubao_server(websocket):
                         text_to_process, action, output_filename
                     )
                     # 将处理结果和文件路径发送回客户端
-                    await websocket.send(json.dumps({
+                    response_data = {
                         "processed_text": processed_text,
                         "file_path": file_path
-                    }))
+                    }
+                    await websocket.send(json.dumps(response_data))
+                    doubao_logger.info(f"文件保存完成: {file_path}")
                 else:
                     # 只处理文本，不保存到文件
                     processed_text = await call_doubao_api(text_to_process, action)
                     # 将处理结果发送回客户端
-                    await websocket.send(json.dumps({"processed_text": processed_text}))
+                    response_data = {"processed_text": processed_text}
+                    await websocket.send(json.dumps(response_data))
                 
-                print(f"[豆包] 请求处理完成: action={action}")
+                doubao_logger.info(f"WebSocket请求处理完成: action={action}, 响应长度={len(processed_text)}")
             
             except json.JSONDecodeError:
                 error_msg = "无效的JSON格式"

@@ -1,0 +1,1027 @@
+{% extends "base.html" %}
+
+{% block title %}在线翻译 - CapsWriter-Offline 网页版{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-language me-2"></i>在线翻译
+        </h2>
+    </div>
+</div>
+
+<!-- 翻译控制面板 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>翻译设置
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label for="source-language" class="form-label">源语言</label>
+                        <select id="source-language" class="form-select">
+                            <option value="auto">自动检测</option>
+                            <option value="zh">中文</option>
+                            <option value="en">英文</option>
+                            <option value="ja">日文</option>
+                            <option value="ko">韩文</option>
+                            <option value="fr">法文</option>
+                            <option value="de">德文</option>
+                            <option value="es">西班牙文</option>
+                            <option value="ru">俄文</option>
+                            <option value="it">意大利文</option>
+                            <option value="pt">葡萄牙文</option>
+                            <option value="ar">阿拉伯文</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-1 text-center">
+                        <button id="swap-languages" class="btn btn-outline-secondary">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="target-language" class="form-label">目标语言</label>
+                        <select id="target-language" class="form-select">
+                            <option value="zh">中文</option>
+                            <option value="en" selected>英文</option>
+                            <option value="ja">日文</option>
+                            <option value="ko">韩文</option>
+                            <option value="fr">法文</option>
+                            <option value="de">德文</option>
+                            <option value="es">西班牙文</option>
+                            <option value="ru">俄文</option>
+                            <option value="it">意大利文</option>
+                            <option value="pt">葡萄牙文</option>
+                            <option value="ar">阿拉伯文</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="translation-service" class="form-label">翻译服务</label>
+                        <select id="translation-service" class="form-select">
+                            <option value="deeplx">DeepLX</option>
+                            <option value="google">Google翻译</option>
+                            <option value="baidu">百度翻译</option>
+                            <option value="youdao">有道翻译</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auto-translate" checked>
+                            <label class="form-check-label" for="auto-translate">
+                                自动翻译（输入时实时翻译）
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="preserve-formatting">
+                            <label class="form-check-label" for="preserve-formatting">
+                                保持原文格式
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 翻译主界面 -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>原文
+                    <span id="detected-language" class="badge bg-info ms-2" style="display: none;"></span>
+                </h6>
+                <div>
+                    <button id="paste-source-btn" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-paste me-1"></i>粘贴
+                    </button>
+                    <button id="clear-source-btn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-trash me-1"></i>清空
+                    </button>
+                    <button id="load-file-btn" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-file-upload me-1"></i>文件
+                    </button>
+                </div>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <textarea id="source-text" class="form-control flex-grow-1" rows="15" placeholder="请输入需要翻译的文本..."></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">
+                        字数: <span id="source-char-count">0</span> | 词数: <span id="source-word-count">0</span>
+                    </small>
+                    <button id="translate-btn" class="btn btn-primary">
+                        <i class="fas fa-language me-1"></i>翻译
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>译文
+                    <span id="translation-status" class="badge bg-secondary ms-2">待翻译</span>
+                </h6>
+                <div>
+                    <button id="copy-translation-btn" class="btn btn-sm btn-outline-primary" disabled>
+                        <i class="fas fa-copy me-1"></i>复制
+                    </button>
+                    <button id="save-translation-btn" class="btn btn-sm btn-outline-success" disabled>
+                        <i class="fas fa-save me-1"></i>保存
+                    </button>
+                    <button id="speak-translation-btn" class="btn btn-sm btn-outline-info" disabled>
+                        <i class="fas fa-volume-up me-1"></i>朗读
+                    </button>
+                </div>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <!-- 翻译进度 -->
+                <div id="translation-progress" class="alert alert-info" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>正在翻译中...</span>
+                    </div>
+                </div>
+                
+                <textarea id="translation-text" class="form-control flex-grow-1" rows="15" placeholder="翻译结果将显示在这里..." readonly></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">
+                        字数: <span id="translation-char-count">0</span> | 词数: <span id="translation-word-count">0</span>
+                    </small>
+                    <small class="text-muted">
+                        翻译时间: <span id="translation-time">-</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速翻译和历史记录 -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>快速翻译
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" id="quick-translate-input" class="form-control" placeholder="输入单词或短句进行快速翻译...">
+                    <button id="quick-translate-btn" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="quick-translate-result" class="mt-3" style="display: none;">
+                    <div class="alert alert-light border">
+                        <div id="quick-result-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>翻译历史
+                </h6>
+                <button id="clear-history-btn" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="translation-history" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-muted text-center">暂无翻译历史</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量翻译 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>批量翻译
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="batch-file-input" class="form-label">选择文件</label>
+                            <input type="file" id="batch-file-input" class="form-control" accept=".txt,.csv,.json">
+                            <div class="form-text">支持格式: TXT, CSV, JSON</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">操作</label>
+                            <div class="d-grid">
+                                <button id="batch-translate-btn" class="btn btn-primary" disabled>
+                                    <i class="fas fa-play me-1"></i>开始批量翻译
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 批量翻译进度 -->
+                <div id="batch-progress" style="display: none;">
+                    <div class="progress mb-2">
+                        <div id="batch-progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted" id="batch-status">准备中...</small>
+                        <small class="text-muted" id="batch-count">0/0</small>
+                    </div>
+                </div>
+                
+                <!-- 批量翻译结果 -->
+                <div id="batch-results" style="display: none;">
+                    <h6 class="mt-3">翻译结果</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>原文</th>
+                                    <th>译文</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batch-results-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2">
+                        <button id="download-batch-results" class="btn btn-success">
+                            <i class="fas fa-download me-1"></i>下载结果
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 隐藏的文件输入 -->
+<input type="file" id="file-input" accept=".txt,.md,.doc,.docx" style="display: none;">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let autoTranslateTimer;
+let isTranslating = false;
+let translationStartTime;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    bindEventListeners();
+    loadTranslationHistory();
+    updateCharCounts();
+    checkTranslationService();
+});
+
+// 绑定事件监听器
+function bindEventListeners() {
+    // 文本输入相关
+    document.getElementById('source-text').addEventListener('input', handleSourceTextChange);
+    document.getElementById('paste-source-btn').addEventListener('click', pasteSourceText);
+    document.getElementById('clear-source-btn').addEventListener('click', clearSourceText);
+    document.getElementById('load-file-btn').addEventListener('click', () => {
+        document.getElementById('file-input').click();
+    });
+    document.getElementById('file-input').addEventListener('change', loadFile);
+    
+    // 翻译控制
+    document.getElementById('translate-btn').addEventListener('click', translateText);
+    document.getElementById('swap-languages').addEventListener('click', swapLanguages);
+    document.getElementById('auto-translate').addEventListener('change', handleAutoTranslateChange);
+    
+    // 译文操作
+    document.getElementById('copy-translation-btn').addEventListener('click', copyTranslation);
+    document.getElementById('save-translation-btn').addEventListener('click', saveTranslation);
+    document.getElementById('speak-translation-btn').addEventListener('click', speakTranslation);
+    
+    // 快速翻译
+    document.getElementById('quick-translate-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            quickTranslate();
+        }
+    });
+    document.getElementById('quick-translate-btn').addEventListener('click', quickTranslate);
+    
+    // 批量翻译
+    document.getElementById('batch-file-input').addEventListener('change', handleBatchFileSelect);
+    document.getElementById('batch-translate-btn').addEventListener('click', startBatchTranslation);
+    document.getElementById('download-batch-results').addEventListener('click', downloadBatchResults);
+    
+    // 历史记录
+    document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
+    
+    // 翻译服务变化
+    document.getElementById('translation-service').addEventListener('change', checkTranslationService);
+}
+
+// 处理源文本变化
+function handleSourceTextChange() {
+    updateCharCounts();
+    
+    // 自动翻译
+    if (document.getElementById('auto-translate').checked) {
+        clearTimeout(autoTranslateTimer);
+        autoTranslateTimer = setTimeout(() => {
+            const text = document.getElementById('source-text').value.trim();
+            if (text && !isTranslating) {
+                translateText();
+            }
+        }, 1000); // 1秒延迟
+    }
+}
+
+// 处理自动翻译开关变化
+function handleAutoTranslateChange() {
+    const autoTranslate = document.getElementById('auto-translate').checked;
+    if (autoTranslate) {
+        showAlert('已启用自动翻译', 'info');
+    } else {
+        clearTimeout(autoTranslateTimer);
+        showAlert('已关闭自动翻译', 'info');
+    }
+}
+
+// 粘贴源文本
+async function pasteSourceText() {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('source-text').value = text;
+        updateCharCounts();
+        showAlert('文本已粘贴', 'success');
+        
+        // 如果启用自动翻译，立即翻译
+        if (document.getElementById('auto-translate').checked && text.trim()) {
+            setTimeout(translateText, 500);
+        }
+    } catch (error) {
+        showAlert('无法访问剪贴板', 'warning');
+    }
+}
+
+// 清空源文本
+function clearSourceText() {
+    if (confirm('确定要清空原文吗？')) {
+        document.getElementById('source-text').value = '';
+        document.getElementById('translation-text').value = '';
+        updateCharCounts();
+        updateTranslationCharCounts();
+        updateTranslationButtons(false);
+        showAlert('原文已清空', 'info');
+    }
+}
+
+// 加载文件
+function loadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('source-text').value = e.target.result;
+        updateCharCounts();
+        showAlert(`文件 ${file.name} 已加载`, 'success');
+        
+        // 如果启用自动翻译，延迟翻译
+        if (document.getElementById('auto-translate').checked) {
+            setTimeout(translateText, 1000);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// 交换语言
+function swapLanguages() {
+    const sourceSelect = document.getElementById('source-language');
+    const targetSelect = document.getElementById('target-language');
+    
+    // 不能交换自动检测
+    if (sourceSelect.value === 'auto') {
+        showAlert('无法交换自动检测语言', 'warning');
+        return;
+    }
+    
+    const sourceValue = sourceSelect.value;
+    const targetValue = targetSelect.value;
+    
+    sourceSelect.value = targetValue;
+    targetSelect.value = sourceValue;
+    
+    // 交换文本内容
+    const sourceText = document.getElementById('source-text').value;
+    const translationText = document.getElementById('translation-text').value;
+    
+    if (translationText.trim()) {
+        document.getElementById('source-text').value = translationText;
+        document.getElementById('translation-text').value = sourceText;
+        updateCharCounts();
+        updateTranslationCharCounts();
+    }
+    
+    showAlert('语言已交换', 'info');
+}
+
+// 翻译文本
+function translateText() {
+    const sourceText = document.getElementById('source-text').value.trim();
+    if (!sourceText) {
+        showAlert('请输入需要翻译的文本', 'warning');
+        return;
+    }
+    
+    if (isTranslating) {
+        return;
+    }
+    
+    const sourceLang = document.getElementById('source-language').value;
+    const targetLang = document.getElementById('target-language').value;
+    const service = document.getElementById('translation-service').value;
+    const preserveFormatting = document.getElementById('preserve-formatting').checked;
+    
+    if (sourceLang === targetLang && sourceLang !== 'auto') {
+        showAlert('源语言和目标语言不能相同', 'warning');
+        return;
+    }
+    
+    isTranslating = true;
+    translationStartTime = Date.now();
+    
+    // 显示翻译进度
+    showTranslationProgress(true);
+    updateTranslationStatus('翻译中');
+    
+    // 准备请求数据
+    const requestData = {
+        text: sourceText,
+        source_language: sourceLang,
+        target_language: targetLang,
+        service: service,
+        preserve_formatting: preserveFormatting
+    };
+    
+    // 发送翻译请求
+    fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            completeTranslation(data.translation, data.detected_language);
+        } else {
+            showTranslationError(data.error);
+        }
+    })
+    .catch(error => {
+        showTranslationError('翻译请求失败: ' + error.message);
+    });
+}
+
+// 显示翻译进度
+function showTranslationProgress(show) {
+    const progressDiv = document.getElementById('translation-progress');
+    progressDiv.style.display = show ? 'block' : 'none';
+}
+
+// 更新翻译状态
+function updateTranslationStatus(status) {
+    const statusBadge = document.getElementById('translation-status');
+    statusBadge.textContent = status;
+    
+    const statusClasses = {
+        '待翻译': 'bg-secondary',
+        '翻译中': 'bg-warning',
+        '已完成': 'bg-success',
+        '翻译失败': 'bg-danger'
+    };
+    
+    statusBadge.className = `badge ms-2 ${statusClasses[status] || 'bg-secondary'}`;
+}
+
+// 完成翻译
+function completeTranslation(translation, detectedLanguage) {
+    isTranslating = false;
+    showTranslationProgress(false);
+    
+    // 设置翻译结果
+    document.getElementById('translation-text').value = translation;
+    updateTranslationCharCounts();
+    updateTranslationButtons(true);
+    updateTranslationStatus('已完成');
+    
+    // 显示检测到的语言
+    if (detectedLanguage && document.getElementById('source-language').value === 'auto') {
+        const detectedBadge = document.getElementById('detected-language');
+        detectedBadge.textContent = `检测: ${getLanguageName(detectedLanguage)}`;
+        detectedBadge.style.display = 'inline';
+    }
+    
+    // 计算翻译时间
+    const translationTime = ((Date.now() - translationStartTime) / 1000).toFixed(1);
+    document.getElementById('translation-time').textContent = translationTime + 's';
+    
+    // 添加到历史记录
+    addToHistory({
+        timestamp: new Date(),
+        sourceText: document.getElementById('source-text').value,
+        translation: translation,
+        sourceLang: document.getElementById('source-language').value,
+        targetLang: document.getElementById('target-language').value,
+        service: document.getElementById('translation-service').value,
+        translationTime: translationTime
+    });
+    
+    showAlert('翻译完成', 'success');
+}
+
+// 显示翻译错误
+function showTranslationError(error) {
+    isTranslating = false;
+    showTranslationProgress(false);
+    updateTranslationStatus('翻译失败');
+    showAlert('翻译失败: ' + error, 'danger');
+}
+
+// 更新翻译按钮状态
+function updateTranslationButtons(hasTranslation) {
+    const buttons = ['copy-translation-btn', 'save-translation-btn', 'speak-translation-btn'];
+    buttons.forEach(btnId => {
+        document.getElementById(btnId).disabled = !hasTranslation;
+    });
+}
+
+// 复制翻译结果
+function copyTranslation() {
+    const translationText = document.getElementById('translation-text').value;
+    navigator.clipboard.writeText(translationText).then(() => {
+        showAlert('翻译结果已复制到剪贴板', 'success');
+    }).catch(() => {
+        showAlert('复制失败', 'danger');
+    });
+}
+
+// 保存翻译结果
+function saveTranslation() {
+    const sourceText = document.getElementById('source-text').value;
+    const translationText = document.getElementById('translation-text').value;
+    
+    if (!translationText.trim()) {
+        showAlert('没有可保存的翻译结果', 'warning');
+        return;
+    }
+    
+    const content = `原文:\n${sourceText}\n\n译文:\n${translationText}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `translation_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('翻译结果已保存', 'success');
+}
+
+// 朗读翻译结果
+function speakTranslation() {
+    const translationText = document.getElementById('translation-text').value;
+    if (!translationText.trim()) {
+        showAlert('没有可朗读的内容', 'warning');
+        return;
+    }
+    
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(translationText);
+        const targetLang = document.getElementById('target-language').value;
+        
+        // 设置语言
+        const langMap = {
+            'zh': 'zh-CN',
+            'en': 'en-US',
+            'ja': 'ja-JP',
+            'ko': 'ko-KR',
+            'fr': 'fr-FR',
+            'de': 'de-DE',
+            'es': 'es-ES',
+            'ru': 'ru-RU',
+            'it': 'it-IT',
+            'pt': 'pt-PT'
+        };
+        
+        utterance.lang = langMap[targetLang] || 'en-US';
+        speechSynthesis.speak(utterance);
+        showAlert('开始朗读', 'info');
+    } else {
+        showAlert('浏览器不支持语音合成', 'warning');
+    }
+}
+
+// 快速翻译
+function quickTranslate() {
+    const input = document.getElementById('quick-translate-input');
+    const text = input.value.trim();
+    
+    if (!text) {
+        showAlert('请输入要翻译的内容', 'warning');
+        return;
+    }
+    
+    const requestData = {
+        text: text,
+        source_language: 'auto',
+        target_language: document.getElementById('target-language').value,
+        service: document.getElementById('translation-service').value
+    };
+    
+    fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const resultDiv = document.getElementById('quick-translate-result');
+            const resultText = document.getElementById('quick-result-text');
+            resultText.innerHTML = `
+                <strong>原文:</strong> ${text}<br>
+                <strong>译文:</strong> ${data.translation}
+            `;
+            resultDiv.style.display = 'block';
+        } else {
+            showAlert('快速翻译失败: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('快速翻译请求失败: ' + error.message, 'danger');
+    });
+}
+
+// 处理批量文件选择
+function handleBatchFileSelect(event) {
+    const file = event.target.files[0];
+    const batchBtn = document.getElementById('batch-translate-btn');
+    
+    if (file) {
+        batchBtn.disabled = false;
+        showAlert(`已选择文件: ${file.name}`, 'info');
+    } else {
+        batchBtn.disabled = true;
+    }
+}
+
+// 开始批量翻译
+function startBatchTranslation() {
+    const fileInput = document.getElementById('batch-file-input');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showAlert('请先选择文件', 'warning');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let texts = [];
+            const content = e.target.result;
+            
+            if (file.name.endsWith('.txt')) {
+                texts = content.split('\n').filter(line => line.trim());
+            } else if (file.name.endsWith('.csv')) {
+                const lines = content.split('\n');
+                texts = lines.slice(1).map(line => line.split(',')[0]).filter(text => text && text.trim());
+            } else if (file.name.endsWith('.json')) {
+                const data = JSON.parse(content);
+                texts = Array.isArray(data) ? data : Object.values(data);
+            }
+            
+            if (texts.length === 0) {
+                showAlert('文件中没有找到可翻译的文本', 'warning');
+                return;
+            }
+            
+            processBatchTranslation(texts);
+            
+        } catch (error) {
+            showAlert('文件解析失败: ' + error.message, 'danger');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// 处理批量翻译
+async function processBatchTranslation(texts) {
+    const progressContainer = document.getElementById('batch-progress');
+    const progressBar = document.getElementById('batch-progress-bar');
+    const statusText = document.getElementById('batch-status');
+    const countText = document.getElementById('batch-count');
+    const resultsContainer = document.getElementById('batch-results');
+    const resultsTbody = document.getElementById('batch-results-tbody');
+    
+    progressContainer.style.display = 'block';
+    resultsContainer.style.display = 'block';
+    resultsTbody.innerHTML = '';
+    
+    const results = [];
+    const total = texts.length;
+    
+    for (let i = 0; i < total; i++) {
+        const text = texts[i].trim();
+        if (!text) continue;
+        
+        statusText.textContent = `正在翻译第 ${i + 1} 项...`;
+        countText.textContent = `${i + 1}/${total}`;
+        progressBar.style.width = ((i + 1) / total * 100) + '%';
+        
+        try {
+            const requestData = {
+                text: text,
+                source_language: document.getElementById('source-language').value,
+                target_language: document.getElementById('target-language').value,
+                service: document.getElementById('translation-service').value
+            };
+            
+            const response = await fetch('/api/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            });
+            
+            const data = await response.json();
+            
+            const result = {
+                original: text,
+                translation: data.success ? data.translation : '翻译失败',
+                status: data.success ? '成功' : '失败'
+            };
+            
+            results.push(result);
+            
+            // 添加到表格
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-truncate" style="max-width: 200px;">${result.original}</td>
+                <td class="text-truncate" style="max-width: 200px;">${result.translation}</td>
+                <td><span class="badge ${result.status === '成功' ? 'bg-success' : 'bg-danger'}">${result.status}</span></td>
+            `;
+            resultsTbody.appendChild(row);
+            
+        } catch (error) {
+            results.push({
+                original: text,
+                translation: '网络错误',
+                status: '失败'
+            });
+        }
+        
+        // 添加延迟避免请求过快
+        if (i < total - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+    
+    statusText.textContent = '批量翻译完成';
+    showAlert(`批量翻译完成，成功 ${results.filter(r => r.status === '成功').length} 项`, 'success');
+    
+    // 保存结果供下载
+    window.batchTranslationResults = results;
+}
+
+// 下载批量翻译结果
+function downloadBatchResults() {
+    if (!window.batchTranslationResults) {
+        showAlert('没有可下载的结果', 'warning');
+        return;
+    }
+    
+    const results = window.batchTranslationResults;
+    let content = '原文,译文,状态\n';
+    
+    results.forEach(result => {
+        content += `"${result.original.replace(/"/g, '""')}","${result.translation.replace(/"/g, '""')}","${result.status}"\n`;
+    });
+    
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `batch_translation_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('批量翻译结果已下载', 'success');
+}
+
+// 检查翻译服务状态
+function checkTranslationService() {
+    const service = document.getElementById('translation-service').value;
+    
+    fetch('/api/translation/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: service })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.available) {
+            showAlert(`${service} 翻译服务不可用: ${data.error}`, 'warning');
+        }
+    })
+    .catch(error => {
+        console.error('检查翻译服务状态失败:', error);
+    });
+}
+
+// 更新字数统计
+function updateCharCounts() {
+    const sourceText = document.getElementById('source-text').value;
+    const sourceCharCount = sourceText.length;
+    const sourceWordCount = sourceText.trim() ? sourceText.trim().split(/\s+/).length : 0;
+    
+    document.getElementById('source-char-count').textContent = sourceCharCount;
+    document.getElementById('source-word-count').textContent = sourceWordCount;
+}
+
+// 更新翻译字数统计
+function updateTranslationCharCounts() {
+    const translationText = document.getElementById('translation-text').value;
+    const translationCharCount = translationText.length;
+    const translationWordCount = translationText.trim() ? translationText.trim().split(/\s+/).length : 0;
+    
+    document.getElementById('translation-char-count').textContent = translationCharCount;
+    document.getElementById('translation-word-count').textContent = translationWordCount;
+}
+
+// 获取语言名称
+function getLanguageName(code) {
+    const names = {
+        'zh': '中文',
+        'en': '英文',
+        'ja': '日文',
+        'ko': '韩文',
+        'fr': '法文',
+        'de': '德文',
+        'es': '西班牙文',
+        'ru': '俄文',
+        'it': '意大利文',
+        'pt': '葡萄牙文',
+        'ar': '阿拉伯文'
+    };
+    return names[code] || code;
+}
+
+// 添加到历史记录
+function addToHistory(entry) {
+    const history = getTranslationHistory();
+    entry.id = Date.now();
+    history.unshift(entry);
+    
+    // 限制历史记录数量
+    if (history.length > 50) {
+        history.splice(50);
+    }
+    
+    localStorage.setItem('translationHistory', JSON.stringify(history));
+    renderTranslationHistory();
+}
+
+// 获取翻译历史
+function getTranslationHistory() {
+    const history = localStorage.getItem('translationHistory');
+    return history ? JSON.parse(history) : [];
+}
+
+// 加载翻译历史
+function loadTranslationHistory() {
+    renderTranslationHistory();
+}
+
+// 渲染翻译历史
+function renderTranslationHistory() {
+    const history = getTranslationHistory();
+    const container = document.getElementById('translation-history');
+    
+    if (history.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center">暂无翻译历史</div>';
+        return;
+    }
+    
+    let html = '';
+    history.slice(0, 10).forEach(entry => { // 只显示最近10条
+        const time = new Date(entry.timestamp).toLocaleString();
+        const sourcePreview = entry.sourceText.substring(0, 30) + (entry.sourceText.length > 30 ? '...' : '');
+        const translationPreview = entry.translation.substring(0, 30) + (entry.translation.length > 30 ? '...' : '');
+        
+        html += `
+            <div class="border-bottom pb-2 mb-2 history-entry" data-id="${entry.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1" style="cursor: pointer;" onclick="loadHistoryEntry(${entry.id})">
+                        <div class="text-truncate"><strong>原:</strong> ${sourcePreview}</div>
+                        <div class="text-truncate text-muted"><strong>译:</strong> ${translationPreview}</div>
+                        <small class="text-muted">${time}</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHistoryEntry(${entry.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// 加载历史记录条目
+function loadHistoryEntry(id) {
+    const history = getTranslationHistory();
+    const entry = history.find(item => item.id === id);
+    
+    if (entry) {
+        document.getElementById('source-text').value = entry.sourceText;
+        document.getElementById('translation-text').value = entry.translation;
+        document.getElementById('source-language').value = entry.sourceLang;
+        document.getElementById('target-language').value = entry.targetLang;
+        updateCharCounts();
+        updateTranslationCharCounts();
+        updateTranslationButtons(true);
+        updateTranslationStatus('已完成');
+        showAlert('已加载历史记录', 'info');
+    }
+}
+
+// 删除历史记录条目
+function deleteHistoryEntry(id) {
+    if (confirm('确定要删除这条翻译历史吗？')) {
+        let history = getTranslationHistory();
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('translationHistory', JSON.stringify(history));
+        renderTranslationHistory();
+        showAlert('翻译历史已删除', 'info');
+    }
+}
+
+// 清空历史记录
+function clearHistory() {
+    if (confirm('确定要清空所有翻译历史吗？')) {
+        localStorage.removeItem('translationHistory');
+        renderTranslationHistory();
+        showAlert('翻译历史已清空', 'info');
+    }
+}
+
+// 显示提示信息
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

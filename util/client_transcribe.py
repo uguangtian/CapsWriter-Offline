@@ -5,6 +5,7 @@ import re
 import sys
 import time
 import uuid
+import os
 from pathlib import Path
 
 import websockets
@@ -158,11 +159,29 @@ async def transcribe_send(file: Path):
             
     console.print(f"\n    音频处理完成，总长度：{processed_duration:.2f}s")
 
-    # 等待ffmpeg进程结束
-    await process.wait()
+    # 等待ffmpeg进程结束，添加超时控制
+    try:
+        await asyncio.wait_for(process.wait(), timeout=30.0)  # 30秒超时
+        console.print(f"    ffmpeg进程正常结束")
+    except asyncio.TimeoutError:
+        console.print(f"    ffmpeg进程等待超时，强制终止")
+        process.terminate()
+        try:
+            await asyncio.wait_for(process.wait(), timeout=5.0)  # 再等5秒
+        except asyncio.TimeoutError:
+            console.print(f"    ffmpeg进程强制终止失败，使用kill")
+            process.kill()
+            await process.wait()
 
 
-async def transcribe_recv(file: Path):
+async def transcribe_recv(file: Path, output_dir: Path = "~/Movies/Transcription"):
+    """
+    接收转录结果并保存到文件
+    
+    Args:
+        file: 原始音频文件路径
+        output_dir: 可选的输出目录路径，如果不指定则使用原文件所在目录
+    """
     # 更新热词
     print("transcribe_recv")
     update_hot_all()
@@ -173,11 +192,60 @@ async def transcribe_recv(file: Path):
     websocket = Cosmic.websocket
 
     # 接收结果
-    async for message in websocket:
-        message = json.loads(message)
-        console.print(f"    转录进度: {message['duration']:.2f}s", end="\r")
-        if message["is_final"]:
-            break
+    message = None
+    max_wait_time = 600  # 最大等待时间10分钟
+    start_time = time.time()
+    
+    try:
+        console.print(f"[DEBUG] 开始接收转录结果...", style="cyan")
+        
+        # 使用asyncio.wait_for为整个接收过程设置超时
+        async def receive_results():
+            nonlocal message
+            async for msg in websocket:
+                msg_data = json.loads(msg)
+                console.print(f"[DEBUG] 收到消息: task_id={msg_data.get('task_id', 'unknown')}, is_final={msg_data.get('is_final', False)}, duration={msg_data.get('duration', 0):.2f}s", style="cyan")
+                console.print(f"    转录进度: {msg_data['duration']:.2f}s", end="\r")
+                if msg_data["is_final"]:
+                    console.print(f"\n[DEBUG] 收到最终结果，文本长度: {len(msg_data.get('text', ''))}", style="green")
+                    message = msg_data
+                    break
+                    
+        await asyncio.wait_for(receive_results(), timeout=max_wait_time)
+        
+    except asyncio.TimeoutError:
+        console.print(f"\n[ERROR] 接收转录结果超时（{max_wait_time}秒），可能转录任务失败", style="red")
+        raise Exception(f"转录结果接收超时")
+    except websockets.exceptions.ConnectionClosed as e:
+        console.print(f"\n    接收结果时连接断开: {e}", style="yellow")
+        # 尝试重新连接并继续接收
+        if not await check_websocket():
+            console.print("    无法重新连接到服务端", style="bright_red")
+            raise
+        websocket = Cosmic.websocket
+        
+        # 继续接收剩余结果，但设置较短的超时时间
+        try:
+            async def receive_remaining():
+                nonlocal message
+                async for msg in websocket:
+                    msg_data = json.loads(msg)
+                    console.print(f"    转录进度: {msg_data['duration']:.2f}s", end="\r")
+                    if msg_data["is_final"]:
+                        message = msg_data
+                        break
+                        
+            remaining_time = max_wait_time - (time.time() - start_time)
+            if remaining_time > 0:
+                await asyncio.wait_for(receive_remaining(), timeout=remaining_time)
+            else:
+                raise Exception("总体接收时间已超时")
+        except asyncio.TimeoutError:
+            console.print(f"\n[ERROR] 重连后接收结果仍然超时", style="red")
+            raise Exception("重连后转录结果接收超时")
+    
+    if message is None:
+        raise Exception("未能接收到转录结果")
 
     # 解析结果
     text_merge = message["text"]
@@ -188,10 +256,27 @@ async def transcribe_recv(file: Path):
     timestamps = message["timestamps"]
     tokens = message["tokens"]
 
-    # 得到文件名
-    json_filename = Path(file).with_suffix(".json")
-    txt_filename = Path(file).with_suffix(".txt")
-    merge_filename = Path(file).with_suffix(".merge.txt")
+    # 确定输出目录和文件名
+    if output_dir is not None:
+        # 使用自定义输出目录
+        output_dir = Path(output_dir)
+        # 确保输出目录存在
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 使用原文件的基础名称，但放在指定的输出目录中
+        base_name = Path(file).stem
+        json_filename = output_dir / f"{base_name}.json"
+        txt_filename = output_dir / f"{base_name}.txt"
+        merge_filename = output_dir / f"{base_name}.merge.txt"
+        srt_filename = output_dir / f"{base_name}.srt"
+        
+        console.print(f"    输出目录：{output_dir}")
+    else:
+        # 使用原文件所在目录（原有行为）
+        json_filename = Path(file).with_suffix(".json")
+        txt_filename = Path(file).with_suffix(".txt")
+        merge_filename = Path(file).with_suffix(".merge.txt")
+        srt_filename = Path(file).with_suffix(".srt")
 
     # 写入结果
     with open(merge_filename, "w", encoding="utf-8") as f:
@@ -200,9 +285,29 @@ async def transcribe_recv(file: Path):
         f.write(text_split)
     with open(json_filename, "w", encoding="utf-8") as f:
         json.dump({"timestamps": timestamps, "tokens": tokens}, f, ensure_ascii=False)
+    
+    # 生成SRT字幕文件
     srt_from_txt.one_task(txt_filename)
+    
+    # 如果使用了自定义输出目录，需要将生成的SRT文件移动到正确位置
+    if output_dir is not None:
+        original_srt = Path(file).with_suffix(".srt")
+        if original_srt.exists():
+            import shutil
+            shutil.move(str(original_srt), str(srt_filename))
+            console.print(f"    SRT文件已移动到：{srt_filename}")
 
     process_duration = message["time_complete"] - message["time_start"]
     console.print(f"\033[K    处理耗时：{process_duration:.2f}s")
     # console.print(f"    识别结果：\n[green]{message['text']}")
     console.print(f"    识别结果：\n[green]{text_merge}")
+    
+    # 输出文件保存信息
+    console.print(f"    文件已保存：")
+    console.print(f"      - 合并文本：{merge_filename}")
+    console.print(f"      - 分段文本：{txt_filename}")
+    console.print(f"      - 时间戳数据：{json_filename}")
+    if output_dir is not None and srt_filename.exists():
+        console.print(f"      - SRT字幕：{srt_filename}")
+    elif Path(file).with_suffix(".srt").exists():
+        console.print(f"      - SRT字幕：{Path(file).with_suffix('.srt')}")

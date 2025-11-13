@@ -3,10 +3,13 @@
 import asyncio
 import json
 import httpx
+import time
 from typing import Dict, Any, Optional
 
 # 导入配置
 from util.config import ClaudeConfig
+# 导入日志工具
+from .logger_utils import claude_logger
 
 
 async def call_claude_api(text: str, action: str = "polish", **kwargs) -> str:
@@ -20,6 +23,8 @@ async def call_claude_api(text: str, action: str = "polish", **kwargs) -> str:
     Returns:
         处理后的文本，如果处理失败则返回错误信息
     """
+    # 获取飞书文档ID参数
+    feishu_doc_id = kwargs.get('feishu_doc_id', None)
     # 如果text是空，直接返回
     if not text or len(text.strip()) == 0:
         return "输入文本为空，无法处理"
@@ -31,10 +36,14 @@ async def call_claude_api(text: str, action: str = "polish", **kwargs) -> str:
     api_key = kwargs.get('api_key', ClaudeConfig.api_key)
     api_endpoint = kwargs.get('api_endpoint', ClaudeConfig.api_endpoint)
     
+    # 记录请求开始时间
+    start_time = time.time()
+    
     try:
         headers = {
             "x-api-key": api_key,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01"
         }
         
         # 根据不同的action构建不同的prompt
@@ -59,31 +68,87 @@ async def call_claude_api(text: str, action: str = "polish", **kwargs) -> str:
             "temperature": temperature,
             "max_tokens": max_tokens
         }
-        print("api_endpoint:",api_endpoint,"payload:",payload)
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        
+        # 记录API请求日志
+        request_params = {
+            "api_endpoint": api_endpoint,
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "api_key": api_key,
+            "headers": headers,
+            "payload": payload
+        }
+        request_id = claude_logger.log_api_request(action, len(text), request_params)
+        
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 api_endpoint,
                 json=payload,
                 headers=headers
             )
-            print("response:",response,"json:", response.json())
+            
+            # 计算请求耗时
+            duration_ms = (time.time() - start_time) * 1000
+            
             if response.status_code == 200:
                 result = response.json()
                 # 处理Claude API的特殊返回格式
                 if "content" in result and isinstance(result["content"], list):
                     # 提取content数组中的文本内容
                     text_contents = [item["text"] for item in result["content"] if item["type"] == "text"]
-                    return "\n".join(text_contents)
+                    processed_text = "\n".join(text_contents)
                 # 兼容旧格式
                 elif "choices" in result:
-                    return result["choices"][0]["message"]["content"]
+                    processed_text = result["choices"][0]["message"]["content"]
                 else:
-                    return "响应数据格式错误"
+                    processed_text = "响应数据格式错误"
+                
+                # 记录成功响应日志
+                claude_logger.log_api_response(
+                    request_id=request_id,
+                    success=True,
+                    response_data=result,
+                    response_length=len(processed_text),
+                    duration_ms=duration_ms
+                )
+                
+                # 如果提供了飞书文档ID，则更新文档
+                if feishu_doc_id:
+                    from feishu import FeishuClient
+                    feishu_client = FeishuClient()
+                    await feishu_client.update_document(feishu_doc_id, processed_text)
+                    claude_logger.info(f"已更新飞书文档: {feishu_doc_id}")
+                
+                return processed_text
             else:
-                return f"API调用失败: {response.status_code} - {response.text}"
+                error_msg = f"API调用失败: {response.status_code} - {response.text}"
+                # 记录失败响应日志
+                claude_logger.log_api_response(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                    duration_ms=duration_ms
+                )
+                return error_msg
     
     except Exception as e:
-        return f"处理文本时出错: {str(e)}"
+        # 计算请求耗时
+        duration_ms = (time.time() - start_time) * 1000
+        error_msg = f"处理文本时出错: {str(e)}"
+        
+        # 记录异常日志
+        try:
+            claude_logger.log_api_response(
+                request_id=request_id if 'request_id' in locals() else "unknown",
+                success=False,
+                error_message=error_msg,
+                duration_ms=duration_ms
+            )
+        except:
+            claude_logger.error(f"记录异常日志失败: {error_msg}")
+        
+        return error_msg
 
 
 # WebSocket服务器实现
@@ -94,7 +159,7 @@ async def claude_server(websocket):
         websocket: WebSocket连接对象
         path: 请求路径
     """
-    print(f"[Claude] 新的WebSocket连接已建立")
+    claude_logger.log_websocket_event("connection_established")
     try:
         async for message in websocket:
             try:
@@ -102,10 +167,17 @@ async def claude_server(websocket):
                 data = json.loads(message)
                 text_to_process = data.get("text", "")
                 action = data.get("action", "polish")
+                feishu_doc_id = data.get("feishu_doc_id", None)
                 save_to_file = data.get("save_to_file", False)
                 output_filename = data.get("output_filename", None)
                 
-                print(f"[Claude] 收到请求: action={action}, text长度={len(text_to_process)}")
+                # 记录WebSocket消息接收日志
+                claude_logger.log_websocket_event("message_received", {
+                    "action": action,
+                    "text_length": len(text_to_process),
+                    "save_to_file": save_to_file,
+                    "has_feishu_doc_id": feishu_doc_id is not None
+                })
                 
                 # 使用文本润色服务处理文本
                 if save_to_file:
@@ -116,17 +188,24 @@ async def claude_server(websocket):
                         text_to_process, action, output_filename
                     )
                     # 将处理结果和文件路径发送回客户端
-                    await websocket.send(json.dumps({
+                    response_data = {
                         "processed_text": processed_text,
                         "file_path": file_path
-                    }))
+                    }
+                    await websocket.send(json.dumps(response_data))
+                    claude_logger.info(f"文件保存完成: {file_path}")
                 else:
                     # 只处理文本，不保存到文件
-                    processed_text = await call_claude_api(text_to_process, action)
+                    processed_text = await call_claude_api(
+                        text_to_process, 
+                        action, 
+                        feishu_doc_id=feishu_doc_id
+                    )
                     # 将处理结果发送回客户端
-                    await websocket.send(json.dumps({"processed_text": processed_text}))
+                    response_data = {"processed_text": processed_text}
+                    await websocket.send(json.dumps(response_data))
                 
-                print(f"[Claude] 请求处理完成: action={action}")
+                claude_logger.info(f"WebSocket请求处理完成: action={action}, 响应长度={len(processed_text)}")
             
             except json.JSONDecodeError:
                 error_msg = "无效的JSON格式"

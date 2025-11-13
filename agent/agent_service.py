@@ -152,6 +152,10 @@ class AgentService:
     
     def start(self):
         """启动智能体代理服务"""
+        # 在新线程中需要创建新的事件循环
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         # 创建WebSocket服务器
         start_server = websockets.serve(
             self.handle_request, self.host, self.port
@@ -159,8 +163,8 @@ class AgentService:
         print(f"[AgentService] 正在启动服务，监听地址: {self.host}:{self.port}")
         
         # 启动事件循环
-        asyncio.get_event_loop().run_until_complete(start_server)
-        asyncio.get_event_loop().run_forever()
+        loop.run_until_complete(start_server)
+        loop.run_forever()
     
     def start_in_process(self):
         """在新进程中启动智能体代理服务"""

@@ -143,8 +143,15 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
             console.print(f"[DEBUG] 使用 {Config.model} 模型处理音频", style="cyan")
             result = recognize(recognizer, task)  # 执行识别
         if result is None or result.text is None or result.text == "":
-            console.print(f"[DEBUG] 识别结果为空，跳过处理", style="yellow")
-            continue
-        queue_out.put(result)  # 返回结果
-        console.print(f"[DEBUG] 识别完成，结果长度: {len(result.text)} 已将结果放入输出队列", style="green")
+            console.print(f"[DEBUG] 识别结果为空，is_final={task.is_final}", style="yellow")
+            # 如果是最终任务，即使结果为空也要发送结束标识
+            if task.is_final and result is not None:
+                console.print(f"[DEBUG] 最终任务结果为空，但仍发送结束标识", style="yellow")
+                queue_out.put(result)  # 发送空结果作为结束标识
+            else:
+                console.print(f"[DEBUG] 非最终任务结果为空，跳过处理", style="yellow")
+                continue
+        else:
+            queue_out.put(result)  # 返回结果
+        console.print(f"[DEBUG] 识别完成，结果长度: {len(result.text) if result.text else 0} 已将结果放入输出队列", style="green")
 

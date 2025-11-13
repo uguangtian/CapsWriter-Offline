@@ -3,10 +3,13 @@
 import asyncio
 import json
 import httpx
+import time
 from typing import Dict, Any, Optional
 
 # 导入配置
 from util.config import DeepSeekConfig
+# 导入日志工具
+from .logger_utils import deepseek_logger
 # from global_config import DeepSeekConfig  # 导入全局配置模块
 
 
@@ -33,56 +36,130 @@ async def call_deepseek_api(text: str, action: str = "polish", **kwargs) -> str:
     api_key = kwargs.get('api_key', DeepSeekConfig.api_key)
     api_endpoint = kwargs.get('api_endpoint', DeepSeekConfig.api_endpoint)
     
+    # 记录请求开始时间
+    start_time = time.time()
+    
     try:
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
         
-        # 根据不同的action构建不同的prompt
-        if action == "polish":
-            prompt = f"这个文本是使用语音输入的，可能有失误，词语不准确或者句意不通，请润色调整一下，尽量保持原句，只更可能错误的词语，补充标符号。简洁而不需要给出解释，只需要给出润色后的文本：\n\n{text}"
-        elif action == "summarize":
-            prompt = f"请总结以下文本的要点：\n\n{text}"
-        elif action == "translate":
-            prompt = f"将以下文本翻译成中文，要求信达雅：\n\n{text}"
-        elif action == "code_optimizer":
-            prompt = f"请优化下列代码，不要改变函数签名，尽量增加中文注释，只返回代码，不用解释\n\n{text}"
-        else:
-            prompt = f"请{action}以下文本：\n\n{text}"
+        # 获取系统设定和用户设定
+        system_prompt = kwargs.get('system_prompt', None)
+        user_prompt = kwargs.get('user_prompt', None)
+        
+        # 构建默认的系统提示词
+        default_system_prompts = {
+            "polish": "你是一个专业的文本润色助手。你的任务是修正语音输入中的错误，包括错别字、语法错误和标点符号问题，同时保持原文的意思和风格。",
+            "summarize": "你是一个专业的文本总结助手。你的任务是提取文本的关键信息，生成简洁明了的摘要。",
+            "correct": "你是一个专业的文本纠错助手。你的任务是检测并修正文本中的拼写、语法和逻辑错误。",
+            "extract_keywords": "你是一个专业的关键词提取助手。你的任务是从文本中提取最重要的关键词和短语。",
+            "structure": "你是一个专业的文本结构化助手。你的任务是将文本按照逻辑关系进行整理和结构化。",
+            "translate": "你是一个专业的翻译助手。你的任务是准确、流畅地翻译文本，保持原文的意思和风格。"
+        }
+        
+        # 构建默认的用户提示词
+        default_user_prompts = {
+            "polish": "请润色以下文本，修正语音输入中的错误，补充标点符号，保持原意不变：",
+            "summarize": "请总结以下文本的要点：",
+            "correct": "请纠正以下文本中的错误：",
+            "extract_keywords": "请从以下文本中提取关键词：",
+            "structure": "请将以下文本进行结构化整理：",
+            "translate": "请将以下文本翻译成中文："
+        }
+        
+        # 使用自定义提示词或默认提示词
+        final_system_prompt = system_prompt or default_system_prompts.get(action, "你是一个专业的文本处理助手。")
+        final_user_prompt = user_prompt or default_user_prompts.get(action, f"请{action}以下文本：")
+        
+        # 构建完整的用户消息
+        user_message = f"{final_user_prompt}\n\n{text}"
+        
+        # 构建消息列表
+        messages = []
+        if final_system_prompt:
+            messages.append({"role": "system", "content": final_system_prompt})
+        messages.append({"role": "user", "content": user_message})
         
         payload = {
             "model": model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
+            "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens
         }
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        # 记录API请求日志
+        request_params = {
+            "api_endpoint": api_endpoint,
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "api_key": api_key,
+            "headers": headers,
+            "payload": payload
+        }
+        request_id = deepseek_logger.log_api_request(action, len(text), request_params)
+        
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 api_endpoint,
                 json=payload,
                 headers=headers
             )
             
+            # 计算请求耗时
+            duration_ms = (time.time() - start_time) * 1000
+            
             if response.status_code == 200:
                 result = response.json()
                 processed_text = result["choices"][0]["message"]["content"]
+                
+                # 记录成功响应日志
+                deepseek_logger.log_api_response(
+                    request_id=request_id,
+                    success=True,
+                    response_data=result,
+                    response_length=len(processed_text),
+                    duration_ms=duration_ms
+                )
                 
                 # 如果提供了飞书文档ID，则更新文档
                 if feishu_doc_id:
                     from feishu import FeishuClient
                     feishu_client = FeishuClient()
                     await feishu_client.update_document(feishu_doc_id, processed_text)
+                    deepseek_logger.info(f"已更新飞书文档: {feishu_doc_id}")
                     
                 return processed_text
             else:
-                return f"API调用失败: {response.status_code} - {response.text}"
+                error_msg = f"API调用失败: {response.status_code} - {response.text}"
+                # 记录失败响应日志
+                deepseek_logger.log_api_response(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                    duration_ms=duration_ms
+                )
+                return error_msg
     
     except Exception as e:
-        return f"处理文本时出错: {str(e)}"
+        # 计算请求耗时
+        duration_ms = (time.time() - start_time) * 1000
+        error_msg = f"处理文本时出错: {str(e)}"
+        
+        # 记录异常日志
+        try:
+            deepseek_logger.log_api_response(
+                request_id=request_id if 'request_id' in locals() else "unknown",
+                success=False,
+                error_message=error_msg,
+                duration_ms=duration_ms
+            )
+        except:
+            deepseek_logger.error(f"记录异常日志失败: {error_msg}")
+        
+        return error_msg
 
 
 # WebSocket服务器实现
@@ -93,7 +170,7 @@ async def deepseek_server(websocket):
         websocket: WebSocket连接对象
         path: 请求路径
     """
-    print(f"[DeepSeek] 新的WebSocket连接已建立")
+    deepseek_logger.log_websocket_event("connection_established")
     try:
         async for message in websocket:
             try:
@@ -105,7 +182,13 @@ async def deepseek_server(websocket):
                 save_to_file = data.get("save_to_file", False)
                 output_filename = data.get("output_filename", None)
                 
-                print(f"[DeepSeek] 收到请求: action={action}, text长度={len(text_to_process)}")
+                # 记录WebSocket消息接收日志
+                deepseek_logger.log_websocket_event("message_received", {
+                    "action": action,
+                    "text_length": len(text_to_process),
+                    "save_to_file": save_to_file,
+                    "has_feishu_doc_id": feishu_doc_id is not None
+                })
                 
                 # 使用文本润色服务处理文本
                 if save_to_file:
@@ -116,10 +199,12 @@ async def deepseek_server(websocket):
                         text_to_process, action, output_filename
                     )
                     # 将处理结果和文件路径发送回客户端
-                    await websocket.send(json.dumps({
+                    response_data = {
                         "processed_text": processed_text,
                         "file_path": file_path
-                    }))
+                    }
+                    await websocket.send(json.dumps(response_data))
+                    deepseek_logger.info(f"文件保存完成: {file_path}")
                 else:
                     # 只处理文本，不保存到文件
                     processed_text = await call_deepseek_api(
@@ -128,9 +213,10 @@ async def deepseek_server(websocket):
                         feishu_doc_id=feishu_doc_id
                     )
                     # 将处理结果发送回客户端
-                    await websocket.send(json.dumps({"processed_text": processed_text}))
+                    response_data = {"processed_text": processed_text}
+                    await websocket.send(json.dumps(response_data))
                 
-                print(f"[DeepSeek] 请求处理完成: action={action}")
+                deepseek_logger.info(f"WebSocket请求处理完成: action={action}, 响应长度={len(processed_text)}")
             
             except json.JSONDecodeError:
                 error_msg = "无效的JSON格式"

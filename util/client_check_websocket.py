@@ -93,8 +93,9 @@ async def check_websocket() -> bool:
                     websockets.connect(
                         websocket_url,
                         max_size=None,
-                        ping_interval=20,
-                        ping_timeout=10
+                        ping_interval=60,  # 增加ping间隔到60秒，与服务端保持一致
+                        ping_timeout=30,   # 增加ping超时到30秒
+                        close_timeout=60   # 增加关闭超时到60秒
                     ),
                     timeout=CONNECTION_TIMEOUT
                 )

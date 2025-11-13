@@ -273,14 +273,14 @@ async def heartbeat():
                 try:
                     # 等待服务器的ping
                     pong_waiter = await Cosmic.websocket.ping()
-                    await asyncio.wait_for(pong_waiter, timeout=20)
+                    await asyncio.wait_for(pong_waiter, timeout=30)  # 增加超时时间到30秒
                     console.print(f"[DEBUG] 心跳成功", style="dim")
                 except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
                     console.print(f"[yellow]心跳失败，连接可能已断开[/yellow]")
                     break
                 except Exception as e:
                     console.print(f"[yellow]心跳异常: {e}[/yellow]")
-            await asyncio.sleep(30)  # 30秒间隔
+            await asyncio.sleep(60)  # 增加心跳间隔到60秒，与服务端保持一致
     except Exception as e:
         console.print(f"[red]心跳任务异常: {e}[/red]")
 

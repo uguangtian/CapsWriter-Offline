@@ -29,7 +29,7 @@ class TextPolishService:
     def __init__(self, 
                  model_type: str = 'deepseek', 
                  output_dir: str = "./polished",
-                 max_segment_length: int = 4000, 
+                 max_segment_length: int = 40000, 
                  overlap_length: int = 100):
         """初始化文本润色服务
         

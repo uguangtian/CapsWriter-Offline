@@ -1,0 +1,27 @@
+# 图形化转录工具依赖
+# 基于PySide6的GUI框架
+
+# GUI框架
+PySide6==6.7.1
+
+# 基础依赖（继承自主项目）
+typer
+colorama
+rich
+websockets
+opencc-python-reimplemented
+pyaudio
+keyboard
+pynput
+pathlib
+psutil
+numpy
+soundfile
+librosa
+httpx
+requests
+pyperclip
+
+# 平台特定依赖
+pywin32; platform_system == "Windows"
+pyobjc; platform_system == "Darwin"

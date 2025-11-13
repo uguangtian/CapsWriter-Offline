@@ -312,9 +312,14 @@ async def ws_recv(websocket):
     # 登记 socket 到字典，以 socket id 字符串为索引
     sockets = Cosmic.sockets
     sockets_id = Cosmic.sockets_id
-    # 使用内存地址作为唯一标识符
-    # socket_id = str(id(websocket))
-    socket_id = str(websocket.id)
+    # 使用内存地址作为唯一标识符，确保兼容性
+    try:
+        # 尝试使用websocket.id属性
+        socket_id = str(websocket.id)
+    except AttributeError:
+        # 如果没有id属性，使用内存地址
+        socket_id = str(id(websocket))
+        console.print(f"[DEBUG] WebSocket对象没有id属性，使用内存地址: {socket_id}", style="yellow")
 
     sockets[socket_id] = websocket
     sockets_id.append(socket_id)
@@ -345,15 +350,24 @@ async def ws_recv(websocket):
     async def heartbeat():
         try:
             while True:
-                await asyncio.sleep(30)  # 减少心跳间隔到30秒
+                await asyncio.sleep(60)  # 增加心跳间隔到60秒，减少频繁检测
                 try:
                     # 发送ping并等待pong响应
                     pong_waiter = await websocket.ping()
-                    await asyncio.wait_for(pong_waiter, timeout=20)  # 增加超时时间到20秒
+                    await asyncio.wait_for(pong_waiter, timeout=30)  # 增加超时时间到30秒
                     console.print(f"[DEBUG] 心跳成功: {socket_id}", style="dim")
                 except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
                     console.print(f"[DEBUG] 心跳失败，连接可能已断开: {socket_id}", style="yellow")
-                    return  # 不要立即中断，让主循环处理断开
+                    # 心跳失败时立即清理连接
+                    try:
+                        if socket_id in sockets:
+                            del sockets[socket_id]
+                        if socket_id in sockets_id:
+                            sockets_id.remove(socket_id)
+                        console.print(f"[DEBUG] 心跳失败，已清理连接: {socket_id}", style="yellow")
+                    except Exception as cleanup_e:
+                        console.print(f"[DEBUG] 清理连接时出错: {cleanup_e}", style="red")
+                    return  # 退出心跳任务
                 except Exception as e:
                     console.print(f"[DEBUG] 心跳异常: {e}", style="yellow")
                     continue  # 继续尝试下一次心跳
@@ -394,17 +408,6 @@ async def ws_recv(websocket):
         console.print(f"Exception: {e}", style="red")
         console.print(f"[DEBUG] 处理WebSocket连接时出错: {e}", style="red")
     finally:
-        # 清理连接
-        try:
-            if socket_id in sockets:
-                del sockets[socket_id]
-            if socket_id in sockets_id:
-                sockets_id.remove(socket_id)
-            console.print(f"[DEBUG] 客户端连接已断开并清理: socket_id: {socket_id}", style="red")
-            console.print(f"[DEBUG] 剩余活跃连接数: {len(sockets_id)}", style="red")
-        except Exception as e:
-            console.print(f"[DEBUG] 清理连接时出错: {e}", style="red")
-        
         # 取消心跳任务
         if heartbeat_task:
             heartbeat_task.cancel()
@@ -412,12 +415,21 @@ async def ws_recv(websocket):
                 await heartbeat_task
             except asyncio.CancelledError:
                 pass
-                
+        
+        # 停止麦克风状态
         try:
             status_mic.stop()
             status_mic.on = False
-            sockets.pop(socket_id)
-            sockets_id.remove(socket_id)
-            console.print(f"[DEBUG] WebSocket连接已关闭，ID: {socket_id}", style="yellow")
+        except Exception as e:
+            console.print(f"[DEBUG] 停止麦克风状态时出错: {e}", style="yellow")
+        
+        # 清理连接（只执行一次）
+        try:
+            if socket_id in sockets:
+                del sockets[socket_id]
+            if socket_id in sockets_id:
+                sockets_id.remove(socket_id)
+            console.print(f"[DEBUG] 客户端连接已断开并清理: socket_id: {socket_id}", style="yellow")
+            console.print(f"[DEBUG] 剩余活跃连接数: {len(sockets_id)}", style="yellow")
         except Exception as e:
             console.print(f"[DEBUG] 清理连接时出错: {e}", style="red")

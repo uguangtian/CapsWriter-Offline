@@ -157,7 +157,7 @@ async def main_mic():
         await recv_result()
 
 
-async def main_file(files: List[Path]):
+async def main_file(files: List[Path], output_dir: Path = None):
     print("main_file")
     """
     pdb.set_trace() 是 Python 内置的一个调试工具，用于在代码的特定位置设置一个断点。当程序运行到这行代码时，会暂停执行，并进入交互式调试模式。通过这个调试模式，你可以检查变量的值、单步执行代码、调用函数等，从而帮助你诊断和修复代码中的问题。
@@ -218,7 +218,7 @@ async def main_file(files: List[Path]):
                 
             print(f"正在转录文件 {file} ({processed_count}/{total_files})")
             await transcribe_check(file)
-            await asyncio.gather(transcribe_send(file), transcribe_recv(file))
+            await asyncio.gather(transcribe_send(file), transcribe_recv(file, output_dir))
             
             # 每处理完一个文件执行一次内存清理
             if memory_monitor_available:
@@ -230,7 +230,14 @@ async def main_file(files: List[Path]):
 
     if Cosmic.websocket:
         await Cosmic.websocket.close()
-    input("\n按回车退出\n")
+    
+    # 检查是否通过命令行参数调用（如 transcription_gui），如果是则直接退出
+    # 避免等待用户输入导致 GUI 客户端无法接收到完成信号
+    if len(sys.argv) > 1:  # 有命令行参数，说明是被其他程序调用
+        print("转录任务完成，程序退出")
+        return
+    else:
+        input("\n按回车退出\n")
 
 
 def init_mic():
@@ -244,12 +251,12 @@ def init_mic():
         print("...")
 
 
-def init_file(files: List[Path]):
+def init_file(files: List[Path], output_dir: Path = None):
     """
     用 CapsWriter Server 转录音视频文件，生成 srt 字幕
     """
     try:
-        asyncio.run(main_file(files))
+        asyncio.run(main_file(files, output_dir))
     except KeyboardInterrupt:
         console.print("再见！")
         sys.exit()
@@ -263,8 +270,10 @@ if __name__ == "__main__":
     parser.add_argument("--channels", type=int, default=None, help="指定录音的声道数 (1 或 2)")
     parser.add_argument("--device", type=int, default=None, help="指定录音设备的索引")
     parser.add_argument("--device-name", type=str, default=None, help="指定录音设备的名称（支持部分匹配）")
-    parser.add_argument("--file", type=str, default=None, help="指定文件（目录）")
+    parser.add_argument("--file", type=str, default=None, help="指定单个文件")
+    parser.add_argument("--dir", type=str, default=None, help="指定文件夹（批量处理）")
     parser.add_argument("--url", type=str, default=None, help="视频网址")
+    parser.add_argument("--output-dir", type=str, default=None, help="指定输出目录路径")
     
     print("解析命令行参数...", flush=True)
     args = parser.parse_args()
@@ -292,22 +301,31 @@ if __name__ == "__main__":
         print("下载流程结束，退出程序", flush=True)
         sys.exit(0)
     
-    # 如果参数传入文件，那就转录文件
+    # 如果参数传入文件或文件夹，那就转录文件
     # 如果没有多余参数，就从麦克风输入
-    if args.file is not None:      
-        # 检查输入是否为文件夹
-        input_paths = [Path(p) for p in sys.argv[1:]]
-        # typer.run(init_file)
-    
+    if args.file is not None or args.dir is not None:
+        # 检查参数冲突
+        if args.file is not None and args.dir is not None:
+            print("错误：--file 和 --dir 参数不能同时使用")
+            sys.exit(1)
+            
+        # 确定输入路径
+        if args.file is not None:
+            input_paths = [Path(args.file)]
+            print(f"处理单个文件: {args.file}")
+        else:  # args.dir is not None
+            input_paths = [Path(args.dir)]
+            print(f"处理文件夹: {args.dir}")
+            
         file_paths = []
         
         for path in input_paths:
             if path.is_dir():
                 # 如果是文件夹，遍历处理其中的所有视频和音频文件
-                print(f"处理文件夹: {path}")
+                print(f"扫描文件夹: {path}")
                 # 定义支持的视频和音频文件扩展名
-                media_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv',  # 视频
-                                   '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']  # 音频
+                media_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm', '.m3u8', '.ts', '.vob', '.ogv', '.divx', '.xvid', '.rm', '.rmvb', '.mpg', '.mpeg', '.3gp', '.mxf', '.asf', '.dat',  # 视频
+                                   '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma', '.amr', '.opus', '.ac3', '.eac3', '.dts', '.ape', '.alac', '.aiff', '.caf']  # 音频
                 
                 # 遍历文件夹中的所有文件
                 for file in path.glob('**/*'):
@@ -315,15 +333,29 @@ if __name__ == "__main__":
                         print(f"找到媒体文件: {file}")
                         file_paths.append(file)
             else:
-                # 如果是文件，直接添加
-                file_paths.append(path)
+                # 如果是文件，检查是否为支持的媒体文件
+                if path.is_file():
+                    media_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm', '.m3u8', '.ts', '.vob', '.ogv', '.divx', '.xvid', '.rm', '.rmvb', '.mpg', '.mpeg', '.3gp', '.mxf', '.asf', '.dat', # 视频
+                   '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma', '.amr', '.opus', '.ac3', '.eac3', '.dts', '.ape', '.alac', '.aiff', '.caf' ] #音频
+                    if path.suffix.lower() in media_extensions:
+                        file_paths.append(path)
+                    else:
+                        print(f"警告：文件 {path} 不是支持的媒体格式")
+                else:
+                    print(f"错误：文件 {path} 不存在")
+                    sys.exit(1)
         
         if file_paths:
-            # 使用找到的所有文件路径调用 init_file
-            # 不直接调用 init_file，而是通过 typer.run 执行
-            asyncio.run(main_file(file_paths))
+            print(f"共找到 {len(file_paths)} 个媒体文件")
+            # 处理输出目录参数
+            output_dir = None
+            if args.output_dir is not None:
+                output_dir = Path(args.output_dir)
+                print(f"输出目录: {output_dir}")
+            # 使用找到的所有文件路径调用 main_file
+            init_file(file_paths, output_dir)
         else:
-            print("未找到任何媒体文件")
+            print("未找到任何支持的媒体文件")
             sys.exit(1)
     else:
               # 如果命令行指定了设备索引或名称，更新配置

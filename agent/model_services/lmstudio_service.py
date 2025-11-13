@@ -3,10 +3,13 @@
 import asyncio
 import json
 import httpx
+import time
 from typing import Dict, Any, Optional, Callable
 
 # 导入配置
 from util.config import LMStudioConfig
+# 导入日志工具
+from .logger_utils import lmstudio_logger
 
 
 async def call_lmstudio_api(text: str, action: str = "polish", stream: bool = False, stream_callback: Optional[Callable] = None, **kwargs) -> str:
@@ -30,6 +33,9 @@ async def call_lmstudio_api(text: str, action: str = "polish", stream: bool = Fa
     temperature = kwargs.get('temperature', LMStudioConfig.temperature)
     max_tokens = kwargs.get('max_tokens', LMStudioConfig.max_tokens)
     api_endpoint = kwargs.get('api_endpoint', LMStudioConfig.api_endpoint)
+    
+    # 记录请求开始时间
+    start_time = time.time()
     
     try:
         headers = {
@@ -56,24 +62,80 @@ async def call_lmstudio_api(text: str, action: str = "polish", stream: bool = Fa
             ],
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "stream": stream
+            "stream": stream,
+            "extra_body": {"enable_thinking": False}
         }
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        # 记录API请求日志
+        request_params = {
+            "api_endpoint": api_endpoint,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "headers": headers,
+            "payload": payload
+        }
+        request_id = lmstudio_logger.log_api_request(action, len(text), request_params)
+        
+        async with httpx.AsyncClient(timeout=6000.0) as client:
             response = await client.post(api_endpoint, json=payload, headers=headers)
+            # log all
+            print(f"api_endpoint: {api_endpoint} headers: {headers} payload: {payload} response: {response} action: {action}")
+            
+            # 计算请求耗时
+            duration_ms = (time.time() - start_time) * 1000
             
             if response.status_code != 200:
-                return f"API调用失败: {response.status_code} - {response.text}"
+                error_msg = f"API调用失败: {response.status_code} - {response.text}"
+                # 记录失败响应日志
+                lmstudio_logger.log_api_response(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                    duration_ms=duration_ms
+                )
+                return error_msg
             
             result = response.json()
             if "choices" in result and len(result["choices"]) > 0:
-                return result["choices"][0]["message"]["content"]
+                processed_text = result["choices"][0]["message"]["content"]
+                # 记录成功响应日志
+                lmstudio_logger.log_api_response(
+                    request_id=request_id,
+                    success=True,
+                    response_data=result,
+                    response_length=len(processed_text),
+                    duration_ms=duration_ms
+                )
+                return processed_text
             else:
-                return "响应数据格式错误"
+                error_msg = "响应数据格式错误"
+                # 记录失败响应日志
+                lmstudio_logger.log_api_response(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                    duration_ms=duration_ms
+                )
+                return error_msg
 
     
     except Exception as e:
-        return f"处理文本时出错: {str(e)}"
+        # 计算请求耗时
+        duration_ms = (time.time() - start_time) * 1000
+        error_msg = f"处理文本时出错: {str(e)}"
+        
+        # 记录异常日志
+        try:
+            lmstudio_logger.log_api_response(
+                request_id=request_id if 'request_id' in locals() else "unknown",
+                success=False,
+                error_message=error_msg,
+                duration_ms=duration_ms
+            )
+        except:
+            lmstudio_logger.error(f"记录异常日志失败: {error_msg}")
+        
+        return error_msg
 
 
 # WebSocket服务器实现
@@ -84,7 +146,7 @@ async def lmstudio_server(websocket):
         websocket: WebSocket连接对象
         path: 请求路径
     """
-    print(f"[LM Studio] 新的WebSocket连接已建立")
+    lmstudio_logger.log_websocket_event("connection_established")
     try:
         async for message in websocket:
             try:
@@ -95,7 +157,12 @@ async def lmstudio_server(websocket):
                 save_to_file = data.get("save_to_file", False)
                 output_filename = data.get("output_filename", None)
                 
-                print(f"[LM Studio] 收到请求: action={action}, text长度={len(text_to_process)}")
+                # 记录WebSocket消息接收日志
+                lmstudio_logger.log_websocket_event("message_received", {
+                    "action": action,
+                    "text_length": len(text_to_process),
+                    "save_to_file": save_to_file
+                })
                 
                 # 使用文本润色服务处理文本
                 if save_to_file:
@@ -106,17 +173,20 @@ async def lmstudio_server(websocket):
                         text_to_process, action, output_filename
                     )
                     # 将处理结果和文件路径发送回客户端
-                    await websocket.send(json.dumps({
+                    response_data = {
                         "processed_text": processed_text,
                         "file_path": file_path
-                    }))
+                    }
+                    await websocket.send(json.dumps(response_data))
+                    lmstudio_logger.info(f"文件保存完成: {file_path}")
                 else:
                     # 只处理文本，不保存到文件
                     processed_text = await call_lmstudio_api(text_to_process, action)
                     # 将处理结果发送回客户端
-                    await websocket.send(json.dumps({"processed_text": processed_text}))
+                    response_data = {"processed_text": processed_text}
+                    await websocket.send(json.dumps(response_data))
                 
-                print(f"[LM Studio] 请求处理完成: action={action}")
+                lmstudio_logger.info(f"WebSocket请求处理完成: action={action}, 响应长度={len(processed_text)}")
             
             except json.JSONDecodeError:
                 error_msg = "无效的JSON格式"

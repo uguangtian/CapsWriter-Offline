@@ -1,0 +1,1296 @@
+{% extends "base.html" %}
+
+{% block title %}系统配置{% endblock %}
+
+{% block extra_css %}
+<style>
+.config-section {
+    margin-bottom: 2rem;
+}
+
+.config-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.config-card:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.config-form .form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.config-form .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.config-actions {
+    position: sticky;
+    bottom: 20px;
+    background: white;
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.model-path-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.model-path-item:last-child {
+    margin-bottom: 0;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.online {
+    background-color: #28a745;
+}
+
+.status-indicator.offline {
+    background-color: #dc3545;
+}
+
+.status-indicator.unknown {
+    background-color: #6c757d;
+}
+
+.config-tabs .nav-link {
+    color: #495057;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+}
+
+.config-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background-color: transparent;
+}
+
+.config-import-export {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">系统配置</h1>
+            <p class="text-muted mb-0">管理 CapsWriter-Offline 的各项配置</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-secondary me-2" onclick="resetToDefaults()">
+                <i class="fas fa-undo"></i> 重置默认
+            </button>
+            <button type="button" class="btn btn-outline-primary me-2" onclick="exportConfig()">
+                <i class="fas fa-download"></i> 导出配置
+            </button>
+            <button type="button" class="btn btn-outline-success me-2" onclick="importConfig()">
+                <i class="fas fa-upload"></i> 导入配置
+            </button>
+            <button type="button" class="btn btn-primary" onclick="saveConfig()">
+                <i class="fas fa-save"></i> 保存配置
+            </button>
+        </div>
+    </div>
+
+    <!-- 配置状态提示 -->
+    <div id="config-alerts"></div>
+
+    <!-- 配置选项卡 -->
+    <ul class="nav nav-tabs config-tabs mb-4" id="configTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="server-tab" data-bs-toggle="tab" data-bs-target="#server-config" type="button" role="tab">
+                <i class="fas fa-server"></i> 服务端配置
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="client-tab" data-bs-toggle="tab" data-bs-target="#client-config" type="button" role="tab">
+                <i class="fas fa-desktop"></i> 客户端配置
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ai-models-tab" data-bs-toggle="tab" data-bs-target="#ai-models-config" type="button" role="tab">
+                <i class="fas fa-brain"></i> AI模型配置
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="translation-tab" data-bs-toggle="tab" data-bs-target="#translation-config" type="button" role="tab">
+                <i class="fas fa-language"></i> 翻译配置
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="speech-tab" data-bs-toggle="tab" data-bs-target="#speech-config" type="button" role="tab">
+                <i class="fas fa-microphone"></i> 语音识别
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-config" type="button" role="tab">
+                <i class="fas fa-cogs"></i> 高级设置
+            </button>
+        </li>
+    </ul>
+
+    <!-- 配置内容 -->
+    <div class="tab-content" id="configTabContent">
+        <!-- 服务端配置 -->
+        <div class="tab-pane fade show active" id="server-config" role="tabpanel">
+            <div class="config-card p-4">
+                <h5 class="mb-3">服务端设置</h5>
+                <form class="config-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="server-host" class="form-label">服务器地址</label>
+                                <input type="text" class="form-control" id="server-host" value="localhost">
+                                <div class="form-text">服务器监听的IP地址</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="server-port" class="form-label">服务器端口</label>
+                                <input type="number" class="form-control" id="server-port" value="6006" min="1" max="65535">
+                                <div class="form-text">WebSocket服务器端口</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="web-port" class="form-label">网页端口</label>
+                                <input type="number" class="form-control" id="web-port" value="5000" min="1" max="65535">
+                                <div class="form-text">网页服务器端口</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max-connections" class="form-label">最大连接数</label>
+                                <input type="number" class="form-control" id="max-connections" value="10" min="1" max="100">
+                                <div class="form-text">同时允许的最大客户端连接数</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="auto-start-server" checked>
+                            <label class="form-check-label" for="auto-start-server">
+                                启动时自动开启服务器
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable-cors">
+                            <label class="form-check-label" for="enable-cors">
+                                启用跨域访问 (CORS)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 客户端配置 -->
+        <div class="tab-pane fade" id="client-config" role="tabpanel">
+            <div class="config-card p-4">
+                <h5 class="mb-3">客户端设置</h5>
+                <form class="config-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="client-language" class="form-label">界面语言</label>
+                                <select class="form-select" id="client-language">
+                                    <option value="zh-CN" selected>简体中文</option>
+                                    <option value="zh-TW">繁体中文</option>
+                                    <option value="en-US">English</option>
+                                    <option value="ja-JP">日本語</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="theme" class="form-label">界面主题</label>
+                                <select class="form-select" id="theme">
+                                    <option value="light" selected>浅色主题</option>
+                                    <option value="dark">深色主题</option>
+                                    <option value="auto">跟随系统</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="auto-save-interval" class="form-label">自动保存间隔 (秒)</label>
+                                <input type="number" class="form-control" id="auto-save-interval" value="30" min="10" max="300">
+                                <div class="form-text">自动保存转录结果的时间间隔</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max-history" class="form-label">历史记录数量</label>
+                                <input type="number" class="form-control" id="max-history" value="100" min="10" max="1000">
+                                <div class="form-text">保留的历史记录最大数量</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable-notifications" checked>
+                            <label class="form-check-label" for="enable-notifications">
+                                启用桌面通知
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="auto-copy-result">
+                            <label class="form-check-label" for="auto-copy-result">
+                                自动复制转录结果到剪贴板
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- AI模型配置 -->
+        <div class="tab-pane fade" id="ai-models-config" role="tabpanel">
+            <div class="config-card p-4">
+                <h5 class="mb-3">AI模型设置</h5>
+                
+                <!-- LM Studio -->
+                <div class="model-path-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <span class="status-indicator unknown" id="lmstudio-status"></span>
+                            LM Studio
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="testModelConnection('lmstudio')">
+                            <i class="fas fa-plug"></i> 测试连接
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="lmstudio-host" class="form-label">服务器地址</label>
+                                <input type="text" class="form-control" id="lmstudio-host" value="localhost">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="lmstudio-port" class="form-label">端口</label>
+                                <input type="number" class="form-control" id="lmstudio-port" value="1234">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="lmstudio-enabled">
+                            <label class="form-check-label" for="lmstudio-enabled">
+                                启用 LM Studio
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DeepSeek -->
+                <div class="model-path-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <span class="status-indicator unknown" id="deepseek-status"></span>
+                            DeepSeek
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="testModelConnection('deepseek')">
+                            <i class="fas fa-plug"></i> 测试连接
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deepseek-api-key" class="form-label">API Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="deepseek-api-key" placeholder="输入 DeepSeek API Key">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('deepseek-api-key')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deepseek-model" class="form-label">模型</label>
+                                <select class="form-select" id="deepseek-model">
+                                    <option value="deepseek-chat" selected>deepseek-chat</option>
+                                    <option value="deepseek-coder">deepseek-coder</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deepseek-temperature" class="form-label">Temperature</label>
+                                <input type="number" class="form-control" id="deepseek-temperature" value="0.7" min="0" max="2" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="deepseek-enabled">
+                            <label class="form-check-label" for="deepseek-enabled">
+                                启用 DeepSeek
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doubao -->
+                <div class="model-path-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <span class="status-indicator unknown" id="doubao-status"></span>
+                            豆包 (Doubao)
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="testModelConnection('doubao')">
+                            <i class="fas fa-plug"></i> 测试连接
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="doubao-api-key" class="form-label">API Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="doubao-api-key" placeholder="输入豆包 API Key">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('doubao-api-key')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="doubao-model" class="form-label">模型</label>
+                                <input type="text" class="form-control" id="doubao-model" value="doubao-pro-4k">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="doubao-temperature" class="form-label">Temperature</label>
+                                <input type="number" class="form-control" id="doubao-temperature" value="0.7" min="0" max="2" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="doubao-enabled">
+                            <label class="form-check-label" for="doubao-enabled">
+                                启用豆包
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 翻译配置 -->
+        <div class="tab-pane fade" id="translation-config" role="tabpanel">
+            <div class="config-card p-4">
+                <h5 class="mb-3">翻译服务设置</h5>
+                
+                <!-- DeepLX -->
+                <div class="model-path-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <span class="status-indicator unknown" id="deeplx-status"></span>
+                            DeepLX
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="testTranslationService('deeplx')">
+                            <i class="fas fa-plug"></i> 测试连接
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deeplx-host" class="form-label">服务器地址</label>
+                                <input type="text" class="form-control" id="deeplx-host" value="localhost">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deeplx-port" class="form-label">端口</label>
+                                <input type="number" class="form-control" id="deeplx-port" value="1188">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="deeplx-enabled" checked>
+                            <label class="form-check-label" for="deeplx-enabled">
+                                启用 DeepLX
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 其他翻译服务 -->
+                <div class="model-path-item">
+                    <h6 class="mb-3">其他翻译服务</h6>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="google-translate-enabled">
+                            <label class="form-check-label" for="google-translate-enabled">
+                                启用 Google 翻译
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="baidu-translate-enabled">
+                            <label class="form-check-label" for="baidu-translate-enabled">
+                                启用百度翻译
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="youdao-translate-enabled">
+                            <label class="form-check-label" for="youdao-translate-enabled">
+                                启用有道翻译
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 语音识别配置 -->
+        <div class="tab-pane fade" id="speech-config" role="tabpanel">
+            <div class="config-card p-4">
+                <h5 class="mb-3">语音识别设置</h5>
+                
+                <!-- SenseVoice -->
+                <div class="model-path-item">
+                    <h6 class="mb-3">SenseVoice 模型</h6>
+                    <div class="mb-3">
+                        <label for="sensevoice-model-path" class="form-label">模型路径</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="sensevoice-model-path" placeholder="选择 SenseVoice 模型文件路径">
+                            <button class="btn btn-outline-secondary" type="button" onclick="selectModelPath('sensevoice')">
+                                <i class="fas fa-folder-open"></i> 浏览
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sensevoice-language" class="form-label">默认语言</label>
+                                <select class="form-select" id="sensevoice-language">
+                                    <option value="auto" selected>自动检测</option>
+                                    <option value="zh">中文</option>
+                                    <option value="en">英文</option>
+                                    <option value="ja">日文</option>
+                                    <option value="ko">韩文</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sensevoice-vad-threshold" class="form-label">VAD 阈值</label>
+                                <input type="number" class="form-control" id="sensevoice-vad-threshold" value="0.5" min="0" max="1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paraformer -->
+                <div class="model-path-item">
+                    <h6 class="mb-3">Paraformer 模型</h6>
+                    <div class="mb-3">
+                        <label for="paraformer-model-path" class="form-label">模型路径</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="paraformer-model-path" placeholder="选择 Paraformer 模型文件路径">
+                            <button class="btn btn-outline-secondary" type="button" onclick="selectModelPath('paraformer')">
+                                <i class="fas fa-folder-open"></i> 浏览
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="paraformer-chunk-size" class="form-label">分块大小</label>
+                                <input type="number" class="form-control" id="paraformer-chunk-size" value="960" min="100" max="2000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="paraformer-encoder-chunk-look-back" class="form-label">编码器回看</label>
+                                <input type="number" class="form-control" id="paraformer-encoder-chunk-look-back" value="4" min="0" max="10">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 高级设置 -->
+        <div class="tab-pane fade" id="advanced-config" role="tabpanel">
+            <div class="config-card p-4">
+                <h5 class="mb-3">高级设置</h5>
+                
+                <!-- 日志设置 -->
+                <div class="model-path-item">
+                    <h6 class="mb-3">日志设置</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="log-level" class="form-label">日志级别</label>
+                                <select class="form-select" id="log-level">
+                                    <option value="DEBUG">DEBUG</option>
+                                    <option value="INFO" selected>INFO</option>
+                                    <option value="WARNING">WARNING</option>
+                                    <option value="ERROR">ERROR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="log-max-size" class="form-label">日志文件最大大小 (MB)</label>
+                                <input type="number" class="form-control" id="log-max-size" value="10" min="1" max="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable-file-logging" checked>
+                            <label class="form-check-label" for="enable-file-logging">
+                                启用文件日志
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 性能设置 -->
+                <div class="model-path-item">
+                    <h6 class="mb-3">性能设置</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max-workers" class="form-label">最大工作线程</label>
+                                <input type="number" class="form-control" id="max-workers" value="4" min="1" max="16">
+                                <div class="form-text">处理请求的最大并发线程数</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="request-timeout" class="form-label">请求超时 (秒)</label>
+                                <input type="number" class="form-control" id="request-timeout" value="30" min="5" max="300">
+                                <div class="form-text">API请求的超时时间</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable-gpu">
+                            <label class="form-check-label" for="enable-gpu">
+                                启用 GPU 加速 (如果可用)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配置导入导出 -->
+                <div class="config-import-export">
+                    <h6 class="mb-3">配置导入导出</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="config-file-input" class="form-label">导入配置文件</label>
+                                <input type="file" class="form-control" id="config-file-input" accept=".toml,.json">
+                                <div class="form-text">支持 TOML 和 JSON 格式</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="config-export-format" class="form-label">导出格式</label>
+                                <select class="form-select" id="config-export-format">
+                                    <option value="toml" selected>TOML</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 配置操作栏 -->
+    <div class="config-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted">配置状态: </span>
+                <span id="config-status" class="badge bg-secondary">未保存</span>
+            </div>
+            <div>
+                <button type="button" class="btn btn-outline-secondary me-2" onclick="reloadConfig()">
+                    <i class="fas fa-sync-alt"></i> 重新加载
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveConfig()">
+                    <i class="fas fa-save"></i> 保存所有配置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 文件选择模态框 -->
+<div class="modal fade" id="file-select-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">选择文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="file-browser"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmFileSelection()">确认选择</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentConfig = {};
+let configChanged = false;
+let selectedFilePath = '';
+let currentModelType = '';
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadConfig();
+    setupEventListeners();
+});
+
+// 设置事件监听器
+function setupEventListeners() {
+    // 监听所有配置输入的变化
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('change', markConfigChanged);
+        input.addEventListener('input', markConfigChanged);
+    });
+    
+    // 文件输入监听
+    document.getElementById('config-file-input').addEventListener('change', handleConfigFileImport);
+}
+
+// 标记配置已更改
+function markConfigChanged() {
+    configChanged = true;
+    updateConfigStatus('已修改', 'warning');
+}
+
+// 更新配置状态
+function updateConfigStatus(text, type) {
+    const statusElement = document.getElementById('config-status');
+    statusElement.textContent = text;
+    statusElement.className = `badge bg-${type}`;
+}
+
+// 加载配置
+function loadConfig() {
+    showAlert('正在加载配置...', 'info');
+    
+    fetch('/api/config/get')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentConfig = data.config;
+                populateConfigForm(data.config);
+                updateConfigStatus('已加载', 'success');
+                configChanged = false;
+                showAlert('配置加载成功', 'success');
+            } else {
+                showAlert('加载配置失败: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert('加载配置失败: ' + error.message, 'danger');
+        });
+}
+
+// 填充配置表单
+function populateConfigForm(config) {
+    // 服务端配置
+    if (config.server) {
+        setInputValue('server-host', config.server.host);
+        setInputValue('server-port', config.server.port);
+        setInputValue('web-port', config.server.web_port);
+        setInputValue('max-connections', config.server.max_connections);
+        setCheckboxValue('auto-start-server', config.server.auto_start);
+        setCheckboxValue('enable-cors', config.server.enable_cors);
+    }
+    
+    // 客户端配置
+    if (config.client) {
+        setInputValue('client-language', config.client.language);
+        setInputValue('theme', config.client.theme);
+        setInputValue('auto-save-interval', config.client.auto_save_interval);
+        setInputValue('max-history', config.client.max_history);
+        setCheckboxValue('enable-notifications', config.client.enable_notifications);
+        setCheckboxValue('auto-copy-result', config.client.auto_copy_result);
+    }
+    
+    // AI模型配置
+    if (config.ai_models) {
+        // LM Studio
+        if (config.ai_models.lmstudio) {
+            setInputValue('lmstudio-host', config.ai_models.lmstudio.host);
+            setInputValue('lmstudio-port', config.ai_models.lmstudio.port);
+            setCheckboxValue('lmstudio-enabled', config.ai_models.lmstudio.enabled);
+        }
+        
+        // DeepSeek
+        if (config.ai_models.deepseek) {
+            setInputValue('deepseek-api-key', config.ai_models.deepseek.api_key);
+            setInputValue('deepseek-model', config.ai_models.deepseek.model);
+            setInputValue('deepseek-temperature', config.ai_models.deepseek.temperature);
+            setCheckboxValue('deepseek-enabled', config.ai_models.deepseek.enabled);
+        }
+        
+        // Doubao
+        if (config.ai_models.doubao) {
+            setInputValue('doubao-api-key', config.ai_models.doubao.api_key);
+            setInputValue('doubao-model', config.ai_models.doubao.model);
+            setInputValue('doubao-temperature', config.ai_models.doubao.temperature);
+            setCheckboxValue('doubao-enabled', config.ai_models.doubao.enabled);
+        }
+    }
+    
+    // 翻译配置
+    if (config.translation) {
+        if (config.translation.deeplx) {
+            setInputValue('deeplx-host', config.translation.deeplx.host);
+            setInputValue('deeplx-port', config.translation.deeplx.port);
+            setCheckboxValue('deeplx-enabled', config.translation.deeplx.enabled);
+        }
+        
+        setCheckboxValue('google-translate-enabled', config.translation.google_enabled);
+        setCheckboxValue('baidu-translate-enabled', config.translation.baidu_enabled);
+        setCheckboxValue('youdao-translate-enabled', config.translation.youdao_enabled);
+    }
+    
+    // 语音识别配置
+    if (config.speech) {
+        if (config.speech.sensevoice) {
+            setInputValue('sensevoice-model-path', config.speech.sensevoice.model_path);
+            setInputValue('sensevoice-language', config.speech.sensevoice.language);
+            setInputValue('sensevoice-vad-threshold', config.speech.sensevoice.vad_threshold);
+        }
+        
+        if (config.speech.paraformer) {
+            setInputValue('paraformer-model-path', config.speech.paraformer.model_path);
+            setInputValue('paraformer-chunk-size', config.speech.paraformer.chunk_size);
+            setInputValue('paraformer-encoder-chunk-look-back', config.speech.paraformer.encoder_chunk_look_back);
+        }
+    }
+    
+    // 高级设置
+    if (config.advanced) {
+        setInputValue('log-level', config.advanced.log_level);
+        setInputValue('log-max-size', config.advanced.log_max_size);
+        setCheckboxValue('enable-file-logging', config.advanced.enable_file_logging);
+        setInputValue('max-workers', config.advanced.max_workers);
+        setInputValue('request-timeout', config.advanced.request_timeout);
+        setCheckboxValue('enable-gpu', config.advanced.enable_gpu);
+    }
+}
+
+// 设置输入值
+function setInputValue(id, value) {
+    const element = document.getElementById(id);
+    if (element && value !== undefined) {
+        element.value = value;
+    }
+}
+
+// 设置复选框值
+function setCheckboxValue(id, value) {
+    const element = document.getElementById(id);
+    if (element && value !== undefined) {
+        element.checked = value;
+    }
+}
+
+// 收集配置数据
+function collectConfigData() {
+    return {
+        server: {
+            host: document.getElementById('server-host').value,
+            port: parseInt(document.getElementById('server-port').value),
+            web_port: parseInt(document.getElementById('web-port').value),
+            max_connections: parseInt(document.getElementById('max-connections').value),
+            auto_start: document.getElementById('auto-start-server').checked,
+            enable_cors: document.getElementById('enable-cors').checked
+        },
+        client: {
+            language: document.getElementById('client-language').value,
+            theme: document.getElementById('theme').value,
+            auto_save_interval: parseInt(document.getElementById('auto-save-interval').value),
+            max_history: parseInt(document.getElementById('max-history').value),
+            enable_notifications: document.getElementById('enable-notifications').checked,
+            auto_copy_result: document.getElementById('auto-copy-result').checked
+        },
+        ai_models: {
+            lmstudio: {
+                host: document.getElementById('lmstudio-host').value,
+                port: parseInt(document.getElementById('lmstudio-port').value),
+                enabled: document.getElementById('lmstudio-enabled').checked
+            },
+            deepseek: {
+                api_key: document.getElementById('deepseek-api-key').value,
+                model: document.getElementById('deepseek-model').value,
+                temperature: parseFloat(document.getElementById('deepseek-temperature').value),
+                enabled: document.getElementById('deepseek-enabled').checked
+            },
+            doubao: {
+                api_key: document.getElementById('doubao-api-key').value,
+                model: document.getElementById('doubao-model').value,
+                temperature: parseFloat(document.getElementById('doubao-temperature').value),
+                enabled: document.getElementById('doubao-enabled').checked
+            }
+        },
+        translation: {
+            deeplx: {
+                host: document.getElementById('deeplx-host').value,
+                port: parseInt(document.getElementById('deeplx-port').value),
+                enabled: document.getElementById('deeplx-enabled').checked
+            },
+            google_enabled: document.getElementById('google-translate-enabled').checked,
+            baidu_enabled: document.getElementById('baidu-translate-enabled').checked,
+            youdao_enabled: document.getElementById('youdao-translate-enabled').checked
+        },
+        speech: {
+            sensevoice: {
+                model_path: document.getElementById('sensevoice-model-path').value,
+                language: document.getElementById('sensevoice-language').value,
+                vad_threshold: parseFloat(document.getElementById('sensevoice-vad-threshold').value)
+            },
+            paraformer: {
+                model_path: document.getElementById('paraformer-model-path').value,
+                chunk_size: parseInt(document.getElementById('paraformer-chunk-size').value),
+                encoder_chunk_look_back: parseInt(document.getElementById('paraformer-encoder-chunk-look-back').value)
+            }
+        },
+        advanced: {
+            log_level: document.getElementById('log-level').value,
+            log_max_size: parseInt(document.getElementById('log-max-size').value),
+            enable_file_logging: document.getElementById('enable-file-logging').checked,
+            max_workers: parseInt(document.getElementById('max-workers').value),
+            request_timeout: parseInt(document.getElementById('request-timeout').value),
+            enable_gpu: document.getElementById('enable-gpu').checked
+        }
+    };
+}
+
+// 保存配置
+function saveConfig() {
+    const configData = collectConfigData();
+    
+    showAlert('正在保存配置...', 'info');
+    
+    fetch('/api/config/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentConfig = configData;
+            configChanged = false;
+            updateConfigStatus('已保存', 'success');
+            showAlert('配置保存成功', 'success');
+        } else {
+            showAlert('保存配置失败: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('保存配置失败: ' + error.message, 'danger');
+    });
+}
+
+// 重新加载配置
+function reloadConfig() {
+    if (configChanged) {
+        if (!confirm('当前配置已修改但未保存，确定要重新加载吗？')) {
+            return;
+        }
+    }
+    loadConfig();
+}
+
+// 重置为默认配置
+function resetToDefaults() {
+    if (!confirm('确定要重置为默认配置吗？这将丢失所有当前设置。')) {
+        return;
+    }
+    
+    fetch('/api/config/reset', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadConfig();
+            showAlert('已重置为默认配置', 'success');
+        } else {
+            showAlert('重置配置失败: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('重置配置失败: ' + error.message, 'danger');
+    });
+}
+
+// 导出配置
+function exportConfig() {
+    const format = document.getElementById('config-export-format').value;
+    const configData = collectConfigData();
+    
+    fetch('/api/config/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: configData, format: format })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `capswriter-config.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        showAlert('配置导出成功', 'success');
+    })
+    .catch(error => {
+        showAlert('导出配置失败: ' + error.message, 'danger');
+    });
+}
+
+// 导入配置
+function importConfig() {
+    document.getElementById('config-file-input').click();
+}
+
+// 处理配置文件导入
+function handleConfigFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('config_file', file);
+    
+    showAlert('正在导入配置...', 'info');
+    
+    fetch('/api/config/import', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            populateConfigForm(data.config);
+            markConfigChanged();
+            showAlert('配置导入成功，请检查并保存', 'success');
+        } else {
+            showAlert('导入配置失败: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('导入配置失败: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        event.target.value = ''; // 清空文件输入
+    });
+}
+
+// 测试模型连接
+function testModelConnection(modelType) {
+    const statusElement = document.getElementById(`${modelType}-status`);
+    statusElement.className = 'status-indicator unknown';
+    
+    let testData = {};
+    
+    if (modelType === 'lmstudio') {
+        testData = {
+            host: document.getElementById('lmstudio-host').value,
+            port: parseInt(document.getElementById('lmstudio-port').value)
+        };
+    } else if (modelType === 'deepseek') {
+        testData = {
+            api_key: document.getElementById('deepseek-api-key').value,
+            model: document.getElementById('deepseek-model').value
+        };
+    } else if (modelType === 'doubao') {
+        testData = {
+            api_key: document.getElementById('doubao-api-key').value,
+            model: document.getElementById('doubao-model').value
+        };
+    }
+    
+    fetch('/api/config/test-model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model_type: modelType, config: testData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusElement.className = 'status-indicator online';
+            showAlert(`${modelType} 连接测试成功`, 'success');
+        } else {
+            statusElement.className = 'status-indicator offline';
+            showAlert(`${modelType} 连接测试失败: ${data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        statusElement.className = 'status-indicator offline';
+        showAlert(`${modelType} 连接测试失败: ${error.message}`, 'danger');
+    });
+}
+
+// 测试翻译服务
+function testTranslationService(serviceType) {
+    const statusElement = document.getElementById(`${serviceType}-status`);
+    statusElement.className = 'status-indicator unknown';
+    
+    let testData = {};
+    
+    if (serviceType === 'deeplx') {
+        testData = {
+            host: document.getElementById('deeplx-host').value,
+            port: parseInt(document.getElementById('deeplx-port').value)
+        };
+    }
+    
+    fetch('/api/config/test-translation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_type: serviceType, config: testData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusElement.className = 'status-indicator online';
+            showAlert(`${serviceType} 连接测试成功`, 'success');
+        } else {
+            statusElement.className = 'status-indicator offline';
+            showAlert(`${serviceType} 连接测试失败: ${data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        statusElement.className = 'status-indicator offline';
+        showAlert(`${serviceType} 连接测试失败: ${error.message}`, 'danger');
+    });
+}
+
+// 选择模型路径
+function selectModelPath(modelType) {
+    currentModelType = modelType;
+    
+    // 打开文件浏览器模态框
+    const modal = new bootstrap.Modal(document.getElementById('file-select-modal'));
+    modal.show();
+    
+    // 加载文件浏览器
+    loadFileBrowser('/');
+}
+
+// 加载文件浏览器
+function loadFileBrowser(path) {
+    fetch('/api/files/list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: path })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            renderFileBrowser(data.files, path);
+        } else {
+            showAlert('加载文件列表失败: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('加载文件列表失败: ' + error.message, 'danger');
+    });
+}
+
+// 渲染文件浏览器
+function renderFileBrowser(files, currentPath) {
+    const container = document.getElementById('file-browser');
+    let html = `
+        <div class="mb-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="#" onclick="loadFileBrowser('/')">根目录</a>
+                    </li>
+    `;
+    
+    if (currentPath !== '/') {
+        const parts = currentPath.split('/').filter(p => p);
+        let breadcrumbPath = '';
+        parts.forEach((part, index) => {
+            breadcrumbPath += '/' + part;
+            if (index === parts.length - 1) {
+                html += `<li class="breadcrumb-item active">${part}</li>`;
+            } else {
+                html += `<li class="breadcrumb-item"><a href="#" onclick="loadFileBrowser('${breadcrumbPath}')">${part}</a></li>`;
+            }
+        });
+    }
+    
+    html += `
+                </ol>
+            </nav>
+        </div>
+        <div class="list-group">
+    `;
+    
+    // 添加返回上级目录
+    if (currentPath !== '/') {
+        const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+        html += `
+            <a href="#" class="list-group-item list-group-item-action" onclick="loadFileBrowser('${parentPath}')">
+                <i class="fas fa-arrow-up"></i> ..
+            </a>
+        `;
+    }
+    
+    // 添加文件和文件夹
+    files.forEach(file => {
+        const fullPath = currentPath === '/' ? '/' + file.name : currentPath + '/' + file.name;
+        const icon = file.type === 'directory' ? 'fa-folder' : 'fa-file';
+        const clickAction = file.type === 'directory' ? 
+            `loadFileBrowser('${fullPath}')` : 
+            `selectFile('${fullPath}')`;
+        
+        html += `
+            <a href="#" class="list-group-item list-group-item-action" onclick="${clickAction}">
+                <i class="fas ${icon}"></i> ${file.name}
+            </a>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 选择文件
+function selectFile(filePath) {
+    selectedFilePath = filePath;
+    
+    // 高亮选中的文件
+    const items = document.querySelectorAll('#file-browser .list-group-item');
+    items.forEach(item => item.classList.remove('active'));
+    
+    const selectedItem = Array.from(items).find(item => 
+        item.onclick && item.onclick.toString().includes(filePath)
+    );
+    if (selectedItem) {
+        selectedItem.classList.add('active');
+    }
+}
+
+// 确认文件选择
+function confirmFileSelection() {
+    if (!selectedFilePath) {
+        showAlert('请选择一个文件', 'warning');
+        return;
+    }
+    
+    // 设置模型路径
+    document.getElementById(`${currentModelType}-model-path`).value = selectedFilePath;
+    markConfigChanged();
+    
+    // 关闭模态框
+    const modal = bootstrap.Modal.getInstance(document.getElementById('file-select-modal'));
+    modal.hide();
+    
+    selectedFilePath = '';
+    currentModelType = '';
+}
+
+// 切换密码可见性
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+// 显示提示消息
+function showAlert(message, type) {
+    const alertsContainer = document.getElementById('config-alerts');
+    const alertId = 'alert-' + Date.now();
+    
+    const alertHtml = `
+        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    alertsContainer.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // 自动移除提示
+    setTimeout(() => {
+        const alert = document.getElementById(alertId);
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+}
+
+// 页面离开前检查未保存的更改
+window.addEventListener('beforeunload', function(e) {
+    if (configChanged) {
+        e.preventDefault();
+        e.returnValue = '配置已修改但未保存，确定要离开吗？';
+    }
+});
+</script>
+{% endblock %}

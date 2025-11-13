@@ -6,10 +6,11 @@ import threading
 from pathlib import Path
 from queue import Queue
 
-import win32api
-import win32con
-import win32gui
-import win32print
+if sys.platform == "win32":
+    import win32api
+    import win32con
+    import win32gui
+    import win32print
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QAction, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
@@ -48,16 +49,20 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
         self.timer.start(100)  # 每100毫秒更新一次
 
     def update_tooltip_position(self):
-        # 使用pywin32获取全局鼠标位置
-        x, y = win32api.GetCursorPos()
-        global scale_x, scale_y
-        x, y = x / scale_x, y / scale_y
-        # 更新标签的位置和文本
-        self.move(x + (20 / scale_x), y + (20 / scale_y))
-        if is_microphone_in_use():
-            self.setText(chr(0xF8B1))
-            self.setVisible(True)
+        if sys.platform == "win32":
+            # 使用pywin32获取全局鼠标位置
+            x, y = win32api.GetCursorPos()
+            global scale_x, scale_y
+            x, y = x / scale_x, y / scale_y
+            # 更新标签的位置和文本
+            self.move(x + (20 / scale_x), y + (20 / scale_y))
+            if is_microphone_in_use():
+                self.setText(chr(0xF8B1))
+                self.setVisible(True)
+            else:
+                self.setVisible(False)
         else:
+            # On macOS/Linux, disable this feature
             self.setVisible(False)
 
 
@@ -641,9 +646,13 @@ def start_client_gui():
         and Path("hint_while_recording.exe").exists()
         # and Config.hold_mode
     ):
-        subprocess.Popen(
-            ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
-        )
+        if sys.platform == "win32":
+            subprocess.Popen(
+                ["hint_while_recording.exe"], creationflags=subprocess.CREATE_NO_WINDOW
+            )
+        else:
+            # On macOS/Linux, this feature is not available
+            pass
     app = QApplication(sys.argv)
     if Config.hint_while_recording_at_cursor_position:
         tooltip = Hint_While_Recording_At_Cursor_Position()
@@ -659,20 +668,26 @@ def start_client_gui():
 
 
 def Print_Screen_Scale():
-    # 获取屏幕的宽度和高度
-    hDC = win32gui.GetDC(0)
-    screen_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
-    screen_height = win32print.GetDeviceCaps(hDC, win32con.DESKTOPVERTRES)
-    print(f"屏幕尺寸: {screen_width}x{screen_height}")
-    # 获取逻辑的宽度和高度
-    logical_width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
-    logical_height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
-    print(f"逻辑尺寸: {logical_width}x{logical_height}")
-    # 计算缩放比例
     global scale_x, scale_y
-    scale_x = screen_width / logical_width
-    scale_y = screen_height / logical_height
-    print(f"屏幕缩放比例: {scale_x}, {scale_y}")
+    if sys.platform == "win32":
+        # 获取屏幕的宽度和高度
+        hDC = win32gui.GetDC(0)
+        screen_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
+        screen_height = win32print.GetDeviceCaps(hDC, win32con.DESKTOPVERTRES)
+        print(f"屏幕尺寸: {screen_width}x{screen_height}")
+        # 获取逻辑的宽度和高度
+        logical_width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
+        logical_height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
+        print(f"逻辑尺寸: {logical_width}x{logical_height}")
+        # 计算缩放比例
+        scale_x = screen_width / logical_width
+        scale_y = screen_height / logical_height
+        print(f"屏幕缩放比例: {scale_x}, {scale_y}")
+    else:
+        # On macOS/Linux, use default scale
+        scale_x = 1.0
+        scale_y = 1.0
+        print(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
 
 if __name__ == "__main__":

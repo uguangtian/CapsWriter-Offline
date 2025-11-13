@@ -1,8 +1,18 @@
 from pathlib import Path
 from tomlkit import parse
+import sys
+import os
 
 # 加载TOML配置文件
-config_toml_path = Path(__file__).parent.parent / "config.toml"
+# 在打包后的应用中，使用 sys._MEIPASS 获取资源路径
+if getattr(sys, 'frozen', False):
+    # 打包后的环境
+    base_path = Path(sys._MEIPASS)
+else:
+    # 开发环境
+    base_path = Path(__file__).parent.parent
+
+config_toml_path = base_path / "config.toml"
 with config_toml_path.open("r", encoding="utf-8") as f:
     config_str = f.read()
     config = parse(config_str)
@@ -107,6 +117,7 @@ class DeepSeekConfig:
     deepseek_port: int = config.get("deepseek", {}).get("deepseek_port", "6018")
     api_key: str = config.get("deepseek", {}).get("api_key", "")
     api_endpoint: str = config.get("deepseek", {}).get("api_endpoint", "https://api.deepseek.com/v1/chat/completions")
+    base_url: str = config.get("deepseek", {}).get("base_url", "https://api.deepseek.com/v1")
     model: str = config.get("deepseek", {}).get("model", "deepseek-chat")
     temperature: float = config.get("deepseek", {}).get("temperature", 0.7)
     max_tokens: int = config.get("deepseek", {}).get("max_tokens", 2000)

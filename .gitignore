@@ -26,3 +26,5 @@ python3
 2025
 1970
 *.exe
+assets
+dist

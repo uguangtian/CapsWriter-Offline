@@ -80,6 +80,21 @@ def paraformerRecognize(recognizer, punc_model, task: Task) -> Result:
         result = results[task.task_id]
         # 高效处理音频数据
         samples = np.frombuffer(task.data, dtype=np.float32)
+        # 新增：空音频防护，避免 ONNX Conv 输入维度为 0 的异常
+        if len(samples) == 0:
+            console.print(f"[DEBUG] 警告：空的音频数据，跳过解码")
+            # 更新时间戳
+            result.time_start = task.time_start
+            result.time_submit = task.time_submit
+            result.time_complete = time.time()
+            # 如果是最终任务，标记完成并返回最终结果
+            if task.is_final:
+                result.is_final = True
+                final_result = results.pop(task.task_id)
+                console.print(f"[DEBUG] 完成最终处理（空音频）: task_id={task.task_id}, is_final=True")
+                return final_result
+            return result
+            
         # 检查音频数据的有效性
         #if len(samples) == 0:
         #    console.print(f"[DEBUG] 警告：空的音频数据")
@@ -100,8 +115,19 @@ def paraformerRecognize(recognizer, punc_model, task: Task) -> Result:
 
         # 创建识别流并处理
         stream = recognizer.create_stream()
+        # 样本非空才送入波形（上面已防护空样本）
         stream.accept_waveform(task.samplerate, samples)
-        recognizer.decode_stream(stream)
+        try:
+            recognizer.decode_stream(stream)
+        except Exception as e:
+            console.print(f"[red] 解码失败: {e}")
+            # 优雅回退，避免因异常导致任务中断
+            if task.is_final:
+                result.is_final = True
+                final_result = results.pop(task.task_id)
+                console.print(f"[DEBUG] 最终包解码异常，返回空结果: task_id={task.task_id}")
+                return final_result
+            return result
 
         # 更新时间戳
         result.time_start = task.time_start
@@ -117,6 +143,13 @@ def paraformerRecognize(recognizer, punc_model, task: Task) -> Result:
         
         if not timestamps or not tokens:
             console.print(f"[DEBUG] 警告：没有识别结果")
+            # 即使识别结果为空，也要正确设置is_final状态
+            if task.is_final:
+                result.is_final = True
+                # 从缓存中移除结果
+                final_result = results.pop(task.task_id)
+                console.print(f"[DEBUG] 完成空结果的最终处理: task_id={task.task_id}, is_final=True")
+                return final_result
             return result
             
         console.print(f"[DEBUG] 识别结果: tokens_count={len(tokens)}")

@@ -1,0 +1,810 @@
+{% extends "base.html" %}
+
+{% block title %}文本处理 - CapsWriter-Offline 网页版{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-edit me-2"></i>AI文本处理
+        </h2>
+    </div>
+</div>
+
+<!-- 文本输入区域 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-keyboard me-2"></i>文本输入
+                </h5>
+                <div>
+                    <button id="paste-btn" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-paste me-1"></i>粘贴
+                    </button>
+                    <button id="clear-input-btn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-trash me-1"></i>清空
+                    </button>
+                    <button id="load-file-btn" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-file-upload me-1"></i>加载文件
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <textarea id="input-text" class="form-control" rows="8" placeholder="请输入需要处理的文本内容..."></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">
+                        字数: <span id="input-char-count">0</span> | 词数: <span id="input-word-count">0</span>
+                    </small>
+                    <div>
+                        <input type="file" id="file-input" accept=".txt,.md,.doc,.docx" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 处理选项 -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-magic me-2"></i>处理选项
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="model-select" class="form-label">AI模型</label>
+                            <select id="model-select" class="form-select">
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="doubao">豆包</option>
+                                <option value="claude">Claude</option>
+                                <option value="lmstudio">LM Studio</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="task-type" class="form-label">处理类型</label>
+                            <select id="task-type" class="form-select">
+                                <option value="polish">文本润色</option>
+                                <option value="correct">错误纠正</option>
+                                <option value="translate">翻译</option>
+                                <option value="summarize">内容摘要</option>
+                                <option value="expand">内容扩展</option>
+                                <option value="rewrite">重新改写</option>
+                                <option value="custom">自定义任务</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 自定义任务提示词 -->
+                <div id="custom-prompt-container" class="mb-3" style="display: none;">
+                    <label for="custom-prompt" class="form-label">自定义提示词</label>
+                    <textarea id="custom-prompt" class="form-control" rows="3" placeholder="请输入自定义的处理指令..."></textarea>
+                </div>
+                
+                <!-- 翻译选项 -->
+                <div id="translation-options" class="mb-3" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="source-lang" class="form-label">源语言</label>
+                            <select id="source-lang" class="form-select">
+                                <option value="auto">自动检测</option>
+                                <option value="zh">中文</option>
+                                <option value="en">英文</option>
+                                <option value="ja">日文</option>
+                                <option value="ko">韩文</option>
+                                <option value="fr">法文</option>
+                                <option value="de">德文</option>
+                                <option value="es">西班牙文</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="target-lang" class="form-label">目标语言</label>
+                            <select id="target-lang" class="form-select">
+                                <option value="zh">中文</option>
+                                <option value="en">英文</option>
+                                <option value="ja">日文</option>
+                                <option value="ko">韩文</option>
+                                <option value="fr">法文</option>
+                                <option value="de">德文</option>
+                                <option value="es">西班牙文</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="stream-output" checked>
+                        <label class="form-check-label" for="stream-output">
+                            流式输出
+                        </label>
+                    </div>
+                    <button id="process-btn" class="btn btn-primary btn-lg">
+                        <i class="fas fa-play me-2"></i>开始处理
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>快速模板
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm template-btn" data-template="polish">
+                        <i class="fas fa-star me-1"></i>润色优化
+                    </button>
+                    <button class="btn btn-outline-success btn-sm template-btn" data-template="formal">
+                        <i class="fas fa-user-tie me-1"></i>正式化
+                    </button>
+                    <button class="btn btn-outline-info btn-sm template-btn" data-template="casual">
+                        <i class="fas fa-smile me-1"></i>口语化
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm template-btn" data-template="academic">
+                        <i class="fas fa-graduation-cap me-1"></i>学术化
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm template-btn" data-template="simplify">
+                        <i class="fas fa-compress me-1"></i>简化表达
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm template-btn" data-template="expand">
+                        <i class="fas fa-expand me-1"></i>详细展开
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 处理结果 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>处理结果
+                </h5>
+                <div>
+                    <button id="copy-result-btn" class="btn btn-sm btn-outline-primary" disabled>
+                        <i class="fas fa-copy me-1"></i>复制
+                    </button>
+                    <button id="save-result-btn" class="btn btn-sm btn-outline-success" disabled>
+                        <i class="fas fa-save me-1"></i>保存
+                    </button>
+                    <button id="clear-result-btn" class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="fas fa-trash me-1"></i>清空
+                    </button>
+                    <button id="compare-btn" class="btn btn-sm btn-outline-info" disabled>
+                        <i class="fas fa-columns me-1"></i>对比
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- 处理状态 -->
+                <div id="processing-status" class="alert alert-info" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span id="processing-message">正在处理中...</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div id="processing-progress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- 结果显示区域 -->
+                <div id="result-container">
+                    <!-- 单列显示 -->
+                    <div id="single-view">
+                        <textarea id="result-text" class="form-control" rows="12" placeholder="处理结果将显示在这里..." readonly></textarea>
+                    </div>
+                    
+                    <!-- 对比显示 -->
+                    <div id="compare-view" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">原文</h6>
+                                <textarea id="original-compare" class="form-control" rows="12" readonly></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">处理结果</h6>
+                                <textarea id="result-compare" class="form-control" rows="12" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 结果统计 -->
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">
+                        结果字数: <span id="result-char-count">0</span> | 词数: <span id="result-word-count">0</span>
+                    </small>
+                    <small class="text-muted">
+                        处理时间: <span id="processing-time">-</span> | 
+                        模型: <span id="used-model">-</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 处理历史 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>处理历史
+                </h5>
+                <button id="clear-history-btn" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash me-1"></i>清空历史
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="processing-history" class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>处理类型</th>
+                                <th>模型</th>
+                                <th>原文预览</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">暂无处理历史</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let socket;
+let isProcessing = false;
+let processingStartTime;
+let currentTaskId;
+
+// 预定义模板
+const templates = {
+    polish: '请润色以下文本，使其更加流畅、准确和优雅：',
+    formal: '请将以下文本改写为正式、专业的表达方式：',
+    casual: '请将以下文本改写为轻松、口语化的表达方式：',
+    academic: '请将以下文本改写为学术性、严谨的表达方式：',
+    simplify: '请简化以下文本，使其更加简洁明了：',
+    expand: '请详细展开以下文本，增加更多细节和说明：'
+};
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    bindEventListeners();
+    loadProcessingHistory();
+    updateCharCounts();
+});
+
+// 初始化Socket.IO连接
+function initializeSocket() {
+    socket = io();
+    
+    socket.on('text_processing_start', function(data) {
+        showProcessingStatus('开始处理文本...', 10);
+    });
+    
+    socket.on('text_processing_progress', function(data) {
+        showProcessingStatus(data.message, data.progress);
+    });
+    
+    socket.on('text_processing_chunk', function(data) {
+        appendResultText(data.chunk);
+    });
+    
+    socket.on('text_processing_complete', function(data) {
+        completeProcessing(data.result);
+    });
+    
+    socket.on('text_processing_error', function(data) {
+        showProcessingError(data.error);
+    });
+}
+
+// 绑定事件监听器
+function bindEventListeners() {
+    // 文本输入相关
+    document.getElementById('input-text').addEventListener('input', updateCharCounts);
+    document.getElementById('paste-btn').addEventListener('click', pasteText);
+    document.getElementById('clear-input-btn').addEventListener('click', clearInput);
+    document.getElementById('load-file-btn').addEventListener('click', () => {
+        document.getElementById('file-input').click();
+    });
+    document.getElementById('file-input').addEventListener('change', loadFile);
+    
+    // 处理选项相关
+    document.getElementById('task-type').addEventListener('change', handleTaskTypeChange);
+    document.getElementById('process-btn').addEventListener('click', startProcessing);
+    
+    // 模板按钮
+    document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            applyTemplate(this.dataset.template);
+        });
+    });
+    
+    // 结果操作按钮
+    document.getElementById('copy-result-btn').addEventListener('click', copyResult);
+    document.getElementById('save-result-btn').addEventListener('click', saveResult);
+    document.getElementById('clear-result-btn').addEventListener('click', clearResult);
+    document.getElementById('compare-btn').addEventListener('click', toggleCompareView);
+    
+    // 历史记录
+    document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
+}
+
+// 处理任务类型变化
+function handleTaskTypeChange() {
+    const taskType = document.getElementById('task-type').value;
+    const customContainer = document.getElementById('custom-prompt-container');
+    const translationOptions = document.getElementById('translation-options');
+    
+    // 显示/隐藏自定义提示词
+    if (taskType === 'custom') {
+        customContainer.style.display = 'block';
+    } else {
+        customContainer.style.display = 'none';
+    }
+    
+    // 显示/隐藏翻译选项
+    if (taskType === 'translate') {
+        translationOptions.style.display = 'block';
+    } else {
+        translationOptions.style.display = 'none';
+    }
+}
+
+// 应用模板
+function applyTemplate(templateKey) {
+    const template = templates[templateKey];
+    if (template) {
+        document.getElementById('task-type').value = 'custom';
+        document.getElementById('custom-prompt').value = template;
+        handleTaskTypeChange();
+        showAlert('模板已应用', 'success');
+    }
+}
+
+// 粘贴文本
+async function pasteText() {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('input-text').value = text;
+        updateCharCounts();
+        showAlert('文本已粘贴', 'success');
+    } catch (error) {
+        showAlert('无法访问剪贴板', 'warning');
+    }
+}
+
+// 清空输入
+function clearInput() {
+    if (confirm('确定要清空输入文本吗？')) {
+        document.getElementById('input-text').value = '';
+        updateCharCounts();
+        showAlert('输入已清空', 'info');
+    }
+}
+
+// 加载文件
+function loadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('input-text').value = e.target.result;
+        updateCharCounts();
+        showAlert(`文件 ${file.name} 已加载`, 'success');
+    };
+    reader.readAsText(file);
+}
+
+// 开始处理
+function startProcessing() {
+    const inputText = document.getElementById('input-text').value.trim();
+    if (!inputText) {
+        showAlert('请输入需要处理的文本', 'warning');
+        return;
+    }
+    
+    if (isProcessing) {
+        showAlert('正在处理中，请稍候', 'info');
+        return;
+    }
+    
+    const taskType = document.getElementById('task-type').value;
+    const model = document.getElementById('model-select').value;
+    const streamOutput = document.getElementById('stream-output').checked;
+    
+    let prompt = '';
+    let options = {};
+    
+    // 构建处理参数
+    if (taskType === 'custom') {
+        prompt = document.getElementById('custom-prompt').value.trim();
+        if (!prompt) {
+            showAlert('请输入自定义提示词', 'warning');
+            return;
+        }
+    } else if (taskType === 'translate') {
+        const sourceLang = document.getElementById('source-lang').value;
+        const targetLang = document.getElementById('target-lang').value;
+        options.source_language = sourceLang;
+        options.target_language = targetLang;
+    }
+    
+    // 准备请求数据
+    const requestData = {
+        text: inputText,
+        task_type: taskType,
+        model: model,
+        prompt: prompt,
+        stream: streamOutput,
+        options: options
+    };
+    
+    // 开始处理
+    isProcessing = true;
+    processingStartTime = Date.now();
+    currentTaskId = Date.now().toString();
+    
+    // 清空结果区域
+    document.getElementById('result-text').value = '';
+    updateResultCharCounts();
+    
+    // 显示处理状态
+    showProcessingStatus('准备处理...', 0);
+    
+    // 更新UI状态
+    updateProcessingUI(true);
+    
+    // 发送处理请求
+    if (streamOutput) {
+        socket.emit('process_text_stream', requestData);
+    } else {
+        fetch('/api/process_text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                completeProcessing(data.result);
+            } else {
+                showProcessingError(data.error);
+            }
+        })
+        .catch(error => {
+            showProcessingError('请求失败: ' + error.message);
+        });
+    }
+}
+
+// 显示处理状态
+function showProcessingStatus(message, progress) {
+    const statusDiv = document.getElementById('processing-status');
+    const messageSpan = document.getElementById('processing-message');
+    const progressBar = document.getElementById('processing-progress');
+    
+    statusDiv.style.display = 'block';
+    messageSpan.textContent = message;
+    progressBar.style.width = progress + '%';
+}
+
+// 隐藏处理状态
+function hideProcessingStatus() {
+    document.getElementById('processing-status').style.display = 'none';
+}
+
+// 追加结果文本（流式输出）
+function appendResultText(chunk) {
+    const resultTextArea = document.getElementById('result-text');
+    resultTextArea.value += chunk;
+    resultTextArea.scrollTop = resultTextArea.scrollHeight;
+    updateResultCharCounts();
+}
+
+// 完成处理
+function completeProcessing(result) {
+    isProcessing = false;
+    hideProcessingStatus();
+    
+    // 设置结果文本
+    if (!document.getElementById('stream-output').checked) {
+        document.getElementById('result-text').value = result;
+    }
+    
+    // 更新UI状态
+    updateProcessingUI(false);
+    updateResultCharCounts();
+    
+    // 计算处理时间
+    const processingTime = ((Date.now() - processingStartTime) / 1000).toFixed(1);
+    document.getElementById('processing-time').textContent = processingTime + 's';
+    document.getElementById('used-model').textContent = document.getElementById('model-select').value;
+    
+    // 添加到历史记录
+    addToHistory({
+        timestamp: new Date(),
+        taskType: document.getElementById('task-type').value,
+        model: document.getElementById('model-select').value,
+        originalText: document.getElementById('input-text').value,
+        resultText: document.getElementById('result-text').value,
+        processingTime: processingTime
+    });
+    
+    showAlert('处理完成', 'success');
+}
+
+// 显示处理错误
+function showProcessingError(error) {
+    isProcessing = false;
+    hideProcessingStatus();
+    updateProcessingUI(false);
+    showAlert('处理失败: ' + error, 'danger');
+}
+
+// 更新处理UI状态
+function updateProcessingUI(processing) {
+    const processBtn = document.getElementById('process-btn');
+    const resultButtons = ['copy-result-btn', 'save-result-btn', 'clear-result-btn', 'compare-btn'];
+    
+    if (processing) {
+        processBtn.disabled = true;
+        processBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>处理中...';
+    } else {
+        processBtn.disabled = false;
+        processBtn.innerHTML = '<i class="fas fa-play me-2"></i>开始处理';
+        
+        // 启用结果操作按钮
+        const hasResult = document.getElementById('result-text').value.trim() !== '';
+        resultButtons.forEach(btnId => {
+            document.getElementById(btnId).disabled = !hasResult;
+        });
+    }
+}
+
+// 复制结果
+function copyResult() {
+    const resultText = document.getElementById('result-text').value;
+    navigator.clipboard.writeText(resultText).then(() => {
+        showAlert('结果已复制到剪贴板', 'success');
+    }).catch(() => {
+        showAlert('复制失败', 'danger');
+    });
+}
+
+// 保存结果
+function saveResult() {
+    const resultText = document.getElementById('result-text').value;
+    if (!resultText.trim()) {
+        showAlert('没有可保存的内容', 'warning');
+        return;
+    }
+    
+    const blob = new Blob([resultText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `processed_text_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('文件已保存', 'success');
+}
+
+// 清空结果
+function clearResult() {
+    if (confirm('确定要清空处理结果吗？')) {
+        document.getElementById('result-text').value = '';
+        updateResultCharCounts();
+        updateProcessingUI(false);
+        showAlert('结果已清空', 'info');
+    }
+}
+
+// 切换对比视图
+function toggleCompareView() {
+    const singleView = document.getElementById('single-view');
+    const compareView = document.getElementById('compare-view');
+    const compareBtn = document.getElementById('compare-btn');
+    
+    if (compareView.style.display === 'none') {
+        // 切换到对比视图
+        singleView.style.display = 'none';
+        compareView.style.display = 'block';
+        compareBtn.innerHTML = '<i class="fas fa-list me-1"></i>单列';
+        
+        // 填充对比内容
+        document.getElementById('original-compare').value = document.getElementById('input-text').value;
+        document.getElementById('result-compare').value = document.getElementById('result-text').value;
+    } else {
+        // 切换到单列视图
+        singleView.style.display = 'block';
+        compareView.style.display = 'none';
+        compareBtn.innerHTML = '<i class="fas fa-columns me-1"></i>对比';
+    }
+}
+
+// 更新字数统计
+function updateCharCounts() {
+    const inputText = document.getElementById('input-text').value;
+    const inputCharCount = inputText.length;
+    const inputWordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
+    
+    document.getElementById('input-char-count').textContent = inputCharCount;
+    document.getElementById('input-word-count').textContent = inputWordCount;
+}
+
+// 更新结果字数统计
+function updateResultCharCounts() {
+    const resultText = document.getElementById('result-text').value;
+    const resultCharCount = resultText.length;
+    const resultWordCount = resultText.trim() ? resultText.trim().split(/\s+/).length : 0;
+    
+    document.getElementById('result-char-count').textContent = resultCharCount;
+    document.getElementById('result-word-count').textContent = resultWordCount;
+}
+
+// 添加到历史记录
+function addToHistory(entry) {
+    const history = getProcessingHistory();
+    entry.id = Date.now();
+    history.unshift(entry);
+    
+    // 限制历史记录数量
+    if (history.length > 50) {
+        history.splice(50);
+    }
+    
+    localStorage.setItem('processingHistory', JSON.stringify(history));
+    renderProcessingHistory();
+}
+
+// 获取处理历史
+function getProcessingHistory() {
+    const history = localStorage.getItem('processingHistory');
+    return history ? JSON.parse(history) : [];
+}
+
+// 加载处理历史
+function loadProcessingHistory() {
+    renderProcessingHistory();
+}
+
+// 渲染处理历史
+function renderProcessingHistory() {
+    const history = getProcessingHistory();
+    const tbody = document.getElementById('history-tbody');
+    
+    if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无处理历史</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    history.forEach(entry => {
+        const time = new Date(entry.timestamp).toLocaleString();
+        const preview = entry.originalText.substring(0, 50) + (entry.originalText.length > 50 ? '...' : '');
+        
+        html += `
+            <tr>
+                <td>${time}</td>
+                <td><span class="badge bg-primary">${getTaskTypeName(entry.taskType)}</span></td>
+                <td><span class="badge bg-secondary">${entry.model}</span></td>
+                <td class="text-truncate" style="max-width: 200px;">${preview}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="loadHistoryEntry(${entry.id})">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHistoryEntry(${entry.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// 获取任务类型名称
+function getTaskTypeName(taskType) {
+    const names = {
+        polish: '润色',
+        correct: '纠错',
+        translate: '翻译',
+        summarize: '摘要',
+        expand: '扩展',
+        rewrite: '改写',
+        custom: '自定义'
+    };
+    return names[taskType] || taskType;
+}
+
+// 加载历史记录条目
+function loadHistoryEntry(id) {
+    const history = getProcessingHistory();
+    const entry = history.find(item => item.id === id);
+    
+    if (entry) {
+        document.getElementById('input-text').value = entry.originalText;
+        document.getElementById('result-text').value = entry.resultText;
+        updateCharCounts();
+        updateResultCharCounts();
+        updateProcessingUI(false);
+        showAlert('已加载历史记录', 'info');
+    }
+}
+
+// 删除历史记录条目
+function deleteHistoryEntry(id) {
+    if (confirm('确定要删除这条历史记录吗？')) {
+        let history = getProcessingHistory();
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('processingHistory', JSON.stringify(history));
+        renderProcessingHistory();
+        showAlert('历史记录已删除', 'info');
+    }
+}
+
+// 清空历史记录
+function clearHistory() {
+    if (confirm('确定要清空所有处理历史吗？')) {
+        localStorage.removeItem('processingHistory');
+        renderProcessingHistory();
+        showAlert('处理历史已清空', 'info');
+    }
+}
+
+// 显示提示信息
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}
