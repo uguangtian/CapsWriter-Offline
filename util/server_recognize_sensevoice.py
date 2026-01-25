@@ -6,7 +6,7 @@ from util.chinese_itn import chinese_to_num
 from util.config import ServerConfig as Config
 from util.format_tools import adjust_space
 from util.server_classes import Result, Task
-from rich import console
+from util.server_cosmic import console
 
 results = {}
 
