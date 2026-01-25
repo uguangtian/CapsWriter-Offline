@@ -164,10 +164,10 @@ class ParaformerArgs:
 
 # FunASR-Nano 参数配置
 class FunASRNanoArgs:
-    encoder_adaptor: str = config.get("funasr_nano_args").get("encoder_adaptor")
-    llm: str = config.get("funasr_nano_args").get("llm")
-    embedding: str = config.get("funasr_nano_args").get("embedding")
-    tokenizer: str = config.get("funasr_nano_args").get("tokenizer")
+    encoder_adaptor: str = str(ModelPaths.funasr_nano_dir / "encoder_adaptor.int8.onnx")
+    llm: str = str(ModelPaths.funasr_nano_dir / "llm_int8" / "llm.int8.onnx")
+    embedding: str = str(ModelPaths.funasr_nano_dir / "embedding.int8.onnx")
+    tokenizer: str = str(ModelPaths.funasr_nano_dir / "Qwen3-0.6B")
     num_threads: int = config.get("funasr_nano_args").get("num_threads")
     sample_rate: int = config.get("funasr_nano_args").get("sample_rate")
     feature_dim: int = config.get("funasr_nano_args").get("feature_dim")
