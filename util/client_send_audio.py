@@ -154,7 +154,7 @@ async def send_audio():
                         "source": "mic",
                         #"data": base64.b64encode(processed_data.tobytes()).decode("utf-8"),
                         "data": base64.b64encode(  # 数据
-                            np.mean(data[::3], axis=1).tobytes()
+                            np.mean(data[::3], axis=1).astype(np.float32).tobytes()
                         ).decode("utf-8"),
                         #"samplerate": 16000,
                     }

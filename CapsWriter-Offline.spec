@@ -137,12 +137,12 @@ app = BUNDLE(
     name='CapsWriter-Offline.app',
     icon=None,  # 暂时移除图标以避免格式问题
     bundle_identifier='com.capswriter.offline',
-    version='test-12.0.0',
+    version='1.0.0',
     info_plist={
         'CFBundleName': 'CapsWriter-Offline',
         'CFBundleDisplayName': 'CapsWriter离线版',
-        'CFBundleVersion': 'test-12.0.0',
-        'CFBundleShortVersionString': 'test-12.0.0',
+        'CFBundleVersion': '1.0.0',
+        'CFBundleShortVersionString': '1.0.0',
         'CFBundleIdentifier': 'com.capswriter.offline',
         'CFBundleExecutable': 'CapsWriter-Offline',
         # 'CFBundleIconFile': 'appicon.ico',  # 暂时注释掉图标文件

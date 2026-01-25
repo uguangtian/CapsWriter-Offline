@@ -3,7 +3,7 @@ import time
 from multiprocessing import Queue
 from platform import system
 
-from util.config import ModelPaths, ParaformerArgs, SenseVoiceArgs
+from util.config import ModelPaths, ParaformerArgs, SenseVoiceArgs, FunASRNanoArgs
 from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
 from util.server_cosmic import console
@@ -51,6 +51,16 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
             recognizer = sherpa_onnx.OfflineRecognizer.from_paraformer(
                 **paraformer_args
             )
+        elif Config.model == "FunASRNano":
+            funasr_nano_args = {
+                key: value
+                for key, value in FunASRNanoArgs.__dict__.items()
+                if not key.startswith("_")
+            }
+            console.print(f"[yellow]尝试加载 FunASR-Nano 模型，参数: {funasr_nano_args}")
+            recognizer = sherpa_onnx.OfflineRecognizer.from_funasr_nano(
+                **funasr_nano_args
+            )
         else:
             sense_voice_args = {
                 key: value
@@ -85,9 +95,9 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
         queue_out.put(False)
         return
 
+    # 载入标点模型
+    punc_model = None
     if Config.model == "Paraformer":
-        # 载入标点模型
-        punc_model = None
         if Config.format_punc and CT_Transformer is not None:
             console.print(
                 "[yellow]标点模型载入中，载入时长约 50 秒，请耐心等待...", end="\r"
@@ -139,6 +149,10 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
         if Config.model == "Paraformer":
             console.print("[DEBUG] 使用 Paraformer 模型处理音频", style="cyan")
             result = paraformerRecognize(recognizer, punc_model, task)  # 执行识别
+        elif Config.model == "FunASRNano":
+            console.print("[DEBUG] 使用 FunASR-Nano 模型处理音频", style="cyan")
+            # FunASR-Nano 和 SenseVoice 使用相同的处理逻辑
+            result = recognize(recognizer, task)  # 执行识别
         else:
             console.print(f"[DEBUG] 使用 {Config.model} 模型处理音频", style="cyan")
             result = recognize(recognizer, task)  # 执行识别

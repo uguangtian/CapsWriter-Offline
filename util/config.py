@@ -132,6 +132,7 @@ class ModelPaths:
     paraformer_tokens_path: Path = Path(config.get("model_paths").get("paraformer_tokens_path"))
     punc_model_dir: Path = Path(config.get("model_paths").get("punc_model_dir"))
     opus_mt_dir: Path = Path(config.get("model_paths").get("opus_mt_dir"))
+    funasr_nano_dir: Path = Path(config.get("model_paths").get("funasr_nano_dir"))
 
 
 # SenseVoice 参数配置
@@ -159,6 +160,20 @@ class ParaformerArgs:
     feature_dim: int = config.get("paraformer_args").get("feature_dim")
     decoding_method: str = config.get("paraformer_args").get("decoding_method")
     debug: bool = config.get("paraformer_args").get("debug")
+
+
+# FunASR-Nano 参数配置
+class FunASRNanoArgs:
+    encoder_adaptor: str = config.get("funasr_nano_args").get("encoder_adaptor")
+    llm: str = config.get("funasr_nano_args").get("llm")
+    embedding: str = config.get("funasr_nano_args").get("embedding")
+    tokenizer: str = config.get("funasr_nano_args").get("tokenizer")
+    num_threads: int = config.get("funasr_nano_args").get("num_threads")
+    sample_rate: int = config.get("funasr_nano_args").get("sample_rate")
+    feature_dim: int = config.get("funasr_nano_args").get("feature_dim")
+    decoding_method: str = config.get("funasr_nano_args").get("decoding_method")
+    debug: bool = config.get("funasr_nano_args").get("debug")
+    provider: str = config.get("funasr_nano_args").get("provider")
 
 
 # Claude 配置
@@ -217,6 +232,7 @@ def print_config():
         ModelPaths,
         SenseVoiceArgs,
         ParaformerArgs,
+        FunASRNanoArgs,
     ]
 
     for config_class in config_classes:

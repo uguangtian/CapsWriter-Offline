@@ -1,7 +1,7 @@
 # ======================服务端配置==================================
 [server]
-model = "Paraformer"
-# 'Sensevoice' 或 'Paraformer'
+model = "FunASRNano"
+# 'Sensevoice', 'Paraformer', 或 'FunASRNano'
 # Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
 # 比如转录字幕不完整，识别结果不准确、丢失标点等
 # 如果你只说中文普通话，建议使用 'Paraformer' 模型
@@ -347,6 +347,9 @@ max_tokens = 2000
 model_dir = "models"
 # 模型文件目录
 
+funasr_nano_dir = "models/FunASR-nano-onnx"
+# FunASR-Nano 模型目录
+
 sensevoice_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
 # SenseVoice 模型路径
 
@@ -404,6 +407,40 @@ rule_fsts = ""
 
 rule_fars = ""
 # 自定义规则 FAR 文件路径
+
+
+# ======================FunASR-Nano 参数配置==================================
+
+[funasr_nano_args]
+encoder_adaptor = "${model_paths.funasr_nano_dir}/encoder_adaptor.int8.onnx"
+# Encoder Adaptor 模型路径
+
+llm = "${model_paths.funasr_nano_dir}/llm_int8/llm.int8.onnx"
+# LLM 模型路径
+
+embedding = "${model_paths.funasr_nano_dir}/embedding.int8.onnx"
+# Embedding 模型路径
+
+tokenizer = "${model_paths.funasr_nano_dir}/Qwen3-0.6B"
+# Tokenizer 目录路径
+
+num_threads = 6
+# 使用的线程数
+
+sample_rate = 16000
+# 采样率
+
+feature_dim = 80
+# 特征维度
+
+decoding_method = "greedy_search"
+# 解码方法
+
+debug = false
+# 是否启用调试模式
+
+provider = "cpu"
+# 推理设备（cpu, cuda, coreml）
 
 
 # ======================Paraformer 参数配置==================================
