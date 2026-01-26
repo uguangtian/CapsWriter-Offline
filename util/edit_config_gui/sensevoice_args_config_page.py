@@ -190,21 +190,21 @@ class SenseVoiceArgsConfigPage(SiPage):
             self.language.addOption("ko")
             self.language.addOption("yue")
             self.language.menu().setShowIcon(False)
-            match str(self.config["sensevoice_args"]["language"]):
-                case "auto":
-                    self.language.menu().setIndex(0)
-                case "zh":
-                    self.language.menu().setIndex(1)
-                case "en":
-                    self.language.menu().setIndex(2)
-                case "ja":
-                    self.language.menu().setIndex(3)
-                case "ko":
-                    self.language.menu().setIndex(4)
-                case "yue":
-                    self.language.menu().setIndex(5)
-                case _:
-                    self.language.menu().setIndex(0)
+            lang = str(self.config["sensevoice_args"]["language"])
+            if lang == "auto":
+                self.language.menu().setIndex(0)
+            elif lang == "zh":
+                self.language.menu().setIndex(1)
+            elif lang == "en":
+                self.language.menu().setIndex(2)
+            elif lang == "ja":
+                self.language.menu().setIndex(3)
+            elif lang == "ko":
+                self.language.menu().setIndex(4)
+            elif lang == "yue":
+                self.language.menu().setIndex(5)
+            else:
+                self.language.menu().setIndex(0)
             self.language_linear_attaching = SiOptionCardLinear(self)
             self.language_linear_attaching.setTitle("识别语言", '默认值："auto"')
             self.language_linear_attaching.load(
