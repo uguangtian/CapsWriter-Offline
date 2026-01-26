@@ -393,7 +393,7 @@ decoding_method = "greedy_search"
 debug = false
 # 是否启用调试模式
 
-provider = "cpu"
+provider = "coreml"
 # 推理设备（cpu, cuda, coreml）
 # M系列芯片(M1/M2/M3/M4等)可以使用 "coreml" 加速
 # 如果使用 "coreml" 遇到报错，请改回 "cpu"
@@ -441,7 +441,7 @@ decoding_method = "greedy_search"
 debug = false
 # 是否启用调试模式
 
-provider = "cpu"
+provider = "coreml"
 # 推理设备（cpu, cuda, coreml）
 
 
