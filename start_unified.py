@@ -32,6 +32,10 @@ class UnifiedLauncher:
         
     def check_dependencies(self):
         """检查必要的依赖文件是否存在"""
+        # 如果是打包后的环境，跳过文件检查
+        if getattr(sys, 'frozen', False):
+            return True
+
         required_files = [
             "core_server.py",
             "start_server_gui.py", 
@@ -59,6 +63,14 @@ class UnifiedLauncher:
             return True
             
         try:
+            # 如果是打包环境
+            if getattr(sys, 'frozen', False):
+                # 调用自身，传入 --internal-run-server 参数
+                # 注意：这里我们使用 sys.executable 启动新进程
+                self.server_process = subprocess.Popen([sys.executable, "--internal-run-server"])
+                print("服务端启动成功")
+                return True
+
             # 在 macOS/Linux 上默认使用核心版本，在 Windows 上可以选择 GUI 版本
             if gui_mode and not self.background_mode and sys.platform == "win32":
                 # 启动GUI版本的服务端（仅Windows）
@@ -92,6 +104,13 @@ class UnifiedLauncher:
             return True
             
         try:
+            # 如果是打包环境
+            if getattr(sys, 'frozen', False):
+                # 调用自身，传入 --internal-run-client 参数
+                self.client_process = subprocess.Popen([sys.executable, "--internal-run-client"])
+                print("客户端启动成功")
+                return True
+
             # 在 macOS/Linux 上默认使用核心版本，在 Windows 上可以选择 GUI 版本
             if gui_mode and sys.platform == "win32":
                 # 启动GUI版本的客户端（仅Windows）
@@ -208,6 +227,17 @@ class UnifiedLauncher:
 
 
 def main():
+    # MacOS 打包应用自动打开终端
+    if sys.platform == 'darwin' and getattr(sys, 'frozen', False) and not sys.stdin.isatty():
+        try:
+            # 使用 open -a Terminal 重新启动自身
+            # sys.executable 指向打包后的二进制文件
+            # 我们直接让 Terminal 打开这个可执行文件
+            subprocess.Popen(['open', '-a', 'Terminal', sys.executable])
+            sys.exit(0)
+        except Exception as e:
+            print(f"尝试打开终端失败: {e}")
+
     parser = argparse.ArgumentParser(
         description="CapsWriter-Offline 统一启动器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -242,7 +272,26 @@ def main():
         version="CapsWriter-Offline 统一启动器 v1.0"
     )
     
+    # 内部使用的参数，用于打包环境下的多进程启动
+    parser.add_argument("--internal-run-server", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--internal-run-client", action="store_true", help=argparse.SUPPRESS)
+    
     args = parser.parse_args()
+
+    # 处理内部调用
+    if args.internal_run_server:
+        # 模拟 python core_server.py 的行为
+        sys.argv = [sys.argv[0]]
+        import core_server
+        core_server.init()
+        sys.exit(0)
+
+    if args.internal_run_client:
+        # 模拟 python core_client.py 的行为
+        sys.argv = [sys.argv[0]]
+        import core_client
+        core_client.init_mic()
+        sys.exit(0)
     
     # 检查参数冲突
     if args.server_only and args.client_only:

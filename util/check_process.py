@@ -37,6 +37,11 @@ def check_process(name):
         except FileNotFoundError:
             print("未找到ps命令。")
             return False
+        except Exception as e:
+            # 在某些 macOS 环境下（如沙盒或打包后），ps 可能无权限执行
+            # 此时我们假设进程未运行，或者无法检测，避免程序崩溃
+            # print(f"无法执行 ps 命令: {e}")
+            return False
                 
     return False
 
