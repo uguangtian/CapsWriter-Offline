@@ -268,10 +268,16 @@ def main():
     except KeyboardInterrupt:
         print("\n用户中断")
         launcher.cleanup()
+        if getattr(sys, 'frozen', False):
+            input("按回车键退出...")
         sys.exit(0)
     except Exception as e:
         print(f"未预期的错误: {e}")
+        import traceback
+        traceback.print_exc()
         launcher.cleanup()
+        if getattr(sys, 'frozen', False):
+            input("按回车键退出...")
         sys.exit(1)
 
 

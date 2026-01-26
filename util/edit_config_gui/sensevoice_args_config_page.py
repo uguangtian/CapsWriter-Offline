@@ -97,15 +97,15 @@ class SenseVoiceArgsConfigPage(SiPage):
             self.sample_rate.addOption("44100")
             self.sample_rate.addOption("48000")
             self.sample_rate.menu().setShowIcon(False)
-            match str(self.config["sensevoice_args"]["sample_rate"]):
-                case "16000":
-                    self.sample_rate.menu().setIndex(0)
-                case "44100":
-                    self.sample_rate.menu().setIndex(1)
-                case "48000":
-                    self.sample_rate.menu().setIndex(2)
-                case _:
-                    self.sample_rate.menu().setIndex(0)
+            sample_rate = str(self.config["sensevoice_args"]["sample_rate"])
+            if sample_rate == "16000":
+                self.sample_rate.menu().setIndex(0)
+            elif sample_rate == "44100":
+                self.sample_rate.menu().setIndex(1)
+            elif sample_rate == "48000":
+                self.sample_rate.menu().setIndex(2)
+            else:
+                self.sample_rate.menu().setIndex(0)
             self.sample_rate_linear_attaching = SiOptionCardLinear(self)
             self.sample_rate_linear_attaching.setTitle("采样率", '默认值："16000"')
             self.sample_rate_linear_attaching.load(
@@ -164,15 +164,15 @@ class SenseVoiceArgsConfigPage(SiPage):
             self.provider.addOption("cuda")
             self.provider.addOption("coreml")
             self.provider.menu().setShowIcon(False)
-            match str(self.config["sensevoice_args"]["provider"]):
-                case "cpu":
-                    self.provider.menu().setIndex(0)
-                case "cuda":
-                    self.provider.menu().setIndex(1)
-                case "coreml":
-                    self.provider.menu().setIndex(2)
-                case _:
-                    self.provider.menu().setIndex(0)
+            provider = str(self.config["sensevoice_args"]["provider"])
+            if provider == "cpu":
+                self.provider.menu().setIndex(0)
+            elif provider == "cuda":
+                self.provider.menu().setIndex(1)
+            elif provider == "coreml":
+                self.provider.menu().setIndex(2)
+            else:
+                self.provider.menu().setIndex(0)
             self.provider_linear_attaching = SiOptionCardLinear(self)
             self.provider_linear_attaching.setTitle("推理设备", '默认值："cpu"')
             self.provider_linear_attaching.load(

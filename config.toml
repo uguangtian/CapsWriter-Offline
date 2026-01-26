@@ -347,6 +347,7 @@ max_tokens = 2000
 model_dir = "models"
 # 模型文件目录
 
+#funasr_nano_dir = "models/Fun-ASR-Nano-2512-GGUF"
 funasr_nano_dir = "models/FunASR-nano-onnx"
 # FunASR-Nano 模型目录
 
@@ -415,16 +416,20 @@ rule_fars = ""
 # ======================FunASR-Nano 参数配置==================================
 
 [funasr_nano_args]
-encoder_adaptor = "${model_paths.funasr_nano_dir}/encoder_adaptor.int8.onnx"
+#encoder_adaptor = "${model_paths.funasr_nano_dir}/encoder_adaptor.int8.onnx"
+encoder_adaptor = "encoder_adaptor.int8.onnx"
+#encoder_adaptor = "Fun-ASR-Nano-Encoder-Adaptor.fp32.onnx"
 # Encoder Adaptor 模型路径
 
-llm = "${model_paths.funasr_nano_dir}/llm_int8/llm.int8.onnx"
+#llm = "Fun-ASR-Nano-Decoder.q8_0.gguf"
+llm = "llm_int8/llm.int8.onnx"
 # LLM 模型路径
 
-embedding = "${model_paths.funasr_nano_dir}/embedding.int8.onnx"
+embedding = "embedding.int8.onnx"
+#embedding = "embedding.int8.onnx"
 # Embedding 模型路径
 
-tokenizer = "${model_paths.funasr_nano_dir}/Qwen3-0.6B"
+#tokenizer = "${model_paths.funasr_nano_dir}/Qwen3-0.6B"
 # Tokenizer 目录路径
 
 num_threads = 6
@@ -442,7 +447,7 @@ decoding_method = "greedy_search"
 debug = false
 # 是否启用调试模式
 
-provider = "coreml"
+provider = "cpu"
 # 推理设备（cpu, cuda, coreml）
 
 
