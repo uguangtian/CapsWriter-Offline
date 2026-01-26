@@ -36,9 +36,7 @@ cat > "$PLIST_FILE" << EOF
     
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/open</string>
-        <string>-a</string>
-        <string>Terminal</string>
+        <string>/bin/bash</string>
         <string>$PROJECT_DIR/launch_in_terminal.sh</string>
     </array>
     
