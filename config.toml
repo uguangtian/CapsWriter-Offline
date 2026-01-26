@@ -395,6 +395,8 @@ debug = false
 
 provider = "cpu"
 # 推理设备（cpu, cuda, coreml）
+# M系列芯片(M1/M2/M3/M4等)可以使用 "coreml" 加速
+# 如果使用 "coreml" 遇到报错，请改回 "cpu"
 
 language = "auto"
 # 识别语言（auto, zh, en, ja, ko, yue）
