@@ -1,5 +1,6 @@
 # 1. 导入必要库
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from threading import Thread
 import torch
 import sys
 import os
@@ -16,7 +17,7 @@ model = None
 
 if is_mlx:
     try:
-        from mlx_lm import load, generate
+        from mlx_lm import load, generate, stream_generate
         print(f"检测到 MLX 模型，正在使用 mlx-lm 加载：{model_path}")
         model, tokenizer = load(model_path)
     except ImportError:
@@ -84,6 +85,7 @@ while True:
                  input_text = "\n".join([f"{m['role']}: {m['content']}" for m in messages]) + "\nassistant:"
 
         response = ""
+        print("模型: ", end="", flush=True)
         
         if is_mlx:
             # MLX 推理
@@ -95,32 +97,35 @@ while True:
             
             # 注意：mlx_lm.generate 不支持直接传入历史 messages，需要自己拼接 prompt
             # 上面已经拼好了 input_text
-            response = generate(
+            for response_chunk in stream_generate(
                 model, 
                 tokenizer, 
                 prompt=input_text, 
-                verbose=False, 
                 max_tokens=512,
                 sampler=sampler
-            )
+            ):
+                print(response_chunk.text, end="", flush=True)
+                response += response_chunk.text
         else:
             # Transformers 推理
             inputs = tokenizer([input_text], return_tensors="pt").to(device)
-            
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=512,
-                temperature=0.7,
-                do_sample=True,
+            streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+            generation_kwargs = dict(
+                inputs, 
+                streamer=streamer, 
+                max_new_tokens=512, 
+                temperature=0.7, 
+                do_sample=True, 
                 pad_token_id=tokenizer.eos_token_id
             )
+            thread = Thread(target=model.generate, kwargs=generation_kwargs)
+            thread.start()
             
-            generated_ids = [
-                output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, outputs)
-            ]
-            response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+            for new_text in streamer:
+                print(new_text, end="", flush=True)
+                response += new_text
         
-        print(f"模型: {response}\n")
+        print("\n")
         
         # 添加助手回复到历史
         messages.append({"role": "assistant", "content": response})
