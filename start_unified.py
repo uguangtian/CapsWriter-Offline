@@ -228,15 +228,19 @@ class UnifiedLauncher:
 
 def main():
     # MacOS 打包应用自动打开终端
-    if sys.platform == 'darwin' and getattr(sys, 'frozen', False) and not sys.stdin.isatty():
-        try:
-            # 使用 open -a Terminal 重新启动自身
-            # sys.executable 指向打包后的二进制文件
-            # 我们直接让 Terminal 打开这个可执行文件
-            subprocess.Popen(['open', '-a', 'Terminal', sys.executable])
-            sys.exit(0)
-        except Exception as e:
-            print(f"尝试打开终端失败: {e}")
+    if sys.platform == 'darwin' and getattr(sys, 'frozen', False):
+        # 设置工作目录为可执行文件所在目录，确保能找到配置文件和模型
+        os.chdir(os.path.dirname(sys.executable))
+        
+        if not sys.stdin.isatty():
+            try:
+                # 使用 open -a Terminal 重新启动自身
+                # sys.executable 指向打包后的二进制文件
+                # 我们直接让 Terminal 打开这个可执行文件
+                subprocess.Popen(['open', '-a', 'Terminal', sys.executable])
+                sys.exit(0)
+            except Exception as e:
+                print(f"尝试打开终端失败: {e}")
 
     parser = argparse.ArgumentParser(
         description="CapsWriter-Offline 统一启动器",

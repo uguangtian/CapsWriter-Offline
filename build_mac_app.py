@@ -315,6 +315,14 @@ app = BUNDLE(
             print("✓ 已设置执行权限")
         
         print(f"✓ 应用包已创建: {app_path}")
+        
+        # 提示用户关于模型文件的信息
+        print("\n" + "="*50)
+        print("注意：模型文件(models目录)未包含在应用包中（因为体积过大）。")
+        print("请手动将 models 目录复制到应用包内的 MacOS 目录下：")
+        print(f"cp -r models {app_path}/Contents/MacOS/")
+        print("="*50 + "\n")
+        
         return True
     
     def create_dmg(self):
