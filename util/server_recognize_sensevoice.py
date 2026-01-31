@@ -87,8 +87,16 @@ def recognize(recognizer, task: Task):
         m += 1
 
     # 最后与先前的结果合并
-    result.timestamps += [t + task.offset for t in stream.result.timestamps[m:n]]
-    result.tokens += [token for token in stream.result.tokens[m:n]]
+    try:
+        new_timestamps = [t + task.offset for t in stream.result.timestamps[m:n]]
+        new_tokens = [token for token in stream.result.tokens[m:n]]
+        
+        result.timestamps += new_timestamps
+        result.tokens += new_tokens
+    except UnicodeDecodeError:
+        console.print(f"[red]警告: 识别结果包含无法解码的字符，已跳过该部分结果", style="red")
+    except Exception as e:
+        console.print(f"[red]警告: 合并结果时发生错误: {e}", style="red")
 
     # token 合并为文本
     text = "".join(result.tokens)
