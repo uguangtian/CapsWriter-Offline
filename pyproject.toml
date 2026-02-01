@@ -1,0 +1,31 @@
+[project]
+name = "capswriter-offline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "colorama>=0.4.6",
+    "flask>=3.1.2",
+    "httpx>=0.28.1",
+    "jieba>=0.42.1",
+    "keyboard>=0.13.5",
+    "librosa>=0.11.0",
+    "numpy>=2.3.5",
+    "opencc-python-reimplemented>=0.1.7",
+    "pathlib>=1.0.1",
+    "psutil>=7.2.2",
+    "pynput>=1.8.1",
+    "pyobjc>=12.1",
+    "pyperclip>=1.11.0",
+    "pypinyin>=0.55.0",
+    "requests>=2.32.5",
+    "rich>=14.3.1",
+    "sherpa-onnx>=1.12.23",
+    "sounddevice>=0.5.5",
+    "soundfile>=0.13.1",
+    "tomlkit>=0.14.0",
+    "typer>=0.21.1",
+    "watchdog>=6.0.0",
+    "websockets>=16.0",
+]

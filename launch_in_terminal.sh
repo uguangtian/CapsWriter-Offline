@@ -15,7 +15,7 @@ source "$SCRIPT_DIR/python3/bin/activate"
 
 # 启动应用
 echo "正在启动 CapsWriter-Offline..."
-python3 start_unified.py
+python3  start_unified.py
 
 # 保持终端打开
 echo "按任意键退出..."
