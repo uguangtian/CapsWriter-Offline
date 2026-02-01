@@ -25,7 +25,7 @@ offline_translate_port = "6017"
 format_num = true
 # 是否将中文数字转为阿拉伯数字
 
-format_punc = true
+format_punc = false
 # 使用 'Paraformer' 模型时，输出时是否启用标点符号引擎
 
 format_spell = true
