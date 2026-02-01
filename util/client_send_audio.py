@@ -98,11 +98,13 @@ async def send_audio():
             # print('task, type:',task["type"])
             if task["type"] == "begin":
                 time_start = task["time"]
+                print(f"[Log] 录音开始 task_id: {task_id}")
                 #continue
             elif task["type"] == "data":
                 # 在阈值之前积攒音频数据
                 if task["time"] - time_start < Config.threshold:
                     cache.append(task["data"])
+                    print(f"[Log] 积攒音频数据, 当前缓存块数: {len(cache)}, 累计时长: {(task['time'] - time_start):.2f}s")
                     continue
                     #audio_buffer.add_data(task["data"])
                     #current_time = time.time()
@@ -144,6 +146,12 @@ async def send_audio():
 
                     
                     # 发送音频数据
+                    encoded_data = base64.b64encode(  # 数据
+                            np.mean(data[::3], axis=1).astype(np.float32).tobytes()
+                        ).decode("utf-8")
+                    
+                    print(f"[Log] 发送中间音频数据, 原始长度: {len(data)}, 编码后长度: {len(encoded_data)}")
+
                     message = {
                         "task_id": task_id,
                         "seg_duration": Config.mic_seg_duration,
@@ -153,9 +161,7 @@ async def send_audio():
                         "time_frame": task["time"],
                         "source": "mic",
                         #"data": base64.b64encode(processed_data.tobytes()).decode("utf-8"),
-                        "data": base64.b64encode(  # 数据
-                            np.mean(data[::3], axis=1).astype(np.float32).tobytes()
-                        ).decode("utf-8"),
+                        "data": encoded_data,
                         #"samplerate": 16000,
                     }
                     #await send_message(message)
@@ -164,45 +170,49 @@ async def send_audio():
             #elif task["type"] in ["finish", "cancel"]:
                 # print('case 1, type finish:',task_id)
             elif task["type"] == "finish":
-                # print('case 2, type finish:',task_id)
-                # 处理剩余的缓冲数据
-                #if audio_buffer.buffer:
-                #data = []
-                #if task["type"] in ["finish"]:
-                #data = audio_buffer.get_data()
+                print(f"[Log] 录音结束, 开始处理 finish 任务, task_id: {task_id}")
+                
+                # 准备发送的数据
+                final_data = b""
                 
                 # 处理剩余的缓存数据
                 if cache:
                     data = np.concatenate(cache)
                     cache.clear()
+                    print(f"[Log] finish 任务中处理剩余缓存数据, 原始长度: {len(data)}")
                     if Config.save_audio and file:
                         write_file(file, data)
+                    
+                    # 处理音频数据用于发送
+                    try:
+                        # 确保数据格式正确
+                        if len(data.shape) > 1:
+                            processed_data = np.mean(data[::3], axis=1)
+                        else:
+                            processed_data = data[::3]
+                        
+                        final_data = base64.b64encode(
+                            processed_data.astype(np.float32).tobytes()
+                        ).decode("utf-8")
+                    except Exception as e:
+                        console.print(f"[red]处理最终音频数据出错: {e}")
+
                 elif Config.save_audio and file:
                     # 如果没有缓存数据但需要保存音频，确保文件正确关闭
                     pass
                 
                 # 发送最后的音频数据
-                # 处理最后的音频数据
-                #data = data.astype(np.float32)
-                #processed_data = data[::3]
-                #if len(data.shape) > 1:
-                #    data = np.mean(processed_data, axis=1)
-                
-                # print('start send_audio, finish, task_id:',task_id)
                 message = {
                     "task_id": task_id,
                     "seg_duration": Config.mic_seg_duration,
                     "seg_overlap": Config.mic_seg_overlap,
-                    #"is_final": False,
                     "is_final": True,
                     "time_start": time_start,
                     "time_frame": task["time"],
                     "source": "mic",
-                    #"data": base64.b64encode(processed_data.tobytes()).decode("utf-8"),
-                    "data": "",
-                    #"samplerate": 16000,
+                    "data": final_data,  # 发送剩余数据
                 }
-                print('send_audio, finish, message:',message)
+                print(f"[Log] 发送 finish 消息, task_id: {task_id}, final_data 长度: {len(final_data)}")
                 #await send_message(message)
                 task = asyncio.create_task(send_message(message))
                 break
