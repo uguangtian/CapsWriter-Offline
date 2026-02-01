@@ -100,5 +100,47 @@ class TestAudioProcessing(unittest.TestCase):
         processed = np.mean(combined[::3], axis=1)
         self.assertEqual(processed.shape[0], (chunk_size * 2) // 3)
 
+    def test_json_serialization(self):
+        """
+        Test that the message payload is JSON serializable, especially the 'data' field
+        """
+        import json
+        
+        # Case 1: With data
+        data = "base64encodedstring"
+        message = {
+            "task_id": "123",
+            "data": data,
+            "is_final": True
+        }
+        try:
+            json_str = json.dumps(message)
+            self.assertIsInstance(json_str, str)
+        except TypeError as e:
+            self.fail(f"JSON serialization failed with string data: {e}")
+            
+        # Case 2: Empty data (simulating the bug fix)
+        final_data = "" # Should be string, not bytes
+        message_empty = {
+            "task_id": "123",
+            "data": final_data,
+            "is_final": True
+        }
+        try:
+            json_str = json.dumps(message_empty)
+            self.assertIsInstance(json_str, str)
+        except TypeError as e:
+            self.fail(f"JSON serialization failed with empty string data: {e}")
+            
+        # Case 3: Bytes data (simulating the bug)
+        final_data_bytes = b"" 
+        message_bytes = {
+            "task_id": "123",
+            "data": final_data_bytes,
+            "is_final": True
+        }
+        with self.assertRaises(TypeError):
+            json.dumps(message_bytes)
+
 if __name__ == '__main__':
     unittest.main()

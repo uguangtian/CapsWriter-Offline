@@ -173,7 +173,7 @@ async def send_audio():
                 print(f"[Log] 录音结束, 开始处理 finish 任务, task_id: {task_id}")
                 
                 # 准备发送的数据
-                final_data = b""
+                final_data = ""
                 
                 # 处理剩余的缓存数据
                 if cache:
