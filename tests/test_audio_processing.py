@@ -100,6 +100,38 @@ class TestAudioProcessing(unittest.TestCase):
         processed = np.mean(combined[::3], axis=1)
         self.assertEqual(processed.shape[0], (chunk_size * 2) // 3)
 
+    def test_session_buffer_fallback(self):
+        """
+        Simulate a restart scenario: no middle segments sent,
+        final_data initially empty, but session_buffer has audio.
+        Ensure fallback produces non-empty base64.
+        """
+        # Create session buffer with 3 chunks
+        sr = 48000
+        chunks = [
+            np.random.uniform(-1.0, 1.0, (sr // 10, 2)).astype(np.float32),  # 0.1s
+            np.random.uniform(-1.0, 1.0, (sr // 5, 2)).astype(np.float32),   # 0.2s
+            np.random.uniform(-1.0, 1.0, (sr // 4, 2)).astype(np.float32),   # 0.25s
+        ]
+        session_buffer = chunks
+        any_data_sent = False
+        final_data = ""
+
+        # Fallback logic (mirrors client_send_audio.py)
+        session_audio = np.concatenate(session_buffer)
+        if len(session_audio.shape) > 1:
+            processed_session = np.mean(session_audio[::3], axis=1)
+        else:
+            processed_session = session_audio[::3]
+        final_data = base64.b64encode(
+            processed_session.astype(np.float32).tobytes()
+        ).decode("utf-8")
+
+        self.assertTrue(len(final_data) > 0)
+        # Also verify approximate sample count after downsampling
+        expected_len = (session_audio.shape[0] // 3)
+        self.assertEqual(len(processed_session), expected_len)
+
     def test_json_serialization(self):
         """
         Test that the message payload is JSON serializable, especially the 'data' field

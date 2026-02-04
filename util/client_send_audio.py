@@ -87,7 +87,9 @@ async def send_audio():
         task_id = str(uuid.uuid1())
         time_start = 0
         #audio_buffer = AudioBuffer()
-        cache = []
+        cache = []  # 阈值前的缓存（短暂）
+        session_buffer = []  # 会话级缓存，整个录音周期的所有片段
+        any_data_sent = False  # 是否发送过中间音频数据
         duration = 0
         file_path, file = "", None
         #MIN_SEND_INTERVAL = 0.1  # 最小发送间隔（秒）
@@ -104,6 +106,7 @@ async def send_audio():
                 # 在阈值之前积攒音频数据
                 if task["time"] - time_start < Config.threshold:
                     cache.append(task["data"])
+                    session_buffer.append(task["data"])
                     print(f"[Log] 积攒音频数据, 当前缓存块数: {len(cache)}, 累计时长: {(task['time'] - time_start):.2f}s")
                     continue
                     #audio_buffer.add_data(task["data"])
@@ -116,6 +119,8 @@ async def send_audio():
                     cache.clear()
                 else:
                     data = task["data"]
+                # 记录到会话缓存（用于在意外情况下补发最终数据）
+                session_buffer.append(data)
                 
                 # 创建音频文件（如果需要）
                 if Config.save_audio and not file_path:
@@ -166,6 +171,7 @@ async def send_audio():
                     }
                     #await send_message(message)
                     task = asyncio.create_task(send_message(message))
+                    any_data_sent = True
 
             #elif task["type"] in ["finish", "cancel"]:
                 # print('case 1, type finish:',task_id)
@@ -196,6 +202,20 @@ async def send_audio():
                         ).decode("utf-8")
                     except Exception as e:
                         console.print(f"[red]处理最终音频数据出错: {e}")
+                # 若没有缓存、且整个会话期间从未发送过中间数据，则使用会话缓存补发
+                if final_data == "" and not any_data_sent and session_buffer:
+                    try:
+                        session_audio = np.concatenate(session_buffer)
+                        print(f"[Log] 使用会话缓存补发最终数据, 原始长度: {len(session_audio)}")
+                        if len(session_audio.shape) > 1:
+                            processed_session = np.mean(session_audio[::3], axis=1)
+                        else:
+                            processed_session = session_audio[::3]
+                        final_data = base64.b64encode(
+                            processed_session.astype(np.float32).tobytes()
+                        ).decode("utf-8")
+                    except Exception as e:
+                        console.print(f"[red]补发最终数据时出错: {e}")
 
                 elif Config.save_audio and file:
                     # 如果没有缓存数据但需要保存音频，确保文件正确关闭
