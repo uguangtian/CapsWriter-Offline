@@ -127,20 +127,20 @@ class DeepSeekConfig:
 
 # 模型路径配置
 class ModelPaths:
-    model_dir: Path = Path(config.get("model_paths").get("model_dir"))
-    sensevoice_path: Path = Path(config.get("model_paths").get("sensevoice_path"))
-    sensevoice_tokens_path: Path = Path(config.get("model_paths").get("sensevoice_tokens_path"))
-    paraformer_path: Path = Path(config.get("model_paths").get("paraformer_path"))
-    paraformer_tokens_path: Path = Path(config.get("model_paths").get("paraformer_tokens_path"))
-    punc_model_dir: Path = Path(config.get("model_paths").get("punc_model_dir"))
-    opus_mt_dir: Path = Path(config.get("model_paths").get("opus_mt_dir"))
-    funasr_nano_dir: Path = Path(config.get("model_paths").get("funasr_nano_dir"))
+    model_dir: Path = Path(config.get("model_paths").get("model_dir")).expanduser()
+    sensevoice_path: Path = Path(config.get("model_paths").get("sensevoice_path")).expanduser()
+    sensevoice_tokens_path: Path = Path(config.get("model_paths").get("sensevoice_tokens_path")).expanduser()
+    paraformer_path: Path = Path(config.get("model_paths").get("paraformer_path")).expanduser()
+    paraformer_tokens_path: Path = Path(config.get("model_paths").get("paraformer_tokens_path")).expanduser()
+    punc_model_dir: Path = Path(config.get("model_paths").get("punc_model_dir")).expanduser()
+    opus_mt_dir: Path = Path(config.get("model_paths").get("opus_mt_dir")).expanduser()
+    funasr_nano_dir: Path = Path(config.get("model_paths").get("funasr_nano_dir")).expanduser()
 
 
 # SenseVoice 参数配置
 class SenseVoiceArgs:
-    model: str = config.get("model_paths").get("sensevoice_path")
-    tokens: str = config.get("model_paths").get("sensevoice_tokens_path")
+    model: str = str(ModelPaths.sensevoice_path)
+    tokens: str = str(ModelPaths.sensevoice_tokens_path)
     num_threads: int = config.get("sensevoice_args").get("num_threads")
     sample_rate: int = config.get("sensevoice_args").get("sample_rate")
     feature_dim: int = config.get("sensevoice_args").get("feature_dim")
@@ -155,8 +155,8 @@ class SenseVoiceArgs:
 
 # Paraformer 参数配置
 class ParaformerArgs:
-    paraformer: str = config.get("model_paths").get("paraformer_path")
-    tokens: str = config.get("model_paths").get("paraformer_tokens_path")
+    paraformer: str = str(ModelPaths.paraformer_path)
+    tokens: str = str(ModelPaths.paraformer_tokens_path)
     num_threads: int = config.get("paraformer_args").get("num_threads")
     sample_rate: int = config.get("paraformer_args").get("sample_rate")
     feature_dim: int = config.get("paraformer_args").get("feature_dim")

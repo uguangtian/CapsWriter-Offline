@@ -350,29 +350,29 @@ max_tokens = 2000
 # ======================模型路径配置==================================
 
 [model_paths]
-model_dir = "models"
+model_dir = "~/Documents/CapsWriter/modles"
 # 模型文件目录
 
 #funasr_nano_dir = "models/Fun-ASR-Nano-2512-GGUF"
-funasr_nano_dir = "models/FunASR-nano-onnx"
+funasr_nano_dir = "~/Documents/CapsWriter/modles/FunASR-nano-onnx"
 # FunASR-Nano 模型目录
 
-sensevoice_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+sensevoice_path = "~/Documents/CapsWriter/modles/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
 # SenseVoice 模型路径
 
-sensevoice_tokens_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+sensevoice_tokens_path = "~/Documents/CapsWriter/modles/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
 # SenseVoice tokens 路径
 
-paraformer_path = "models/paraformer-offline-zh/model.int8.onnx"
+paraformer_path = "~/Documents/CapsWriter/modles/paraformer-offline-zh/model.int8.onnx"
 # Paraformer 模型路径
 
-paraformer_tokens_path = "models/paraformer-offline-zh/tokens.txt"
+paraformer_tokens_path = "~/Documents/CapsWriter/modles/paraformer-offline-zh/tokens.txt"
 # Paraformer tokens 路径
 
-punc_model_dir = "models/punc_ct-transformer_cn-en"
+punc_model_dir = "~/Documents/CapsWriter/modles/punc_ct-transformer_cn-en"
 # 标点模型目录
 
-opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
+opus_mt_dir = "~/Documents/CapsWriter/modles/Helsinki-NLP--opus-mt-zh-en"
 # 离线翻译模型目录
 
 

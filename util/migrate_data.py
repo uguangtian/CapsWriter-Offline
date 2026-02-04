@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 
-from util.config import ClientConfig
+from util.config import ClientConfig, ModelPaths
 
 def migrate():
     # Calculate project root based on this file's location: .../util/migrate_data.py -> .../
@@ -15,15 +15,40 @@ def migrate():
     # Target paths
     new_results_path = Path(ClientConfig.transcription_result_path).expanduser()
     new_audio_path = Path(ClientConfig.audio_storage_path).expanduser()
+    new_models_path = Path(ModelPaths.model_dir).expanduser()
     
     print(f"Migrating data...")
     print(f"From: {project_root}")
     print(f"To Results: {new_results_path}")
     print(f"To Audio: {new_audio_path}")
+    print(f"To Models: {new_models_path}")
     
     # Ensure target root directories exist
     new_results_path.mkdir(parents=True, exist_ok=True)
     new_audio_path.mkdir(parents=True, exist_ok=True)
+    new_models_path.mkdir(parents=True, exist_ok=True)
+
+    # 0. Move Models directory contents
+    src_models_dir = project_root / "models"
+    if src_models_dir.exists() and src_models_dir.is_dir():
+        print(f"Processing models directory: {src_models_dir}")
+        for item in src_models_dir.iterdir():
+            target_item = new_models_path / item.name
+            if target_item.exists():
+                print(f"Skipped {item} (already exists at {target_item})")
+                continue
+            try:
+                shutil.move(str(item), str(target_item))
+                print(f"Moved {item} to {target_item}")
+            except Exception as e:
+                print(f"Failed to move {item}: {e}")
+        # Try to remove empty models dir
+        try:
+            if not any(src_models_dir.iterdir()):
+                src_models_dir.rmdir()
+                print(f"Removed empty directory: {src_models_dir}")
+        except OSError as e:
+            print(f"Could not remove {src_models_dir}: {e}")
 
     # Iterate over directories in project root
     for year_dir in project_root.iterdir():
