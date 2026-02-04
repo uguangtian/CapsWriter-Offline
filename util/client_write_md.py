@@ -56,7 +56,7 @@ def write_md(text: str, time_start: float, file_audio: Path):
     folder_path = Path(ClientConfig.transcription_result_path).expanduser() / time_year / time_month
     console.print(f"[DEBUG] 写入 md 文件开始")
     makedirs(folder_path, exist_ok=True)
-    console.print(f"[DEBUG] 文件夹路径: {folder_path}, file_audio: {file_audio}")
+    #console.print(f"[DEBUG] 文件夹路径: {folder_path}, file_audio: {file_audio}")
 
 
     # 列表内的元素是元组，元组内包含了：关键词、md路径
@@ -66,14 +66,14 @@ def write_md(text: str, time_start: float, file_audio: Path):
         if text.startswith(kwd)
     ]
 
-    console.print(f"[DEBUG] md 文件列表: {md_list}")
+    #console.print(f"[DEBUG] md 文件列表: {md_list}")
 
     # 为 md 文件写入识别记录
     for kwd, file_md in md_list:
         # 确保 md 文件存在
         if not file_md.exists():
             create_md(file_md)
-        console.print(f"[DEBUG] md 文件路径: {file_md}")
+        #console.print(f"[DEBUG] md 文件路径: {file_md}")
 
         # 写入 md
         with open(file_md, "a", encoding="utf-8") as f:

@@ -5,7 +5,6 @@ from collections import defaultdict
 from typing import Dict, List
 
 from util.chinese_itn import chinese_to_num
-from util.config import ServerConfig as Config
 from util.format_tools import adjust_space
 from util.server_classes import Result, Task
 from util.server_cosmic import Cosmic, console
@@ -17,15 +16,23 @@ results: Dict[str, Result] = {}
 punc_cache: Dict[str, str] = {}
 PUNC_CACHE_SIZE = 1000
 
-def format_text(text: str, punc_model) -> str:
+def format_text(text: str, punc_model, config: dict = None) -> str:
     """格式化文本，添加标点符号并进行数字转换"""
     if not text:
         return text
+
+    if config is None:
+        config = {}
+
+    server_config = config.get("server", {})
+    format_spell = server_config.get("format_spell", False)
+    format_punc = server_config.get("format_punc", False)
+    format_num = server_config.get("format_num", False)
         
-    if Config.format_spell:
+    if format_spell:
         text = adjust_space(text)
         
-    if Config.format_punc and punc_model:
+    if format_punc and punc_model:
         # 检查缓存中是否已有结果
         cache_key = text
         if cache_key in punc_cache:
@@ -59,15 +66,15 @@ def format_text(text: str, punc_model) -> str:
             except Exception as e:
                 console.print(f"[red]标点模型处理出错：{e}，跳过标点处理。[/red]")
                 
-    if Config.format_num:
+    if format_num:
         text = chinese_to_num(text)
         
-    if Config.format_spell:
+    if format_spell:
         text = adjust_space(text)
         
     return text
 
-def paraformerRecognize(recognizer, punc_model, task: Task) -> Result:
+def paraformerRecognize(recognizer, punc_model, task: Task, config: dict = None) -> Result:
     """优化的语音识别处理函数"""
     try:
         # 添加调试日志
@@ -204,7 +211,7 @@ def paraformerRecognize(recognizer, punc_model, task: Task) -> Result:
 
         if task.is_final:
             # 格式化最终文本
-            result.text = format_text(text, punc_model)
+            result.text = format_text(text, punc_model, config)
             result.is_final = True
             # 从缓存中移除结果
             final_result = results.pop(task.task_id)

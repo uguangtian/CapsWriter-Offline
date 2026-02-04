@@ -45,9 +45,9 @@ class LMStudioConfig:
 
 # 客户端配置
 class ClientConfig:
-    addr: str = config.get("client").get("addr")
-    speech_recognition_port: str = config.get("client").get("speech_recognition_port")
-    offline_translate_port: str = config.get("client").get("offline_translate_port")
+    addr: str = config.get("client").get("addr") or config.get("server").get("addr", "127.0.0.1")
+    speech_recognition_port: int = int(config.get("client").get("speech_recognition_port") or config.get("server").get("speech_recognition_port"))
+    offline_translate_port: str = str(config.get("client").get("offline_translate_port") or config.get("server").get("offline_translate_port"))
     offline_translate_port_gemma2b: str = config.get("client").get("offline_translate_port_gemma2b")
     speech_recognition_shortcut: str = config.get("client").get("speech_recognition_shortcut")
     use_offline_translate_function: bool = config.get("client").get("use_offline_translate_function")
@@ -86,8 +86,8 @@ class ClientConfig:
     mute_other_audio: bool = config.get("client").get("mute_other_audio")
     pause_other_audio: bool = config.get("client").get("pause_other_audio")
     arabic_year_number: bool = config.get("client").get("arabic_year_number")
-    shrink_automatically_to_tray: bool = config.get("client").get("shrink_automatically_to_tray")
-    only_run_once: bool = config.get("client").get("only_run_once")
+    shrink_automatically_to_tray: bool = config.get("client").get("shrink_automatically_to_tray") if config.get("client").get("shrink_automatically_to_tray") is not None else config.get("server").get("shrink_automatically_to_tray")
+    only_run_once: bool = config.get("client").get("only_run_once") if config.get("client").get("only_run_once") is not None else config.get("server").get("only_run_once")
     only_enable_microphones_when_pressed_record_shortcut: bool = config.get("client").get("only_enable_microphones_when_pressed_record_shortcut")
     microphone_device_index: int = config.get("client").get("microphone_device_index")
     microphone_device_name: str = config.get("client").get("microphone_device_name",{})
@@ -208,6 +208,22 @@ class DoubaoConfig:
     
     # 豆包服务端口
     doubao_port = 6019
+
+
+def get_config_dict():
+    """Extract configuration needed for the recognizer process."""
+    return {
+        "server": {
+            "model": ServerConfig.model,
+            "format_num": ServerConfig.format_num,
+            "format_punc": ServerConfig.format_punc,
+            "format_spell": ServerConfig.format_spell,
+        },
+        "model_paths": {k: v for k, v in ModelPaths.__dict__.items() if not k.startswith("_")},
+        "paraformer_args": {k: v for k, v in ParaformerArgs.__dict__.items() if not k.startswith("_")},
+        "sensevoice_args": {k: v for k, v in SenseVoiceArgs.__dict__.items() if not k.startswith("_")},
+        "funasr_nano_args": {k: v for k, v in FunASRNanoArgs.__dict__.items() if not k.startswith("_")},
+    }
 
 
 def print_config():

@@ -155,7 +155,7 @@ async def send_audio():
                             np.mean(data[::3], axis=1).astype(np.float32).tobytes()
                         ).decode("utf-8")
                     
-                    print(f"[Log] 发送中间音频数据, 原始长度: {len(data)}, 编码后长度: {len(encoded_data)}")
+                    #print(f"[Log] 发送中间音频数据, 原始长度: {len(data)}, 编码后长度: {len(encoded_data)}")
 
                     message = {
                         "task_id": task_id,

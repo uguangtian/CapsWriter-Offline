@@ -255,7 +255,7 @@ class TranscriptionWorker(QThread):
             
             # 检查文件是否存在
             if not self.file_path.exists():
-                self.transcription_failed.emit(filename, f"文件不存在: {self.file_path}")
+                self.transcription_failed.emit(filename, f"TranscriptionWorker 运行时文件不存在: {self.file_path}")
                 return
             
             # 检查是否已有转录结果

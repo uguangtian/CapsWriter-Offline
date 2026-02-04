@@ -3,7 +3,6 @@ import time
 import numpy as np
 
 from util.chinese_itn import chinese_to_num
-from util.config import ServerConfig as Config
 from util.format_tools import adjust_space
 from util.server_classes import Result, Task
 from util.server_cosmic import console
@@ -11,17 +10,23 @@ from util.server_cosmic import console
 results = {}
 
 
-def format_text(text):
-    if Config.format_spell:
+def format_text(text, config: dict = None):
+    if config is None:
+        config = {}
+    server_config = config.get("server", {})
+    format_spell = server_config.get("format_spell", False)
+    format_num = server_config.get("format_num", False)
+
+    if format_spell:
         text = adjust_space(text)  # 调空格
-    if Config.format_num:
+    if format_num:
         text = chinese_to_num(text)  # 转数字
-    if Config.format_spell:
+    if format_spell:
         text = adjust_space(text)  # 调空格
     return text
 
 
-def recognize(recognizer, task: Task):
+def recognize(recognizer, task: Task, config: dict = None):
     # inspect({key:value for key, value in task.__dict__.items() if not key.startswith('_') and key != 'data'})
     # todo 清空遗存的任务结果
 
@@ -109,7 +114,7 @@ def recognize(recognizer, task: Task):
         return result
 
     # 调整文本格式
-    result.text = format_text(text)
+    result.text = format_text(text, config)
     console.print(f"[DEBUG] 格式化后的文本: {result.text}", style="green")
 
     # 若最后一个片段完成识别，从字典摘取任务

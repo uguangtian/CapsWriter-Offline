@@ -13,7 +13,7 @@ def rename_audio(task_id, text, time_start) -> Union[Path, None]:
 
     # 确保旧文件存在
     if not file_path.exists():
-        console.print(f"    文件不存在：{file_path}")
+        console.print(f"rename_audio 运行时    文件不存在：{file_path}")
         return
 
     # 构建新文件名

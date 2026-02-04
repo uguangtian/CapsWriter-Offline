@@ -10,6 +10,7 @@ import websockets
 
 from util.config import ServerConfig as Config
 from util.config import DeepSeekConfig
+from util.config import get_config_dict
 from util.empty_working_set import empty_current_working_set
 from util.server_check_model import check_model
 from util.server_cosmic import Cosmic, console
@@ -73,7 +74,7 @@ async def main():
     # 负责识别的子进程
     recognize_process = Process(
         target=init_recognizer,
-        args=(Cosmic.queue_in, Cosmic.queue_out, Cosmic.sockets_id),
+        args=(Cosmic.queue_in, Cosmic.queue_out, Cosmic.sockets_id, get_config_dict()),
         daemon=True,
     )
     recognize_process.start()

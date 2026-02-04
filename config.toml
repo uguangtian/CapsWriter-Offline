@@ -1,6 +1,6 @@
 # ======================服务端配置==================================
 [server]
-model = "FunASRNano"
+model = "Paraformer"
 # 'Sensevoice', 'Paraformer', 或 'FunASRNano'
 # Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
 # 比如转录字幕不完整，识别结果不准确、丢失标点等
@@ -55,14 +55,15 @@ in_the_meantime_start_the_client_and_run_as_admin = true
 # ======================客户端配置==================================
 
 [client]
-addr = "127.0.0.1"
-# 要连接的服务端地址
-port = 8081
-speech_recognition_port = "6016"
-# 语音识别服务端口
+# addr = "127.0.0.1"
+# 要连接的服务端地址，默认使用服务端配置的地址或 127.0.0.1
+# port = 8081 # 未使用的配置
 
-offline_translate_port = "6017"
-# 离线翻译服务端口
+# speech_recognition_port = "6016"
+# 语音识别服务端口，默认使用服务端配置
+
+# offline_translate_port = "6017"
+# 离线翻译服务端口，默认使用服务端配置
 
 offline_translate_port_gemma2b = "11434"
 # Gemma 2B 离线翻译端口
@@ -188,11 +189,11 @@ pause_other_audio = true
 arabic_year_number = true
 # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
 
-shrink_automatically_to_tray = false
-# 启动后是否自动缩小至托盘
+# shrink_automatically_to_tray = false
+# 启动后是否自动缩小至托盘，默认使用服务端配置
 
-only_run_once = true
-# 只允许运行一次，禁止多开
+# only_run_once = true
+# 只允许运行一次，禁止多开，默认使用服务端配置
 
 only_enable_microphones_when_pressed_record_shortcut = false
 # 只在按下录音快捷键时启用麦克风
