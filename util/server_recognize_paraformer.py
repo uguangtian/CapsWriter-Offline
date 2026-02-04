@@ -1,5 +1,6 @@
 import re
 import time
+import sys
 import numpy as np
 from collections import defaultdict
 from typing import Dict, List
@@ -32,6 +33,13 @@ def format_text(text: str, punc_model, config: dict = None) -> str:
     if format_spell:
         text = adjust_space(text)
         
+    if format_punc:
+        if not punc_model:
+            console.print("[DEBUG] 标点处理被跳过: format_punc=True 但 punc_model 为 None")
+    else:
+        # console.print(f"[DEBUG] 标点处理未启用: format_punc={format_punc}")
+        pass
+
     if format_punc and punc_model:
         # 检查缓存中是否已有结果
         cache_key = text
@@ -42,6 +50,7 @@ def format_text(text: str, punc_model, config: dict = None) -> str:
             try:
                 # print('start punc_result:')
                 punc_result = punc_model(text)
+                console.print(f"[DEBUG] 标点模型处理: input='{text}', output='{punc_result}'")
                 # print('punc_result:punc_result:', punc_result)
                 # 处理标点模型返回的不同格式：列表或元组
                 if punc_result:
@@ -77,9 +86,51 @@ def format_text(text: str, punc_model, config: dict = None) -> str:
 def paraformerRecognize(recognizer, punc_model, task: Task, config: dict = None) -> Result:
     """优化的语音识别处理函数"""
     try:
-        # 添加调试日志
-  
+        # 极速空数据检查，避免后续不必要的处理
+        if not task.data or len(task.data) == 0:
+            console.print(f"[DEBUG] 快速检测到空音频数据: task_id={task.task_id}, is_final={task.is_final}")
+            if sys.stdout:
+                sys.stdout.flush()
+            
+            # 获取或创建结果容器 (如果是空的final包，可能之前已经有结果了)
+            if task.task_id in results:
+                result = results[task.task_id]
+            else:
+                # 这是一个只有结束包的任务?
+                result = Result(task.task_id, task.socket_id, task.source)
+
+            # 更新时间戳
+            result.time_start = task.time_start
+            result.time_submit = task.time_submit
+            result.time_complete = time.time()
+            
+            if task.is_final:
+                result.is_final = True
+                if task.task_id in results:
+                    final_result = results.pop(task.task_id)
+                else:
+                    final_result = result
+                
+                # 确保 text 是基于最新的 tokens 生成的
+                if final_result.tokens:
+                    text = " ".join(final_result.tokens).replace("@@ ", "")
+                    text = re.sub("([^a-zA-Z0-9]) (?![a-zA-Z0-9])", r"\1", text)
+                    final_result.text = text
+
+                # 应用格式化（标点、数字转换等）
+                if final_result.text:
+                    final_result.text = format_text(final_result.text, punc_model, config)
+
+                console.print(f"[DEBUG] 完成最终处理（快速空音频）: task_id={task.task_id}, is_final=True")
+                if sys.stdout:
+                    sys.stdout.flush()
+                return final_result
+            return result
+
         console.print(f"[DEBUG] 开始处理识别任务: task_id={task.task_id}, is_final={task.is_final}")
+        if sys.stdout:
+            sys.stdout.flush()
+        
         # 获取或创建结果容器
         if task.task_id  not in results:
              console.print(f"[DEBUG]  新任务, 创建新的结果容器: task_id={task.task_id}, is_final={task.is_final}")
@@ -87,19 +138,12 @@ def paraformerRecognize(recognizer, punc_model, task: Task, config: dict = None)
         result = results[task.task_id]
         # 高效处理音频数据
         samples = np.frombuffer(task.data, dtype=np.float32)
-        # 新增：空音频防护，避免 ONNX Conv 输入维度为 0 的异常
+        
+        # 再次检查（虽然上面已经检查过了，但保留逻辑完整性）
         if len(samples) == 0:
-            console.print(f"[DEBUG] 警告：空的音频数据，跳过解码")
-            # 更新时间戳
-            result.time_start = task.time_start
-            result.time_submit = task.time_submit
-            result.time_complete = time.time()
-            # 如果是最终任务，标记完成并返回最终结果
-            if task.is_final:
-                result.is_final = True
-                final_result = results.pop(task.task_id)
-                console.print(f"[DEBUG] 完成最终处理（空音频）: task_id={task.task_id}, is_final=True")
-                return final_result
+             # 上面的快速检查应该已经拦截了这种情况，这里只是防御性编程
+            console.print(f"[DEBUG] 警告：空的音频数据，跳过解码 (冗余检查)")
+            # ...
             return result
             
         # 检查音频数据的有效性

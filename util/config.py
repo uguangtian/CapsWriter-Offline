@@ -3,16 +3,43 @@ from tomlkit import parse
 import sys
 import os
 
-# 加载TOML配置文件
-# 在打包后的应用中，使用 sys._MEIPASS 获取资源路径
 if getattr(sys, 'frozen', False):
     # 打包后的环境
-    base_path = Path(sys._MEIPASS)
+    # sys._MEIPASS 是临时解压目录，我们应该优先读取用户当前目录下的 config.toml
+    # 如果当前目录没有 config.toml，则回退到资源文件中的 config_example.toml
+    exe_dir = Path(sys.executable).parent
+    # macOS 打包后，sys.executable 在 App/Contents/MacOS/ 目录
+    # 我们希望配置文件在 App 同级目录，或者 App/Contents/Resources/
+    # 但按照常规，打包后的应用会在其同级目录查找
+    
+    # 修正：对于 macOS .app，我们可能需要特殊处理路径
+    # 这里简单起见，优先查找 sys.executable 同级目录（即 Contents/MacOS/）
+    user_config_path = exe_dir / "config.toml"
+    
+    if user_config_path.exists():
+        config_toml_path = user_config_path
+    else:
+        # 尝试查找上级目录（即 .app 所在目录）
+        # .app/Contents/MacOS -> .app/Contents -> .app -> parent
+        app_dir_config = exe_dir.parent.parent.parent / "config.toml"
+        if app_dir_config.exists():
+            config_toml_path = app_dir_config
+        else:
+             # 最后回退到打包资源中的 config.toml (实际上是 config_example.toml)
+             # 注意：PyInstaller 会将 config.toml 打包到 sys._MEIPASS
+            base_path = Path(sys._MEIPASS)
+            config_toml_path = base_path / "config_example.toml"
 else:
     # 开发环境
     base_path = Path(__file__).parent.parent
+    config_toml_path = base_path / "config.toml"
 
-config_toml_path = base_path / "config.toml"
+if not config_toml_path.exists() and not getattr(sys, 'frozen', False):
+     # 开发环境下如果 config.toml 不存在，读取 config_example.toml
+     config_toml_path = base_path / "config_example.toml"
+
+print(f"Loading config from: {config_toml_path}")
+
 with config_toml_path.open("r", encoding="utf-8") as f:
     config_str = f.read()
     config = parse(config_str)

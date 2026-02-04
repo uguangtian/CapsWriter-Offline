@@ -25,7 +25,7 @@ offline_translate_port = "6017"
 format_num = true
 # 是否将中文数字转为阿拉伯数字
 
-format_punc = false
+format_punc = true
 # 使用 'Paraformer' 模型时，输出时是否启用标点符号引擎
 
 format_spell = true
@@ -390,6 +390,7 @@ decoding_method = "greedy_search"
 debug = false
 # 是否启用调试模式
 
+
 provider = "cpu"
 # 推理设备（cpu, cuda, coreml）
 
@@ -429,3 +430,13 @@ decoding_method = "greedy_search"
 
 debug = false
 # 是否启用调试模式
+
+# ======================标点模型参数配置==================================
+
+[punc_args]
+model_dir = "${model_paths.punc_model_dir}"
+# 标点模型目录
+quantize = true
+# 是否量化
+intra_op_num_threads = 4
+# 线程数

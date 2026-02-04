@@ -1,5 +1,6 @@
 import signal
 import time
+import sys
 from multiprocessing import Queue
 from platform import system
 import logging
@@ -92,27 +93,55 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id, config: dict)
     # 载入标点模型
     punc_model = None
     if model_name == "Paraformer":
+        console.print(f"[DEBUG] 准备加载标点模型: format_punc={format_punc}, CT_Transformer={CT_Transformer is not None}")
         if format_punc and CT_Transformer is not None:
             console.print(
                 "[yellow]标点模型载入中，载入时长约 50 秒，请耐心等待...", end="\r"
             )
             try:
-                punc_model_dir = model_paths.get("punc_model_dir")
-                punc_model = CT_Transformer(punc_model_dir, quantize=True)
+                punc_args = config.get("punc_args", {})
+                punc_model_dir = punc_args.get("model_dir")
+                
+                # 如果 punc_args 中没有 model_dir，尝试从 model_paths 中获取
+                if not punc_model_dir:
+                    model_paths = config.get("model_paths", {})
+                    punc_model_dir = model_paths.get("punc_model_dir")
+                    # 简化逻辑，不再提示用户 fallback 过程，而是直接使用找到的路径
+                    if punc_model_dir:
+                         # 确保找到的路径是字符串
+                         punc_model_dir = str(punc_model_dir)
+
+                quantize = punc_args.get("quantize", True)
+                intra_op_num_threads = punc_args.get("intra_op_num_threads", 4)
+                
+                console.print(f"[DEBUG] 标点模型参数: dir={punc_model_dir}, quantize={quantize}")
+                
+                punc_model = CT_Transformer(
+                    punc_model_dir,
+                    quantize=quantize,
+                    intra_op_num_threads=intra_op_num_threads,
+                )
                 console.print("[green4]标点模型载入完成", end="\n\n")
             except Exception as e:
-                console.print(f"[yellow]标点模型加载失败: {e}，将跳过标点处理", end="\n\n")
-                punc_model = None
-        elif format_punc and CT_Transformer is None:
-            console.print("[yellow]funasr_onnx 不可用，跳过标点模型加载", end="\n\n")
+                console.print(f"[red]标点模型载入失败: {e}", end="\n\n")
+                console.print(f"[red]详细错误: {e.__traceback__}")
+        else:
+            console.print(f"[yellow]标点模型未加载: format_punc={format_punc}, CT_Transformer={CT_Transformer}")
+    
+    t2 = time.time()
+    console.print(f"[green4]模型加载耗时 {t2 - t1:.2f}s", end="\n\n")
+    if sys.stdout:
+        sys.stdout.flush()
 
-    console.print(f"模型加载耗时 {time.time() - t1 :.2f}s", end="\n\n")
-
-    # 清空物理内存工作集
-    if system() == "Windows":
-        empty_current_working_set()
-
-    queue_out.put(True)  # 通知主进程加载完了
+    # 清理内存
+    empty_current_working_set()
+    
+    # 告诉主进程，初始化完成
+    queue_out.put(True)
+    
+    console.print(f"后端服务已启动，请检查防火墙设置，确保端口 {server_config.get('speech_recognition_port', 6016)} 开放")
+    if sys.stdout:
+        sys.stdout.flush()
 
     while True:
         # 从队列中获取任务消息
@@ -143,7 +172,15 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id, config: dict)
 
         if model_name == "Paraformer":
             console.print("[DEBUG] 使用 Paraformer 模型处理音频", style="cyan")
-            result = paraformerRecognize(recognizer, punc_model, task, config=config)  # 执行识别
+            if sys.stdout:
+                sys.stdout.flush()
+            try:
+                result = paraformerRecognize(recognizer, punc_model, task, config=config)  # 执行识别
+            except Exception as e:
+                console.print(f"[red]CRITICAL ERROR in paraformerRecognize: {e}")
+                if sys.stdout:
+                    sys.stdout.flush()
+                raise e
         elif model_name == "FunASRNano":
             console.print("[DEBUG] 使用 FunASR-Nano 模型处理音频", style="cyan")
             # FunASR-Nano 和 SenseVoice 使用相同的处理逻辑

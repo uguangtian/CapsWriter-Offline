@@ -160,21 +160,20 @@ async def main():
 
 
 def init():
+    """入口函数，供 start_unified.py 调用"""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
-        asyncio.run(main())
-    except KeyboardInterrupt:  # Ctrl-C 停止
-        console.print("\n再见！")
-    except OSError as e:  # 端口占用
-        console.print(f"出错了：{e}", style="bright_red")
-        console.input("...")
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        console.print("\n服务端停止")
     except Exception as e:
-        print(e)
+        console.print(f"[red]服务端异常: {e}[/red]")
     finally:
-        Cosmic.queue_out.put(None)
-        cleanup_processes()  # 确保在退出前清理进程
+        cleanup_processes()
         sys.exit(0)
-        # os._exit(0)
-
 
 if __name__ == "__main__":
+    from multiprocessing import freeze_support
+    freeze_support()
     init()
