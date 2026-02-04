@@ -266,7 +266,6 @@ app = BUNDLE(
         
         cmd = [
             sys.executable, "-m", "PyInstaller",
-            "--clean",
             "--noconfirm", 
             str(spec_file)
         ]
