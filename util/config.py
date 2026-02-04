@@ -68,6 +68,8 @@ class ClientConfig:
     restore_clipboard_after_paste: bool = config.get("client").get("restore_clipboard_after_paste")
     save_audio: bool = config.get("client").get("save_audio")
     save_markdown: bool = config.get("client").get("save_markdown")
+    transcription_result_path: str = config.get("client").get("transcription_result_path", "~/Documents/CapsWriter/results")
+    audio_storage_path: str = config.get("client").get("audio_storage_path", "~/Documents/CapsWriter/audio")
     audio_name_len: int = config.get("client").get("audio_name_len")
     reduce_audio_files: bool = config.get("client").get("reduce_audio_files")
     trash_punc: str = config.get("client").get("trash_punc")

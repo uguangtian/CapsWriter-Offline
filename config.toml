@@ -134,6 +134,12 @@ save_audio = true
 save_markdown = true
 # 是否将记录写入 Markdown 文件
 
+transcription_result_path = "~/Documents/CapsWriter/results"
+# 转录结果 Markdown 文件的保存路径
+
+audio_storage_path = "~/Documents/CapsWriter/audio"
+# 录音文件的保存路径
+
 audio_name_len = 20
 # 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过 200
 

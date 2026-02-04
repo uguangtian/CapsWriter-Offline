@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.theme import Theme
 
 from util.hot_kwds import kwd_list
+from util.config import ClientConfig
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 my_theme = Theme({"markdown.code": "cyan", "markdown.item.number": "yellow"})
 console = Console(highlight=False, soft_wrap=False, theme=my_theme)
@@ -51,7 +52,8 @@ def write_md(text: str, time_start: float, file_audio: Path):
     time_month = time.strftime("%m", time.localtime(time_start))
     time_day = time.strftime("%d", time.localtime(time_start))
     time_hms = time.strftime("%H:%M:%S", time.localtime(time_start))
-    folder_path = Path() / time_year / time_month
+    # folder_path = Path() / time_year / time_month
+    folder_path = Path(ClientConfig.transcription_result_path).expanduser() / time_year / time_month
     console.print(f"[DEBUG] 写入 md 文件开始")
     makedirs(folder_path, exist_ok=True)
     console.print(f"[DEBUG] 文件夹路径: {folder_path}, file_audio: {file_audio}")
