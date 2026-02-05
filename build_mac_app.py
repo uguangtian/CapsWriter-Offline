@@ -68,6 +68,13 @@ class MacAppBuilder:
         
         spec_content = f'''
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+datas = []
+binaries = []
+hiddenimports = []
+tmp_ret = collect_all('rich')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 block_cipher = None
 
@@ -75,8 +82,8 @@ block_cipher = None
 a = Analysis(
     ['start_unified.py'],
     pathex=['{self.project_root}'],
-    binaries=[],
-    datas=[
+    binaries=binaries,
+    datas=datas + [
         ('assets', 'assets'),
         ('util', 'util'),
         ('agent', 'agent'),
@@ -88,7 +95,7 @@ a = Analysis(
         ('readme.md', '.'),
         ('requirements*.txt', '.'),
     ],
-    hiddenimports=[
+    hiddenimports=hiddenimports + [
         'PySide6.QtCore',
         'PySide6.QtWidgets', 
         'PySide6.QtGui',
@@ -165,6 +172,22 @@ a = Analysis(
         'mlx_lm.utils',
         'mlx_lm.sample_utils',
         'mlx_lm.tokenizer_utils',
+        'rich',
+        'rich.console',
+        'rich.live',
+        'rich.panel',
+        'rich.markdown',
+        'rich.text',
+        'rich.progress',
+        'rich.table',
+        'rich.logging',
+        'rich.style',
+        'rich.theme',
+        'rich.syntax',
+        'rich.align',
+        'rich.box',
+        'rich.padding',
+        'rich._unicode_data',
     ],
     hookspath=[],
     hooksconfig={{}},
@@ -273,8 +296,9 @@ app = BUNDLE(
         print(f"执行命令: {' '.join(cmd)}")
         
         try:
+            # 不捕获输出，以便在控制台实时显示
             result = subprocess.run(cmd, cwd=self.project_root, check=True, 
-                                  capture_output=True, text=True)
+                                  capture_output=False, text=True)
             print("✓ 构建成功")
             return True
         except subprocess.CalledProcessError as e:

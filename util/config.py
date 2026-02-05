@@ -1,7 +1,6 @@
 from pathlib import Path
 from tomlkit import parse
 import sys
-import os
 
 if getattr(sys, 'frozen', False):
     # 打包后的环境
@@ -152,16 +151,25 @@ class DeepSeekConfig:
     max_tokens: int = config.get("deepseek", {}).get("max_tokens", 2000)
 
 
+def _mp_get_path(path_str):
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    if getattr(sys, 'frozen', False):
+        return (Path(sys.executable).parent / path).expanduser()
+    return path.expanduser()
+
 # 模型路径配置
 class ModelPaths:
-    model_dir: Path = Path(config.get("model_paths").get("model_dir")).expanduser()
-    sensevoice_path: Path = Path(config.get("model_paths").get("sensevoice_path")).expanduser()
-    sensevoice_tokens_path: Path = Path(config.get("model_paths").get("sensevoice_tokens_path")).expanduser()
-    paraformer_path: Path = Path(config.get("model_paths").get("paraformer_path")).expanduser()
-    paraformer_tokens_path: Path = Path(config.get("model_paths").get("paraformer_tokens_path")).expanduser()
-    punc_model_dir: Path = Path(config.get("model_paths").get("punc_model_dir")).expanduser()
-    opus_mt_dir: Path = Path(config.get("model_paths").get("opus_mt_dir")).expanduser()
-    funasr_nano_dir: Path = Path(config.get("model_paths").get("funasr_nano_dir")).expanduser()
+    _paths = config.get("model_paths", {})
+    model_dir: Path = _mp_get_path(_paths.get("model_dir", "models"))
+    sensevoice_path: Path = _mp_get_path(_paths.get("sensevoice_path", "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.onnx"))
+    sensevoice_tokens_path: Path = _mp_get_path(_paths.get("sensevoice_tokens_path", "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"))
+    paraformer_path: Path = _mp_get_path(_paths.get("paraformer_path", "models/paraformer-offline-zh/model.int8.onnx"))
+    paraformer_tokens_path: Path = _mp_get_path(_paths.get("paraformer_tokens_path", "models/paraformer-offline-zh/tokens.txt"))
+    punc_model_dir: Path = _mp_get_path(_paths.get("punc_model_dir", "models/punc_ct-transformer_cn-en"))
+    opus_mt_dir: Path = _mp_get_path(_paths.get("opus_mt_dir", "models/Helsinki-NLP--opus-mt-zh-en"))
+    funasr_nano_dir: Path = _mp_get_path(_paths.get("funasr_nano_dir", "models/funasr-nano"))
 
 
 # SenseVoice 参数配置
@@ -193,16 +201,17 @@ class ParaformerArgs:
 
 # FunASR-Nano 参数配置
 class FunASRNanoArgs:
-    encoder_adaptor: str = str(ModelPaths.funasr_nano_dir / config.get("funasr_nano_args").get("encoder_adaptor"))
+    _args = config.get("funasr_nano_args", {})
+    encoder_adaptor: str = str(ModelPaths.funasr_nano_dir / _args.get("encoder_adaptor", "encoder.int8.onnx"))
     llm: str = str(ModelPaths.funasr_nano_dir / "llm_int8" / "llm.int8.onnx")
     embedding: str = str(ModelPaths.funasr_nano_dir / "embedding.int8.onnx")
     tokenizer: str = str(ModelPaths.funasr_nano_dir / "Qwen3-0.6B")
-    num_threads: int = config.get("funasr_nano_args").get("num_threads")
-    sample_rate: int = config.get("funasr_nano_args").get("sample_rate")
-    feature_dim: int = config.get("funasr_nano_args").get("feature_dim")
-    decoding_method: str = config.get("funasr_nano_args").get("decoding_method")
-    debug: bool = config.get("funasr_nano_args").get("debug")
-    provider: str = config.get("funasr_nano_args").get("provider")
+    num_threads: int = _args.get("num_threads", 4)
+    sample_rate: int = _args.get("sample_rate", 16000)
+    feature_dim: int = _args.get("feature_dim", 80)
+    decoding_method: str = _args.get("decoding_method", "greedy_search")
+    debug: bool = _args.get("debug", False)
+    provider: str = _args.get("provider", "cpu")
 
 
 # Claude 配置

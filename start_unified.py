@@ -20,6 +20,30 @@ import time
 import threading
 from pathlib import Path
 
+# 在 macOS 上禁用 keyboard 库以防止崩溃
+if sys.platform == 'darwin':
+    # 直接使用 mock，不尝试导入 keyboard，因为它在 macOS 上不稳定且需要 root 权限
+    from types import ModuleType
+    mock_keyboard = ModuleType('keyboard')
+    mock_keyboard.KEY_DOWN = 'down'
+    mock_keyboard.KEY_UP = 'up'
+    mock_keyboard.normalize_name = lambda name: name
+    mock_keyboard.is_pressed = lambda key: False
+    mock_keyboard.write = lambda text: print(f"Mock keyboard write: {text}")
+    mock_keyboard.send = lambda hotkey: print(f"Mock keyboard send: {hotkey}")
+    mock_keyboard.release = lambda hotkey: None
+    mock_keyboard.press = lambda hotkey: None
+    
+    # 模拟 KeyboardEvent 类
+    class MockEvent:
+        def __init__(self, event_type, name):
+            self.event_type = event_type
+            self.name = name
+    mock_keyboard.KeyboardEvent = MockEvent
+    
+    sys.modules['keyboard'] = mock_keyboard
+
+
 from util.check_process import check_process
 from util.config import ServerConfig, ClientConfig
 

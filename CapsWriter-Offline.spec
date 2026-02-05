@@ -1,5 +1,12 @@
 
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+datas = []
+binaries = []
+hiddenimports = []
+tmp_ret = collect_all('rich')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 block_cipher = None
 
@@ -7,8 +14,8 @@ block_cipher = None
 a = Analysis(
     ['start_unified.py'],
     pathex=['/Users/liu/data/python/CapsWriter-Offline'],
-    binaries=[],
-    datas=[
+    binaries=binaries,
+    datas=datas + [
         ('assets', 'assets'),
         ('util', 'util'),
         ('agent', 'agent'),
@@ -20,7 +27,7 @@ a = Analysis(
         ('readme.md', '.'),
         ('requirements*.txt', '.'),
     ],
-    hiddenimports=[
+    hiddenimports=hiddenimports + [
         'PySide6.QtCore',
         'PySide6.QtWidgets', 
         'PySide6.QtGui',
@@ -97,6 +104,22 @@ a = Analysis(
         'mlx_lm.utils',
         'mlx_lm.sample_utils',
         'mlx_lm.tokenizer_utils',
+        'rich',
+        'rich.console',
+        'rich.live',
+        'rich.panel',
+        'rich.markdown',
+        'rich.text',
+        'rich.progress',
+        'rich.table',
+        'rich.logging',
+        'rich.style',
+        'rich.theme',
+        'rich.syntax',
+        'rich.align',
+        'rich.box',
+        'rich.padding',
+        'rich._unicode_data',
     ],
     hookspath=[],
     hooksconfig={},
@@ -145,12 +168,12 @@ app = BUNDLE(
     name='CapsWriter-Offline.app',
     icon=None,  # 暂时移除图标以避免格式问题
     bundle_identifier='com.capswriter.offline',
-    version='1.0.0',
+    version='1.0.3',
     info_plist={
         'CFBundleName': 'CapsWriter-Offline',
         'CFBundleDisplayName': 'CapsWriter离线版',
-        'CFBundleVersion': '1.0.0',
-        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleVersion': '1.0.3',
+        'CFBundleShortVersionString': '1.0.3',
         'CFBundleIdentifier': 'com.capswriter.offline',
         'CFBundleExecutable': 'CapsWriter-Offline',
         # 'CFBundleIconFile': 'appicon.ico',  # 暂时注释掉图标文件

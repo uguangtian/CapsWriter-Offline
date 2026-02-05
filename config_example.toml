@@ -365,6 +365,9 @@ punc_model_dir = "models/punc_ct-transformer_cn-en"
 opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
 # 离线翻译模型目录
 
+funasr_nano_dir = "models/funasr-nano"
+# FunASR Nano 模型目录
+
 
 # ======================SenseVoice 参数配置==================================
 
@@ -430,6 +433,26 @@ decoding_method = "greedy_search"
 
 debug = false
 # 是否启用调试模式
+
+
+# ======================FunASR Nano 参数配置==================================
+
+[funasr_nano_args]
+encoder_adaptor = "encoder.int8.onnx"
+# 编码器适配器
+num_threads = 4
+# 线程数
+sample_rate = 16000
+# 采样率
+feature_dim = 80
+# 特征维度
+decoding_method = "greedy_search"
+# 解码方法
+debug = false
+# 是否启用调试模式
+provider = "cpu"
+# 推理设备
+
 
 # ======================标点模型参数配置==================================
 
