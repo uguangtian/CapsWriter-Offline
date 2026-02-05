@@ -68,6 +68,11 @@ async def ws_send():
                     if result.socket_id in sockets:
                         del sockets[result.socket_id]
                         console.print(f"[DEBUG] 已从连接列表中移除断开的连接: {result.socket_id}", style="yellow")
+                except (BrokenPipeError, OSError) as e:
+                    console.print(f"[DEBUG] 发送消息时管道错误 (socket_id: {result.socket_id}): {e}", style="yellow")
+                    if result.socket_id in sockets:
+                        del sockets[result.socket_id]
+                        console.print(f"[DEBUG] 已从连接列表中移除断开的连接: {result.socket_id}", style="yellow")
                 except Exception as e:
                     console.print(f"[DEBUG] 发送消息时出错 (socket_id: {result.socket_id}): {e}", style="red")
 

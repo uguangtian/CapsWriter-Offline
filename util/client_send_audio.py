@@ -13,6 +13,7 @@ from util.client_create_file import create_file
 from util.client_finish_file import finish_file
 from util.client_write_file import write_file
 from util.config import ClientConfig as Config
+from util.client_check_websocket import check_websocket
 
 # 添加音频缓冲区大小常量
 BUFFER_SIZE = 48000 * 1  # 1秒的音频数据，减少延迟
@@ -59,7 +60,6 @@ async def send_message(message):
         return
 
     try:
-        # 对大数据进行分块发送
         await Cosmic.websocket.send(json.dumps(message))
         """
         if len(message.get("data", "")) > MAX_CHUNK_SIZE:
@@ -74,10 +74,15 @@ async def send_message(message):
         else:
             await Cosmic.websocket.send(json.dumps(message))
         """
-    except websockets.ConnectionClosedError:
-        if message["is_final"]:
-            console.print("[red]连接中断了")
-    except Exception as e:
+    except (websockets.ConnectionClosedError, BrokenPipeError, OSError) as e:
+        # 尝试重连一次后重试发送
+        try:
+            await check_websocket()
+            if Cosmic.websocket and (not (hasattr(Cosmic.websocket, 'closed') and Cosmic.websocket.closed)):
+                await Cosmic.websocket.send(json.dumps(message))
+                return
+        except Exception:
+            pass
         console.print(f"[red]发送错误: {str(e)}")
 
         
