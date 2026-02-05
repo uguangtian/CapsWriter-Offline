@@ -85,21 +85,30 @@ def recognize(recognizer, task: Task, config: dict = None):
     if task.is_final:
         n = len(stream.result.timestamps)
 
+    # 安全获取 tokens
+    stream_tokens = []
+    try:
+        stream_tokens = stream.result.tokens
+    except UnicodeDecodeError:
+        console.print(f"[red]警告: 识别结果包含无法解码的字符，已跳过该片段", style="red")
+        m = n
+    except Exception as e:
+        console.print(f"[red]警告: 获取识别结果 token 时发生错误: {e}", style="red")
+        m = n
+
     # 再细去重，依据：在端点是否有重复的字
-    if result.tokens and result.tokens[-2:] == stream.result.tokens[m:n][:2]:
+    if result.tokens and stream_tokens and result.tokens[-2:] == stream_tokens[m:n][:2]:
         m += 2
-    elif result.tokens and result.tokens[-1:] == stream.result.tokens[m:n][:1]:
+    elif result.tokens and stream_tokens and result.tokens[-1:] == stream_tokens[m:n][:1]:
         m += 1
 
     # 最后与先前的结果合并
     try:
         new_timestamps = [t + task.offset for t in stream.result.timestamps[m:n]]
-        new_tokens = [token for token in stream.result.tokens[m:n]]
+        new_tokens = [token for token in stream_tokens[m:n]]
         
         result.timestamps += new_timestamps
         result.tokens += new_tokens
-    except UnicodeDecodeError:
-        console.print(f"[red]警告: 识别结果包含无法解码的字符，已跳过该部分结果", style="red")
     except Exception as e:
         console.print(f"[red]警告: 合并结果时发生错误: {e}", style="red")
 

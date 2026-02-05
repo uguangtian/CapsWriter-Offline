@@ -190,7 +190,15 @@ def paraformerRecognize(recognizer, punc_model, task: Task, config: dict = None)
 
         # 优化重复内容去除
         timestamps = stream.result.timestamps
-        tokens = stream.result.tokens
+        tokens = []
+        try:
+            tokens = stream.result.tokens
+        except UnicodeDecodeError:
+            console.print(f"[red]警告: Paraformer 识别结果包含无法解码的字符，已跳过该片段", style="red")
+            timestamps = []
+        except Exception as e:
+            console.print(f"[red]警告: Paraformer 获取识别结果 token 时发生错误: {e}", style="red")
+            timestamps = []
         
         if not timestamps or not tokens:
             console.print(f"[DEBUG] 警告：没有识别结果")
