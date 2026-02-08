@@ -43,7 +43,8 @@ app = Flask(__name__,
            template_folder='web_templates',
            static_folder='web_static')
 app.config['SECRET_KEY'] = 'capswriter_offline_web_secret_key'
-socketio = SocketIO(app, cors_allowed_origins="*")
+# 强制使用 threading 模式，避免与 agent_service 的 asyncio 冲突
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # 全局变量
 unified_launcher = None
@@ -541,6 +542,8 @@ class WebUnifiedApp:
                 language = request.form.get('language', 'auto')
                 model = request.form.get('model', 'default')
                 use_local_path = request.form.get('use_local_path', 'false').lower() == 'true'
+                sync_mode = request.form.get('sync', 'false').lower() == 'true'
+                execution_result = {}
                 
                 # 根据模式处理文件
                 if use_local_path:
@@ -666,12 +669,17 @@ class WebUnifiedApp:
                         # 检查是否有有效的转录结果
                         if result_text:
                             # 通过SocketIO发送转录结果
-                            socketio.emit('transcription_result', {
+                            response_data = {
                                 'text': result_text,
                                 'filename': filename,
                                 'has_srt': srt_file.exists(),
                                 'mode': 'local_path' if use_local_path else 'upload'
-                            })
+                            }
+                            if sync_mode:
+                                execution_result['success'] = True
+                                execution_result.update(response_data)
+                            
+                            socketio.emit('transcription_result', response_data)
                         else:
                             # 没有转录结果，发送错误信息
                             socketio.emit('transcription_error', {
@@ -681,10 +689,14 @@ class WebUnifiedApp:
                         
                     except Exception as e:
                         # 通过SocketIO发送错误信息
-                        socketio.emit('transcription_error', {
+                        error_data = {
                             'error': f'转录失败: {str(e)}',
                             'filename': filename
-                        })
+                        }
+                        if sync_mode:
+                            execution_result['success'] = False
+                            execution_result.update(error_data)
+                        socketio.emit('transcription_error', error_data)
                     finally:
                         # 清理临时文件（仅在上传模式下）
                         if cleanup_temp_file:
@@ -696,15 +708,32 @@ class WebUnifiedApp:
                                 print(f"清理临时文件失败: {e}")
                 
                 # 在后台线程中运行转录
-                thread = threading.Thread(target=run_transcription, daemon=True)
-                thread.start()
-                
-                return jsonify({
-                    'success': True,
-                    'message': '转录任务已启动，请等待结果',
-                    'filename': filename,
-                    'mode': 'local_path' if use_local_path else 'upload'
-                })
+                if sync_mode:
+                    run_transcription()
+                    if execution_result.get('success'):
+                        return jsonify({
+                            'success': True,
+                            'message': '转录成功',
+                            'text': execution_result.get('text'),
+                            'filename': filename,
+                            'mode': 'local_path' if use_local_path else 'upload'
+                        })
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': execution_result.get('error', '未知错误'),
+                            'filename': filename
+                        }), 500
+                else:
+                    thread = threading.Thread(target=run_transcription, daemon=True)
+                    thread.start()
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': '转录任务已启动，请等待结果',
+                        'filename': filename,
+                        'mode': 'local_path' if use_local_path else 'upload'
+                    })
                 
             except Exception as e:
                 # 通过SocketIO发送错误信息
@@ -731,8 +760,8 @@ class WebUnifiedApp:
         """启动AI代理服务"""
         if self.agent_service is None:
             self.agent_service = AgentService()
-            # 在后台线程中启动
-            threading.Thread(target=self.agent_service.start, daemon=True).start()
+            # 在新进程中启动，避免与Flask-SocketIO的asyncio冲突
+            self.agent_service.start_in_process()
     
     def run(self, host='127.0.0.1', port=8080, debug=False):
         """运行网页应用"""

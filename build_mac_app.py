@@ -96,6 +96,7 @@ a = Analysis(
         ('requirements*.txt', '.'),
     ],
     hiddenimports=hiddenimports + [
+        'clipman',
         'PySide6.QtCore',
         'PySide6.QtWidgets', 
         'PySide6.QtGui',

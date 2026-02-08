@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 
 # 初始化空列表
 binaries = []
-hiddenimports = ['keyboard', 'sounddevice', 'websockets', 'rich', 'appdirs', 'pkg_resources.py2_warn']  # 添加 appdirs
+hiddenimports = ['keyboard', 'sounddevice', 'websockets', 'rich', 'appdirs', 'pkg_resources.py2_warn', 'clipman']  # 添加 appdirs, clipman
 datas = []
 
 # 额外复制动态库

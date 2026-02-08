@@ -28,6 +28,7 @@ a = Analysis(
         ('requirements*.txt', '.'),
     ],
     hiddenimports=hiddenimports + [
+        'clipman',
         'PySide6.QtCore',
         'PySide6.QtWidgets', 
         'PySide6.QtGui',
@@ -168,12 +169,12 @@ app = BUNDLE(
     name='CapsWriter-Offline.app',
     icon=None,  # 暂时移除图标以避免格式问题
     bundle_identifier='com.capswriter.offline',
-    version='1.0.3',
+    version='1.0.0',
     info_plist={
         'CFBundleName': 'CapsWriter-Offline',
         'CFBundleDisplayName': 'CapsWriter离线版',
-        'CFBundleVersion': '1.0.3',
-        'CFBundleShortVersionString': '1.0.3',
+        'CFBundleVersion': '1.0.0',
+        'CFBundleShortVersionString': '1.0.0',
         'CFBundleIdentifier': 'com.capswriter.offline',
         'CFBundleExecutable': 'CapsWriter-Offline',
         # 'CFBundleIconFile': 'appicon.ico',  # 暂时注释掉图标文件

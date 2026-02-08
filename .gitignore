@@ -31,3 +31,4 @@ assets
 dist
 uv.lock
 .trae
+**/*.wav
