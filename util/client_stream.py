@@ -41,19 +41,23 @@ def stream_close(signum, frame):
 
 def stream_reopen():
     if not threading.main_thread().is_alive():
+        console.print("[yellow]主线程已退出，无法重启音频流[/yellow]")
         return
-    print("重启音频流")
+    console("重启音频流")
 
     # 关闭旧流
+    console("重启音频流 关闭旧流")
     Cosmic.stream.close()
 
     # 重载 PortAudio，更新设备列表
+    console("重启音频流 重载 PortAudio，更新设备列表")
     sd._terminate()
     sd._ffi.dlclose(sd._lib)
     sd._lib = sd._ffi.dlopen(sd._libname)
     sd._initialize()
 
     # 打开新流
+    print("重启音频流 打开新流")
     time.sleep(0.1)
     Cosmic.stream = stream_open()
 
@@ -228,7 +232,9 @@ def stream_open():
 
 
     # 打开音频流
+    console.print("打开音频流")
     if Config.only_enable_microphones_when_pressed_record_shortcut:
+        console.print("打开音频流 仅在按下记录快捷键时启用麦克风")
         stream = sd.InputStream(
             samplerate=48000,
             blocksize=int(0.05 * 48000),  # 0.05 seconds
@@ -238,6 +244,7 @@ def stream_open():
             callback=record_callback,  # 放入音频的回调
         )  # stream.start()
     else:
+        console.print("打开音频流  always enabled")
         stream = sd.InputStream(
             samplerate=48000,
             blocksize=int(0.05 * 48000),  # 0.05 seconds

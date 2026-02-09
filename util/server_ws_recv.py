@@ -355,7 +355,7 @@ async def ws_recv(websocket):
                     # 发送ping并等待pong响应
                     pong_waiter = await websocket.ping()
                     await asyncio.wait_for(pong_waiter, timeout=30)  # 增加超时时间到30秒
-                    console.print(f"[DEBUG] 心跳成功: {socket_id}", style="dim")
+                    console.print(f"[DEBUG] time {time.time()} 心跳成功: {socket_id}", style="dim")
                 except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
                     console.print(f"[DEBUG] 心跳失败，连接可能已断开: {socket_id}", style="yellow")
                     # 心跳失败时立即清理连接

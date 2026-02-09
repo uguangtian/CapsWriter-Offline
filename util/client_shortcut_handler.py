@@ -20,6 +20,12 @@ if system() == 'Windows':
 from util.client_stream import stream_reopen
 from util.config import ClientConfig as Config
 from util.my_status import Status
+from rich.console import Console
+from rich.theme import Theme
+
+my_theme = Theme({"markdown.code": "cyan", "markdown.item.number": "yellow"})
+
+console = Console(highlight=False, soft_wrap=False, theme=my_theme)
 
 task = asyncio.Future()
 status = Status("开始录音", spinner="point")
@@ -73,6 +79,7 @@ class KeyManager:
             if Config.hold_mode:
                 # print("on_press, hold_mode")
                 e = type('obj', (object,), {'event_type': 'down', 'name': Config.speech_recognition_shortcut})
+                console.print("on_press, hold_mode, 按下录音键")
                 hold_handler(e)
             else:
                 # print("on_press, click_mode")
@@ -110,6 +117,7 @@ class KeyManager:
                 # print("on_release, hold_mode")
                 # 模拟 keyboard 事件
                 e = type('obj', (object,), {'event_type': 'up', 'name': Config.speech_recognition_shortcut})
+                console.print("on_release, hold_mode, 释放录音键")
                 hold_handler(e)
             else:
                 e = type('obj', (object,), {'event_type': keyboard.KEY_UP, 'name': Config.speech_recognition_shortcut})
@@ -195,7 +203,8 @@ def launch_task():
         not double_clicked
         and Config.only_enable_microphones_when_pressed_record_shortcut
     ):
-        # 重启音频流; 在双击情况下, 只在第一次的时候启动(单击模式)
+        # 重启音频流; 在双击情况下, 只在第一次的时候启动(单击模式) 
+        console.print("stream_reopen3  重启音频流; launch_task ")
         stream_reopen()
         Cosmic.stream.start()
 
@@ -206,9 +215,14 @@ def launch_task():
         and double_clicked
         and Config.only_enable_microphones_when_pressed_record_shortcut
     ):
+        console.print("stream_reopen4  重启音频流; launch_task2 ")
+
         stream_reopen()
         Cosmic.stream.start()
         hold_mode_first_time_cancel_task = False
+    else:
+        console.print("no stream_reopen5")
+
     # 记录开始时间
     t1 = time.time()
 
@@ -420,6 +434,7 @@ def click_mode(e: keyboard.KeyboardEvent):
                     Config.hold_mode,
                 )
             # print(f'DEBUG - 启动任务')
+            console.print("click_mode, 开始录音, call launch_task")
             launch_task()
             # `double_clicked`变量 在此处函数中 改为常駐 因此不需要以下的config判断
             # if Config.enable_double_click_opposite_state:
@@ -515,6 +530,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             )
         pass
         # 记录开始时间
+        console.print("hold_mode, 开始录音, call launch_task")
         launch_task()
 
     elif e.event_type == "up":

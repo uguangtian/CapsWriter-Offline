@@ -21,7 +21,7 @@ async def type_result(text):
             print(e)
 
         # 复制结果
-        print("模拟粘贴",text)
+        print("模拟粘贴 text:",text)
         clipman.set(text)
 
         # 粘贴结果
@@ -62,10 +62,12 @@ async def type_result(text):
                 print("降级使用直接写入方式")
 
         # 还原剪贴板
+        print("还原剪贴板",temp)
         if Config.restore_clipboard_after_paste:
             await asyncio.sleep(0.1)
             clipman.set(temp)
 
     # 模拟打印
     else:
+        print("模拟打印",text)
         keyboard.write(text)
