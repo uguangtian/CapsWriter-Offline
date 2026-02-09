@@ -205,7 +205,7 @@ def launch_task():
     ):
         # 重启音频流; 在双击情况下, 只在第一次的时候启动(单击模式) 
         console.print("stream_reopen3  重启音频流; launch_task ")
-        stream_reopen()
+        stream_reopen(run_in_thread=False)
         Cosmic.stream.start()
 
     # 长按模式(hold_mode)双击功能 第二次重启不适用于上面的判断, 因此，需要下面来判断是否重启音频流
@@ -217,7 +217,7 @@ def launch_task():
     ):
         console.print("stream_reopen4  重启音频流; launch_task2 ")
 
-        stream_reopen()
+        stream_reopen(run_in_thread=False)
         Cosmic.stream.start()
         hold_mode_first_time_cancel_task = False
     else:

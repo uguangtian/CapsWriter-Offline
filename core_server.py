@@ -100,34 +100,20 @@ async def main():
         )
 
         run_online_translate_service()
-        
-    # 启动DeepSeek API服务
-    # if DeepSeekConfig.start_deepseek_server:
-    #     console.print("启动DeepSeek API服务...")
-    #     from util.server_run_deepseek_service import (
-    #         run_deepseek_service,
-    #     )
-
-    #     deepseek_server_process = Process(target=run_deepseek_service)
-    #     deepseek_server_process.start()
-    #     processes.append(deepseek_server_process)
     
-    # 启动Android连接服务
-    # console.print("启动Android连接服务...")
-    # discovery_thread = start_android_connection_service()
 
     # 启动 chat_ui.py 服务
-    console.print("启动 Chat UI 服务...")
-    chat_ui_process = Process(
-        target=run_chat_ui,
-        daemon=True
-    )
-    chat_ui_process.start()
-    processes.append(chat_ui_process)
-    console.print("[green]Chat UI 服务已启动在 http://localhost:5001")
+    # console.print("启动 Chat UI 服务...")
+    # chat_ui_process = Process(
+    #     target=run_chat_ui,
+    #     daemon=True
+    # )
+    # chat_ui_process.start()
+    # processes.append(chat_ui_process)
+    # console.print("[green]Chat UI 服务已启动在 http://localhost:5001")
 
-    console.rule("[green3]开始服务")
-    console.line()
+    # console.rule("[green3]开始服务")
+    # console.line()
 
     # 清空物理内存工作集
     if system() == "Windows":

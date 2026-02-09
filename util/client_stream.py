@@ -36,10 +36,13 @@ def stream_close(signum, frame):
     if system() == 'darwin':
         return
 
-    Cosmic.stream.close()
+    try:
+        Cosmic.stream.close()
+    except Exception as e:
+        console.print(f"[red]关闭流失败: {e}[/red]")
 
 
-def stream_reopen():
+def _do_stream_reopen():
     if not threading.main_thread().is_alive():
         console.print("[yellow]主线程已退出，无法重启音频流[/yellow]")
         return
@@ -47,19 +50,35 @@ def stream_reopen():
 
     # 关闭旧流
     console("重启音频流 关闭旧流")
-    Cosmic.stream.close()
+    try:
+        Cosmic.stream.close()
+    except Exception as e:
+        console.print(f"[red]关闭旧流时出错: {e}[/red]")
+        pass
 
     # 重载 PortAudio，更新设备列表
     console("重启音频流 重载 PortAudio，更新设备列表")
-    sd._terminate()
-    sd._ffi.dlclose(sd._lib)
-    sd._lib = sd._ffi.dlopen(sd._libname)
-    sd._initialize()
+    try:
+        sd._terminate()
+        sd._ffi.dlclose(sd._lib)
+        sd._lib = sd._ffi.dlopen(sd._libname)
+        sd._initialize()
+    except Exception as e:
+        console.print(f"[red]重载 PortAudio 失败: {e}[/red]")
 
     # 打开新流
     print("重启音频流 打开新流")
     time.sleep(0.1)
     Cosmic.stream = stream_open()
+
+
+def stream_reopen(run_in_thread=True):
+    # 在独立线程中执行重启，避免在回调中直接卸载 PortAudio 导致崩溃
+    # 如果 run_in_thread 为 False，则在当前线程执行（用于非回调场景）
+    if run_in_thread:
+        threading.Thread(target=_do_stream_reopen, daemon=True).start()
+    else:
+        _do_stream_reopen()
 
 
 def get_macos_version():
@@ -242,6 +261,7 @@ def stream_open():
             dtype="float32",
             channels=channels,
             callback=record_callback,  # 放入音频的回调
+            finished_callback=stream_reopen,
         )  # stream.start()
     else:
         console.print("打开音频流  always enabled")

@@ -207,15 +207,18 @@ class UnifiedLauncher:
         try:
             if not client_only:
                 # 启动服务端
+                print("启动服务端...")
                 if not self.start_server(gui_mode=not background):
                     return False
                     
                 # 等待服务端就绪
                 if not server_only:
-                    self.wait_for_server_ready()
+                    print("等待服务端就绪...")
+                    # self.wait_for_server_ready()
                     
             if not server_only:
                 # 启动客户端
+                print("启动客户端...")
                 if not self.start_client(gui_mode=not background):
                     if not client_only:
                         self.cleanup()
