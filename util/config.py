@@ -224,6 +224,15 @@ class ClaudeConfig:
     temperature: float = config.get("claude", {}).get("temperature", 0.7)
     max_tokens: int = config.get("claude", {}).get("max_tokens", 2000)
 
+# LLM 校正配置
+class LLMCorrectionConfig:
+    enable: bool = config.get("llm_correction", {}).get("enable", False)
+    model_path: str = str(_mp_get_path(config.get("llm_correction", {}).get("model_path", "models/Qwen2.5-1.5B-Instruct-q4_k_m.gguf")))
+    mode: str = config.get("llm_correction", {}).get("mode", "accurate") # fast or accurate
+    fast_mode_max_tokens: int = config.get("llm_correction", {}).get("fast_mode_max_tokens", 50)
+    accurate_mode_max_tokens: int = config.get("llm_correction", {}).get("accurate_mode_max_tokens", 100)
+    history_len: int = config.get("llm_correction", {}).get("history_len", 3)
+
 # 豆包配置（需要添加到现有配置文件中）
 class DoubaoConfig:
     # 豆包API密钥

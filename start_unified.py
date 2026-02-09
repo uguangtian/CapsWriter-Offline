@@ -214,7 +214,7 @@ class UnifiedLauncher:
                 # 等待服务端就绪
                 if not server_only:
                     print("等待服务端就绪...")
-                    # self.wait_for_server_ready()
+                    self.wait_for_server_ready()
                     
             if not server_only:
                 # 启动客户端

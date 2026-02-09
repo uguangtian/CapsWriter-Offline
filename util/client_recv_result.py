@@ -15,6 +15,7 @@ from util.client_strip_punc import strip_punc
 from util.client_type_result import type_result
 from util.client_write_md import write_md
 from util.config import ClientConfig as Config
+from util.llm_corrector import llm_corrector
 
 if not Cosmic.transcribe_subtitles:
     from util.client_translate_offline import translate_offline
@@ -88,6 +89,7 @@ async def recv_result():
             # 消除末尾标点
             text = strip_punc(text)
 
+
             # 热词替换
             text = hot_sub(text)
             convert_to_traditional_chinese_done = False
@@ -136,6 +138,14 @@ async def recv_result():
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
             console.print(f"    识别结果：[green]{text}")
+                        # ==================== LLM 校正层 ====================
+            # 在此处调用本地 LLM (Qwen2.5-1.5B) 进行文本后处理
+            # 1. 如果启用了 llm_correction (config.toml)，则会对 ASR 结果进行纠错
+            # 2. 支持 fast (轻量纠错) 和 accurate (上下文感知) 两种模式
+            # 3. 校正后的文本再进行热词替换，确保热词优先级最高
+            text = llm_corrector.correct(text)
+            # ====================================================
+            console.print(f"LLM result: {text}")
 
 
             if offline_translate_done:

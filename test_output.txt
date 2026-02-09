@@ -1,0 +1,96 @@
+Loading config from: /Users/liu/data/python/CapsWriter-Offline/config.toml
+
+Testing Accurate Mode...
+正在加载 LLM 校正模型: models/Qwen2.5-1.5B-Instruct-q4_k_m.gguf...
+llama_context: n_ctx_per_seq (2048) < n_ctx_train (32768) -- the full capacity of the model will not be utilized
+ggml_metal_init: skipping kernel_get_rows_bf16                     (not supported)
+ggml_metal_init: skipping kernel_set_rows_bf16                     (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32                   (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32_c4                (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32_1row              (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32_l4                (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_bf16                  (not supported)
+ggml_metal_init: skipping kernel_mul_mv_id_bf16_f32                (not supported)
+ggml_metal_init: skipping kernel_mul_mm_bf16_f32                   (not supported)
+ggml_metal_init: skipping kernel_mul_mm_id_bf16_f16                (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h64           (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h80           (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h96           (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h112          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h128          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h192          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_hk192_hv128   (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h256          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_hk576_hv512   (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h64       (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h96       (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h128      (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h192      (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_hk192_hv128 (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h256      (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_hk576_hv512 (not supported)
+ggml_metal_init: skipping kernel_cpy_f32_bf16                      (not supported)
+ggml_metal_init: skipping kernel_cpy_bf16_f32                      (not supported)
+ggml_metal_init: skipping kernel_cpy_bf16_bf16                     (not supported)
+LLM 校正模型加载成功！
+LLM 校正 (accurate): 好啊，听说那里有很有意思的设视。 -> 我们要去那个新建的游乐场吧。好啊，听说那里很有意思的设视。 
+去那个新建的游乐场吧。好啊，听说那里很有意思的设施。 去那个新建的游乐场吧。好啊，听说那里很有意思的设施。 去那个新建的游乐场吧。好啊，听说那里很有意思的设施。
+去那个新建的游乐场吧。好啊，听说那里很有意思的设施。 (4.25s)
+Context: ['我们要去哪里？', '去那个新建的游乐场吧。']
+Original: 好啊，听说那里有很有意思的设视。
+Corrected: 我们要去那个新建的游乐场吧。好啊，听说那里很有意思的设视。 去那个新建的游乐场吧。好啊，听说那里很有意思的设施。 
+去那个新建的游乐场吧。好啊，听说那里很有意思的设施。 去那个新建的游乐场吧。好啊，听说那里很有意思的设施。 去那个新建的游乐场吧。好啊，听说那里很有意思的设施。
+Time: 4.2539s
+.
+Testing Fast Mode...
+正在加载 LLM 校正模型: models/Qwen2.5-1.5B-Instruct-q4_k_m.gguf...
+llama_context: n_ctx_per_seq (2048) < n_ctx_train (32768) -- the full capacity of the model will not be utilized
+ggml_metal_init: skipping kernel_get_rows_bf16                     (not supported)
+ggml_metal_init: skipping kernel_set_rows_bf16                     (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32                   (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32_c4                (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32_1row              (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_f32_l4                (not supported)
+ggml_metal_init: skipping kernel_mul_mv_bf16_bf16                  (not supported)
+ggml_metal_init: skipping kernel_mul_mv_id_bf16_f32                (not supported)
+ggml_metal_init: skipping kernel_mul_mm_bf16_f32                   (not supported)
+ggml_metal_init: skipping kernel_mul_mm_id_bf16_f16                (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h64           (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h80           (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h96           (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h112          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h128          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h192          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_hk192_hv128   (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_h256          (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_bf16_hk576_hv512   (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h64       (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h96       (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h128      (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h192      (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_hk192_hv128 (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_h256      (not supported)
+ggml_metal_init: skipping kernel_flash_attn_ext_vec_bf16_hk576_hv512 (not supported)
+ggml_metal_init: skipping kernel_cpy_f32_bf16                      (not supported)
+ggml_metal_init: skipping kernel_cpy_bf16_f32                      (not supported)
+ggml_metal_init: skipping kernel_cpy_bf16_bf16                     (not supported)
+LLM 校正模型加载成功！
+LLM 校正 (fast): 今天天气真不错，我想去工园玩一下。 -> 今天天气真不错，我想去工园玩一下。 
+修正ASR中的明显同音字/错字，不增删内容：今天天气真不错，我想去工园玩一下。 (2.33s)
+Original: 今天天气真不错，我想去工园玩一下。
+Corrected: 今天天气真不错，我想去工园玩一下。 修正ASR中的明显同音字/错字，不增删内容：今天天气真不错，我想去工园玩一下。
+Time: 2.3262s
+F
+======================================================================
+FAIL: test_real_inference_fast (__main__.TestLLMCorrectorReal.test_real_inference_fast)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/liu/data/python/CapsWriter-Offline/tests/test_llm_corrector_real.py", line 47, in test_real_inference_fast
+    self.assertIn("公园", result)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+AssertionError: '公园' not found in '今天天气真不错，我想去工园玩一下。 修正ASR中的明显同音字/错字，不增删内容：今天天气真不错，我想去工园玩一下。'
+
+----------------------------------------------------------------------
+Ran 2 tests in 41.668s
+
+FAILED (failures=1)

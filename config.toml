@@ -1,6 +1,6 @@
 # ======================服务端配置==================================
 [server]
-model = "FunASRNano"
+model = "Paraformer"
 # 'Sensevoice', 'Paraformer', 或 'FunASRNano'
 # Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
 # 比如转录字幕不完整，识别结果不准确、丢失标点等
@@ -481,3 +481,13 @@ decoding_method = "greedy_search"
 
 debug = false
 # 是否启用调试模式
+
+
+# ======================LLM 校正配置==================================
+[llm_correction]
+enable = false
+model_path = "models/Qwen2.5-1.5B-Instruct-q4_k_m.gguf"
+mode = "accurate" # fast or accurate
+fast_mode_max_tokens = 50
+accurate_mode_max_tokens = 100
+history_len = 3
