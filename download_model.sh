@@ -26,6 +26,12 @@ git clone https://huggingface.co/yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25
 # 下载标点模型
 echo "正在下载标点模型..."
 git clone https://www.modelscope.cn/iic/punc_ct-transformer_cn-en-common-vocab471067-large-onnx.git punc_ct-transformer_cn-en
+if command -v git-lfs >/dev/null 2>&1; then
+  git -C punc_ct-transformer_cn-en lfs install
+  git -C punc_ct-transformer_cn-en lfs pull
+else
+  echo "警告: 未安装 git-lfs，标点 model_quant.onnx 可能仅为指针文件，请安装后在该目录执行 git lfs pull"
+fi
 
 # 下载翻译模型
 TRANSLATION_DIR="Helsinki-NLP--opus-mt-zh-en"

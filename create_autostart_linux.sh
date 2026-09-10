@@ -18,6 +18,23 @@ fi
 
 mkdir -p "$UNIT_DIR"
 
+# 图形会话：本机实测为 X11 + DISPLAY :1（/tmp/.X11-unix/X1）；:0 无效
+CAPSWRITER_DISPLAY="${CAPSWRITER_DISPLAY:-}"
+if [[ -z "$CAPSWRITER_DISPLAY" ]]; then
+  if [[ -S /tmp/.X11-unix/X1 ]]; then
+    CAPSWRITER_DISPLAY=":1"
+  elif [[ -S /tmp/.X11-unix/X0 ]]; then
+    CAPSWRITER_DISPLAY=":0"
+  else
+    CAPSWRITER_DISPLAY=":0"
+  fi
+fi
+if [[ -f /run/user/$(id -u)/gdm/Xauthority ]]; then
+  CAPSWRITER_XAUTH="/run/user/$(id -u)/gdm/Xauthority"
+else
+  CAPSWRITER_XAUTH="${HOME}/.Xauthority"
+fi
+
 cat > "$UNIT_DIR/capswriter-server.service" <<EOF
 [Unit]
 Description=CapsWriter Offline ASR server
@@ -46,8 +63,8 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=${PROJECT_DIR}
 Environment=PYTHONUNBUFFERED=1
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=${HOME}/.Xauthority
+Environment=DISPLAY=${CAPSWRITER_DISPLAY}
+Environment=XAUTHORITY=${CAPSWRITER_XAUTH}
 ExecStart=${VENV_PY} ${PROJECT_DIR}/core_client.py
 Restart=on-failure
 RestartSec=5
