@@ -5,7 +5,6 @@ from threading import Event
 from platform import system
 import sys
 import keyboard
-from flask import sessions
 if system() == 'Windows':
     from pycaw.pycaw import AudioUtilities
 from pynput import keyboard as pynput_keyboard
