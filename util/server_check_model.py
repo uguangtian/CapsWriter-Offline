@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from util.config import ModelPaths
+from util.config import ModelPaths, get_config_dict
 from util.server_cosmic import console
 
 
@@ -29,18 +29,31 @@ def _auto_download_models():
         console.print(f"[yellow]自动下载模型失败: {e}")
 
 
+def _required_model_paths():
+    """仅检查当前服务端配置实际会用到的模型路径。"""
+    server = get_config_dict().get("server", {})
+    model_name = str(server.get("model", "Paraformer")).lower()
+    required: list[Path] = []
+    if "sensevoice" in model_name:
+        required.extend(
+            [ModelPaths.sensevoice_path, ModelPaths.sensevoice_tokens_path]
+        )
+    else:
+        required.extend(
+            [ModelPaths.paraformer_path, ModelPaths.paraformer_tokens_path]
+        )
+    if server.get("format_punc", True):
+        required.append(ModelPaths.punc_model_dir)
+    if server.get("start_offline_translate_server", False):
+        required.append(ModelPaths.opus_mt_dir)
+    return required
+
+
 def _all_models_exist():
-    for key, path in ModelPaths.__dict__.items():
-        if key.startswith("_"):
-            continue
-        # Skip checking optional models that might not be used
-        if key == "funasr_nano_dir":
-            continue
-            
-        if isinstance(path, (str, Path)):
-            p = Path(path)
-            if not p.exists():
-                return False, p
+    for path in _required_model_paths():
+        p = Path(path)
+        if not p.exists():
+            return False, p
     return True, None
 
 
