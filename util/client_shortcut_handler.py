@@ -7,7 +7,13 @@ import sys
 import keyboard
 if system() == 'Windows':
     from pycaw.pycaw import AudioUtilities
-from pynput import keyboard as pynput_keyboard
+
+
+def _pynput_keyboard_module():
+    from pynput import keyboard as pynput_keyboard
+
+    return pynput_keyboard
+
 
 from util.client_cosmic import Cosmic
 from util.client_pause_other_audio import audio_playering_app_name
@@ -43,6 +49,7 @@ sessions = []
 
 def _pynput_matches_shortcut(key) -> bool:
     """配置项 speech_recognition_shortcut 与 pynput 按键是否一致（Darwin / Linux）。"""
+    pynput_keyboard = _pynput_keyboard_module()
     shortcut_key = Config.speech_recognition_shortcut.lower()
     if "caps" in shortcut_key and key == pynput_keyboard.Key.caps_lock:
         return True
@@ -581,6 +588,7 @@ def click_handler(e: keyboard.KeyboardEvent) -> None:
 
 
 def _start_pynput_shortcut_listener():
+    pynput_keyboard = _pynput_keyboard_module()
     key_manager = KeyManager()
     listener = pynput_keyboard.Listener(
         on_press=key_manager.on_press,
