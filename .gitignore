@@ -5,6 +5,9 @@ util/__pycache__
 build
 dist
 models
+modles/
+modles-probe/
+.venv/
 runtime
 python3.11
 **/*.swp

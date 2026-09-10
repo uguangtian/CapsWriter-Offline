@@ -42,6 +42,34 @@ last_time_released = 0
 key_pressed = False
 sessions = []
 
+def _pynput_matches_shortcut(key) -> bool:
+    """配置项 speech_recognition_shortcut 与 pynput 按键是否一致（Darwin / Linux）。"""
+    shortcut_key = Config.speech_recognition_shortcut.lower()
+    if "caps" in shortcut_key and key == pynput_keyboard.Key.caps_lock:
+        return True
+    if "right cmd" in shortcut_key and key == pynput_keyboard.Key.cmd_r:
+        return True
+    if ("left cmd" in shortcut_key or "command" in shortcut_key) and key == pynput_keyboard.Key.cmd_l:
+        return True
+    if "cmd" in shortcut_key and key == pynput_keyboard.Key.cmd:
+        return True
+    if "right shift" in shortcut_key and key == pynput_keyboard.Key.shift_r:
+        return True
+    if "left shift" in shortcut_key and key == pynput_keyboard.Key.shift:
+        return True
+    if "left alt" in shortcut_key and key == pynput_keyboard.Key.alt_l:
+        return True
+    if shortcut_key.strip() == "alt" and key == pynput_keyboard.Key.alt:
+        return True
+    if "ctrl" in shortcut_key and key in (
+        pynput_keyboard.Key.ctrl,
+        pynput_keyboard.Key.ctrl_l,
+        pynput_keyboard.Key.ctrl_r,
+    ):
+        return True
+    return False
+
+
  # 创建一个按键管理器类
 class KeyManager:
     def __init__(self):
@@ -50,23 +78,7 @@ class KeyManager:
         
     def on_press(self, key):
         # print('on_press, is_pressed:',self.is_pressed)
-        # 将配置的快捷键转换为 pynput 格式
-        shortcut_key = Config.speech_recognition_shortcut.lower()
-        target_key = None  
-        if 'right cmd' in shortcut_key and key == pynput_keyboard.Key.cmd_r:
-            target_key = key
-        elif 'ctrl' in shortcut_key and key == pynput_keyboard.Key.ctrl:
-            target_key = key
-        elif ('left cmd' in shortcut_key or 'command' in shortcut_key) and key == pynput_keyboard.Key.cmd_l:
-            target_key = key
-        elif 'alt' in shortcut_key and key == pynput_keyboard.Key.alt:
-            target_key = key
-        elif 'right shift' in shortcut_key and key == pynput_keyboard.Key.shift_r:
-            target_key = key
-        elif 'left shift' in shortcut_key and key == pynput_keyboard.Key.shift:
-            target_key = key
-        elif 'left alt' in shortcut_key and key == pynput_keyboard.Key.alt_l:
-            target_key = key
+        target_key = key if _pynput_matches_shortcut(key) else None
         
         # 如果是目标按键且当前未被按下
         # print("on_press, target_key:",target_key, "is_pressed:",self.is_pressed)
@@ -89,25 +101,7 @@ class KeyManager:
     
     def on_release(self, key):
         # print("on_release")
-        # 释放时触发
-        # 将配置的快捷键转换为 pynput 格式
-        shortcut_key = Config.speech_recognition_shortcut.lower()
-        target_key = None
-        
-        if 'right cmd' in shortcut_key and key == pynput_keyboard.Key.cmd_r:
-            target_key = key
-        elif 'ctrl' in shortcut_key and key == pynput_keyboard.Key.ctrl:
-            target_key = key
-        elif ('cmd' in shortcut_key or 'command' in shortcut_key) and key == pynput_keyboard.Key.cmd:
-            target_key = key
-        elif 'alt' in shortcut_key and key == pynput_keyboard.Key.alt:
-            target_key = key
-        elif 'right shift' in shortcut_key and key == pynput_keyboard.Key.shift_r:
-            target_key = key
-        elif 'left shift' in shortcut_key and key == pynput_keyboard.Key.shift:
-            target_key = key
-        elif 'left alt' in shortcut_key and key == pynput_keyboard.Key.alt_l:
-            target_key = key
+        target_key = key if _pynput_matches_shortcut(key) else None
         
         # 如果是目标按键且当前被按下
         if target_key and self.is_pressed:
@@ -587,35 +581,31 @@ def click_handler(e: keyboard.KeyboardEvent) -> None:
     click_mode(e)
 
 
-def bond_shortcut():    
-    # 在 macOS 上使用 pynput 代替 keyboard
-    
+def _start_pynput_shortcut_listener():
+    key_manager = KeyManager()
+    listener = pynput_keyboard.Listener(
+        on_press=key_manager.on_press,
+        on_release=key_manager.on_release,
+    )
+    print("开始监听按键")
+    listener.start()
+    print("使用 pynput 监听键盘事件（无需 root）")
 
-    if system() == 'Darwin':
-        try:            
-            
-            # 创建按键管理器实例
-            key_manager = KeyManager()
-            
-            # 启动监听
-            listener = pynput_keyboard.Listener(
-                on_press=key_manager.on_press,
-                on_release=key_manager.on_release
-            )
-            print('开始监听按键')
-            listener.start()
-            
-            print("使用 pynput 监听键盘事件，无需管理员权限")
-            
+
+def bond_shortcut():
+    # macOS / Linux：pynput；Windows：keyboard hook
+    if system() in ("Darwin", "Linux"):
+        try:
+            _start_pynput_shortcut_listener()
         except ImportError:
             print("请安装 pynput 库: pip install pynput")
             sys.exit(1)
+    elif system() == "Windows":
+        print(system(), " system")
+        handler = hold_handler if Config.hold_mode else click_handler
+        keyboard.hook_key(
+            Config.speech_recognition_shortcut, handler, suppress=True
+        )
     else:
-        # 在其他系统上继续使用 keyboard 库
-        print(system(),' system')
-        if Config.hold_mode:
-            # 单击模式，必须得阻塞快捷键
-            # 收到长按时，再模拟发送按键
-            keyboard.hook_key(
-                Config.speech_recognition_shortcut, click_handler, suppress=True
-            )
+        print(f"未支持的系统: {system()}")
+        sys.exit(1)
