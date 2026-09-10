@@ -46,6 +46,8 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=${PROJECT_DIR}
 Environment=PYTHONUNBUFFERED=1
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=${HOME}/.Xauthority
 ExecStart=${VENV_PY} ${PROJECT_DIR}/core_client.py
 Restart=on-failure
 RestartSec=5

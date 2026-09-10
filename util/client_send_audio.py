@@ -6,7 +6,6 @@ import time
 
 import numpy as np
 import websockets
-from pynput import keyboard
 
 from util.client_cosmic import Cosmic, console
 from util.client_create_file import create_file
@@ -287,14 +286,18 @@ def on_press(key):
 
 
 def on_release(key):
-    if key == keyboard.Key.esc:  # 按下 'esc' 键退出程序
+    from pynput import keyboard as pynput_keyboard
+
+    if key == pynput_keyboard.Key.esc:  # 按下 'esc' 键退出程序
         console.print("退出程序...")
         return False
 
 
 # 启动键盘监听
 def start_keyboard_listener():
-    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    from pynput import keyboard as pynput_keyboard
+
+    with pynput_keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
 
 
