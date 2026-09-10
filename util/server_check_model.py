@@ -17,9 +17,7 @@ def _normalize_paths():
 
 
 def _auto_download_models():
-    # Set proxy for download script if needed
-    os.environ["https_proxy"] = os.environ.get("https_proxy", "http://127.0.0.1:7890")
-    os.environ["http_proxy"] = os.environ.get("http_proxy", "http://127.0.0.1:7890")
+    # 仅在环境变量已配置时使用代理，避免 Linux 节点误连 127.0.0.1:7890
     
     try:
         from util.download_models_robust import main as download_main
