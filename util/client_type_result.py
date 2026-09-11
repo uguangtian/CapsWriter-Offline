@@ -7,6 +7,21 @@ import keyboard
 from util.config import ClientConfig as Config
 
 
+def _linux_pynput_paste():
+    from pynput.keyboard import Controller, Key
+
+    controller = Controller()
+    with controller.pressed(Key.ctrl):
+        controller.press("v")
+        controller.release("v")
+
+
+def _linux_pynput_type(text: str):
+    from pynput.keyboard import Controller
+
+    Controller().type(text)
+
+
 async def type_result(text):
     # 模拟粘贴
     print("模拟粘贴",Config.paste)
@@ -47,6 +62,17 @@ async def type_result(text):
                 # 降级到直接写入方式
                 keyboard.write(text)
                 print("降级使用直接写入方式")
+        elif platform.system() == "Linux":
+            try:
+                await asyncio.to_thread(_linux_pynput_paste)
+                print("Linux 粘贴操作完成 (pynput)")
+            except Exception as e:
+                print(f"Linux 粘贴操作失败: {e}")
+                try:
+                    await asyncio.to_thread(_linux_pynput_type, text)
+                    print("降级使用 pynput 直接输入")
+                except Exception as e2:
+                    print(f"Linux 直接输入失败: {e2}")
         else:
             try:
                 if keyboard.is_pressed(Config.offline_translate_shortcut):
@@ -54,10 +80,9 @@ async def type_result(text):
                 if keyboard.is_pressed(Config.online_translate_shortcut):
                     keyboard.release(Config.online_translate_shortcut)
                 keyboard.send("ctrl + v")
-                print("模拟粘贴2",Config.paste)
+                print("模拟粘贴2", Config.paste)
             except Exception as e:
-                print(f"Windows/Linux粘贴操作失败: {e}")
-                # 降级到直接写入方式
+                print(f"Windows 粘贴操作失败: {e}")
                 keyboard.write(text)
                 print("降级使用直接写入方式")
 
@@ -69,5 +94,11 @@ async def type_result(text):
 
     # 模拟打印
     else:
-        print("模拟打印",text)
-        keyboard.write(text)
+        print("模拟打印", text)
+        if platform.system() == "Linux":
+            try:
+                await asyncio.to_thread(_linux_pynput_type, text)
+            except Exception as e:
+                print(f"Linux 直接输入失败: {e}")
+        else:
+            keyboard.write(text)
