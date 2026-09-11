@@ -7,13 +7,18 @@ import keyboard
 from util.config import ClientConfig as Config
 
 
-def _linux_pynput_paste():
+def _linux_pynput_paste(use_shift: bool = False):
     from pynput.keyboard import Controller, Key
 
     controller = Controller()
-    with controller.pressed(Key.ctrl):
-        controller.press("v")
-        controller.release("v")
+    if use_shift:
+        with controller.pressed(Key.ctrl, Key.shift):
+            controller.press("v")
+            controller.release("v")
+    else:
+        with controller.pressed(Key.ctrl):
+            controller.press("v")
+            controller.release("v")
 
 
 def _linux_pynput_type(text: str):
@@ -63,11 +68,19 @@ async def type_result(text):
                 keyboard.write(text)
                 print("降级使用直接写入方式")
         elif platform.system() == "Linux":
+            mode = (getattr(Config, "linux_paste_mode", None) or "ctrl_v").lower()
             try:
-                await asyncio.to_thread(_linux_pynput_paste)
-                print("Linux 粘贴操作完成 (pynput)")
+                if mode == "type":
+                    await asyncio.to_thread(_linux_pynput_type, text)
+                    print("Linux 输出完成 (pynput 逐字输入，适合 SSH/tmux)")
+                elif mode in ("ctrl_shift_v", "shift", "terminal"):
+                    await asyncio.to_thread(_linux_pynput_paste, True)
+                    print("Linux 粘贴操作完成 (Ctrl+Shift+V，适合本地终端)")
+                else:
+                    await asyncio.to_thread(_linux_pynput_paste, False)
+                    print("Linux 粘贴操作完成 (Ctrl+V，适合本地 GUI 编辑器)")
             except Exception as e:
-                print(f"Linux 粘贴操作失败: {e}")
+                print(f"Linux 输出失败: {e}")
                 try:
                     await asyncio.to_thread(_linux_pynput_type, text)
                     print("降级使用 pynput 直接输入")

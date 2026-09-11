@@ -92,6 +92,8 @@ class ClientConfig:
     threshold: float = config.get("client").get("threshold")
     paste: bool = config.get("client").get("paste")
     restore_clipboard_after_paste: bool = config.get("client").get("restore_clipboard_after_paste")
+    # Linux：ctrl_v=本地 GUI 编辑器；ctrl_shift_v=终端/SSH/tmux；type=逐字键入（远程 tmux 最稳）
+    linux_paste_mode: str = config.get("client").get("linux_paste_mode", "ctrl_v")
     save_audio: bool = config.get("client").get("save_audio")
     save_markdown: bool = config.get("client").get("save_markdown")
     transcription_result_path: str = config.get("client").get("transcription_result_path", "~/Documents/CapsWriter/results")
