@@ -1,7 +1,7 @@
 # ======================服务端配置==================================
 [server]
 model = "Paraformer"
-# 'Sensevoice', 'Paraformer', 或 'FunASRNano'
+# 'Sensevoice' 或 'Paraformer'
 # Sensevoice模型虽然多了粤英日韩多语种，但是，中文识别效果大不如Paraformer模型
 # 比如转录字幕不完整，识别结果不准确、丢失标点等
 # 如果你只说中文普通话，建议使用 'Paraformer' 模型
@@ -10,7 +10,7 @@ model = "Paraformer"
 addr = "0.0.0.0"
 # 服务端监听地址
 
-speech_recognition_port = 6016
+speech_recognition_port = "6016"
 # 语音识别服务端口
 
 start_online_translate_server = false
@@ -55,21 +55,22 @@ in_the_meantime_start_the_client_and_run_as_admin = true
 # ======================客户端配置==================================
 
 [client]
-# addr = "127.0.0.1"
-# 要连接的服务端地址，默认使用服务端配置的地址或 127.0.0.1
-# port = 8081 # 未使用的配置
+addr = "127.0.0.1"
+# 要连接的服务端地址
+port = 8081
+speech_recognition_port = "6016"
+# 语音识别服务端口
 
-# speech_recognition_port = "6016"
-# 语音识别服务端口，默认使用服务端配置
-
-# offline_translate_port = "6017"
-# 离线翻译服务端口，默认使用服务端配置
+offline_translate_port = "6017"
+# 离线翻译服务端口
 
 offline_translate_port_gemma2b = "11434"
 # Gemma 2B 离线翻译端口
 
+#speech_recognition_shortcut = "caps lock"
+#speech_recognition_shortcut = "right alt"
 speech_recognition_shortcut = "right cmd"
-# 控制录音的快捷键，默认是 "caps lock"
+# 控制录音的快捷键；macOS 常用 "right cmd"，Ubuntu/Linux 建议改为 "caps lock"
 
 use_offline_translate_function = false
 # 是否启用离线翻译功能
@@ -124,6 +125,9 @@ threshold = 0.0
 # 按下快捷键后，触发语音识别的时间阈值
 
 paste = true
+#linux_paste_mode = "type" #粘贴得不完整
+#linux_paste_mode = "ctrl_v" #没有生效
+linux_paste_mode = "ctrl_shift_v" 
 # 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
 
 restore_clipboard_after_paste = true
@@ -134,12 +138,6 @@ save_audio = true
 
 save_markdown = true
 # 是否将记录写入 Markdown 文件
-
-transcription_result_path = "~/Documents/CapsWriter/results"
-# 转录结果 Markdown 文件的保存路径
-
-audio_storage_path = "~/Documents/CapsWriter/audio"
-# 录音文件的保存路径
 
 audio_name_len = 20
 # 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过 200
@@ -189,11 +187,11 @@ pause_other_audio = true
 arabic_year_number = true
 # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
 
-# shrink_automatically_to_tray = false
-# 启动后是否自动缩小至托盘，默认使用服务端配置
+shrink_automatically_to_tray = false
+# 启动后是否自动缩小至托盘
 
-# only_run_once = true
-# 只允许运行一次，禁止多开，默认使用服务端配置
+only_run_once = true
+# 只允许运行一次，禁止多开
 
 only_enable_microphones_when_pressed_record_shortcut = false
 # 只在按下录音快捷键时启用麦克风
@@ -288,7 +286,7 @@ start_deepseek_server = false
 deepseek_port = "6018"
 # DeepSeek服务端口
 
-api_key = "sk-eb9bb5f2093d40cd8cd7cf7531fe9029"
+api_key = ""
 # DeepSeek API密钥，请在此处填入您的API密钥
 
 api_endpoint = "https://api.deepseek.com/v1/chat/completions"
@@ -319,9 +317,9 @@ max_tokens = 2000
 start_lmstudio_server = false
 lmstudio_port = 1234
 lmstudio_api =  "http://localhost:1234/v1"
-lmstudio_model = ""
+lmstudio_model = "deepseek/deepseek-r1-0528-qwen3-8b"
 temperature = 0.7
-max_tokens = 64000
+max_tokens = 400
 api_endpoint = "http://localhost:1234/v1/chat/completions"
 
 # ======================Claude 配置==================================
@@ -333,7 +331,7 @@ start_claude_server = false
 claude_port = "6019"
 # Claude服务端口
 
-api_key = "sk-pGA2lBTqXL1hRh948j646qvQkMwQA11tcCIpxvqEjeo4igFV"
+api_key = ""
 # Claude API密钥，请在此处填入您的API密钥
 
 api_endpoint = "https://api.aiclaude.site/v1/messages"
@@ -351,30 +349,29 @@ max_tokens = 2000
 # ======================模型路径配置==================================
 
 [model_paths]
-model_dir = "~/Documents/CapsWriter/modles"
+model_dir = "models"
 # 模型文件目录
 
-#funasr_nano_dir = "models/Fun-ASR-Nano-2512-GGUF"
-funasr_nano_dir = "~/Documents/CapsWriter/modles/FunASR-nano-onnx"
-# FunASR-Nano 模型目录
-
-sensevoice_path = "~/Documents/CapsWriter/modles/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+sensevoice_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
 # SenseVoice 模型路径
 
-sensevoice_tokens_path = "~/Documents/CapsWriter/modles/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+sensevoice_tokens_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
 # SenseVoice tokens 路径
 
-paraformer_path = "~/Documents/CapsWriter/modles/paraformer-offline-zh/model.int8.onnx"
+paraformer_path = "models/paraformer-offline-zh/model.int8.onnx"
 # Paraformer 模型路径
 
-paraformer_tokens_path = "~/Documents/CapsWriter/modles/paraformer-offline-zh/tokens.txt"
+paraformer_tokens_path = "models/paraformer-offline-zh/tokens.txt"
 # Paraformer tokens 路径
 
-punc_model_dir = "~/Documents/CapsWriter/modles/punc_ct-transformer_cn-en"
+punc_model_dir = "models/punc_ct-transformer_cn-en"
 # 标点模型目录
 
-opus_mt_dir = "~/Documents/CapsWriter/modles/Helsinki-NLP--opus-mt-zh-en"
+opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
 # 离线翻译模型目录
+
+funasr_nano_dir = "models/funasr-nano"
+# FunASR Nano 模型目录
 
 
 # ======================SenseVoice 参数配置==================================
@@ -401,11 +398,9 @@ decoding_method = "greedy_search"
 debug = false
 # 是否启用调试模式
 
+
 provider = "cpu"
 # 推理设备（cpu, cuda, coreml）
-# M系列芯片(M1/M2/M3/M4等)可以使用 "coreml" 加速
-# 注意：FunASR-Nano 这种极小模型在 CPU 上可能更快，CoreML 适合大模型
-# 如果使用 "coreml" 遇到报错或变慢，请改回 "cpu"
 
 language = "auto"
 # 识别语言（auto, zh, en, ja, ko, yue）
@@ -418,44 +413,6 @@ rule_fsts = ""
 
 rule_fars = ""
 # 自定义规则 FAR 文件路径
-
-
-# ======================FunASR-Nano 参数配置==================================
-
-[funasr_nano_args]
-#encoder_adaptor = "${model_paths.funasr_nano_dir}/encoder_adaptor.int8.onnx"
-encoder_adaptor = "encoder_adaptor.int8.onnx"
-#encoder_adaptor = "Fun-ASR-Nano-Encoder-Adaptor.fp32.onnx"
-# Encoder Adaptor 模型路径
-
-#llm = "Fun-ASR-Nano-Decoder.q8_0.gguf"
-llm = "llm_int8/llm.int8.onnx"
-# LLM 模型路径
-
-embedding = "embedding.int8.onnx"
-#embedding = "embedding.int8.onnx"
-# Embedding 模型路径
-
-#tokenizer = "${model_paths.funasr_nano_dir}/Qwen3-0.6B"
-# Tokenizer 目录路径
-
-num_threads = 6
-# 使用的线程数
-
-sample_rate = 16000
-# 采样率
-
-feature_dim = 80
-# 特征维度
-
-decoding_method = "greedy_search"
-# 解码方法
-
-debug = false
-# 是否启用调试模式
-
-provider = "cpu"
-# 推理设备（cpu, cuda, coreml）
 
 
 # ======================Paraformer 参数配置==================================
@@ -483,11 +440,31 @@ debug = false
 # 是否启用调试模式
 
 
-# ======================LLM 校正配置==================================
-[llm_correction]
-enable = false
-model_path = "models/Qwen2.5-1.5B-Instruct-q4_k_m.gguf"
-mode = "accurate" # fast or accurate
-fast_mode_max_tokens = 50
-accurate_mode_max_tokens = 100
-history_len = 3
+# ======================FunASR Nano 参数配置==================================
+
+[funasr_nano_args]
+encoder_adaptor = "encoder.int8.onnx"
+# 编码器适配器
+num_threads = 4
+# 线程数
+sample_rate = 16000
+# 采样率
+feature_dim = 80
+# 特征维度
+decoding_method = "greedy_search"
+# 解码方法
+debug = false
+# 是否启用调试模式
+provider = "cpu"
+# 推理设备
+
+
+# ======================标点模型参数配置==================================
+
+[punc_args]
+model_dir = "${model_paths.punc_model_dir}"
+# 标点模型目录
+quantize = true
+# 是否量化
+intra_op_num_threads = 4
+# 线程数
