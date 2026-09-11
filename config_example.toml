@@ -68,7 +68,9 @@ offline_translate_port_gemma2b = "11434"
 # Gemma 2B 离线翻译端口
 
 speech_recognition_shortcut = "right cmd"
-# 控制录音的快捷键；macOS 常用 "right cmd"，Ubuntu/Linux 建议改为 "caps lock"
+# 控制录音的快捷键；macOS 常用 "right cmd"
+# Linux（pynput）：caps lock / right alt / right option / left shift 等
+# 右 Option 键：speech_recognition_shortcut = "right option" 或 "right alt"
 
 use_offline_translate_function = false
 # 是否启用离线翻译功能

@@ -63,9 +63,17 @@ def _pynput_matches_shortcut(key) -> bool:
         return True
     if "left shift" in shortcut_key and key == pynput_keyboard.Key.shift:
         return True
-    if "left alt" in shortcut_key and key == pynput_keyboard.Key.alt_l:
-        return True
-    if shortcut_key.strip() == "alt" and key == pynput_keyboard.Key.alt:
+    if "right alt" in shortcut_key or "right option" in shortcut_key:
+        if key == pynput_keyboard.Key.alt_r:
+            return True
+    if "left alt" in shortcut_key or "left option" in shortcut_key:
+        if key == pynput_keyboard.Key.alt_l:
+            return True
+    if shortcut_key.strip() == "alt" and key in (
+        pynput_keyboard.Key.alt,
+        pynput_keyboard.Key.alt_l,
+        pynput_keyboard.Key.alt_r,
+    ):
         return True
     if "ctrl" in shortcut_key and key in (
         pynput_keyboard.Key.ctrl,
