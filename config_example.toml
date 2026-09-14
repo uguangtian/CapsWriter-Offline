@@ -127,8 +127,9 @@ threshold = 0.0
 paste = true
 # 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
 
-linux_paste_mode = "ctrl_v"
-# 仅 Linux：ctrl_v=GUI 编辑器；ctrl_shift_v=本地终端里 SSH/tmux；type=逐字键入（远程 tmux 最稳，不依赖剪贴板同步）
+linux_paste_mode = "auto"
+# 仅 Linux：auto/type/terminal=逐字键入(plain shell 与 tmux 通用，避免贴两次)
+# ctrl_shift_v=只按一次 Ctrl+Shift+V；ctrl_v=本地 GUI 编辑器(Cursor 等)
 
 restore_clipboard_after_paste = true
 # 模拟粘贴后是否恢复剪贴板

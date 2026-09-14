@@ -27,22 +27,40 @@ def _linux_pynput_type(text: str):
     Controller().type(text)
 
 
+def _linux_paste_mode() -> str:
+    return (getattr(Config, "linux_paste_mode", None) or "auto").lower()
+
+
+def _linux_inject_via_keyboard_only(mode: str) -> bool:
+    """终端 / tmux / SSH：只按键注入，不写剪贴板，避免「先贴再敲」重复一遍。"""
+    return mode in ("type", "auto", "terminal", "tty")
+
+
+def _linux_uses_clipboard_shortcut(mode: str) -> bool:
+    return mode in ("ctrl_v", "gui", "ctrl_shift_v", "shift", "terminal_paste")
+
+
 async def type_result(text):
     # 模拟粘贴
     print("模拟粘贴",Config.paste)
     if Config.paste:
-        # 保存剪切板
-        try:
-            # 初始化剪贴板模块
-            clipman.init()
-            temp = clipman.get()
-        except clipman.exceptions.ClipmanBaseException as e:
-            temp = e
-            print(e)
+        linux_mode = _linux_paste_mode() if platform.system() == "Linux" else None
+        use_clipboard = not (
+            platform.system() == "Linux" and _linux_inject_via_keyboard_only(linux_mode)
+        )
 
-        # 复制结果
-        print("模拟粘贴 text:",text)
-        clipman.set(text)
+        temp = None
+        if use_clipboard:
+            try:
+                clipman.init()
+                temp = clipman.get()
+            except clipman.exceptions.ClipmanBaseException as e:
+                temp = e
+                print(e)
+            print("模拟粘贴 text:", text)
+            clipman.set(text)
+        else:
+            print("模拟输出 text:", text)
 
         # 粘贴结果
         if platform.system() == "Darwin":  # Mac
@@ -68,24 +86,27 @@ async def type_result(text):
                 keyboard.write(text)
                 print("降级使用直接写入方式")
         elif platform.system() == "Linux":
-            mode = (getattr(Config, "linux_paste_mode", None) or "ctrl_v").lower()
+            mode = linux_mode
             try:
-                if mode == "type":
+                if _linux_inject_via_keyboard_only(mode):
                     await asyncio.to_thread(_linux_pynput_type, text)
-                    print("Linux 输出完成 (pynput 逐字输入，适合 SSH/tmux)")
-                elif mode in ("ctrl_shift_v", "shift", "terminal"):
+                    print(
+                        "Linux 输出完成 (逐字键入；plain shell / tmux / SSH 通用，不碰剪贴板)"
+                    )
+                elif mode in ("ctrl_shift_v", "shift", "terminal_paste"):
                     await asyncio.to_thread(_linux_pynput_paste, True)
-                    print("Linux 粘贴操作完成 (Ctrl+Shift+V，适合本地终端)")
+                    print("Linux 粘贴完成 (Ctrl+Shift+V，仅一次)")
                 else:
                     await asyncio.to_thread(_linux_pynput_paste, False)
-                    print("Linux 粘贴操作完成 (Ctrl+V，适合本地 GUI 编辑器)")
+                    print("Linux 粘贴完成 (Ctrl+V，本地 GUI 编辑器)")
             except Exception as e:
                 print(f"Linux 输出失败: {e}")
-                try:
-                    await asyncio.to_thread(_linux_pynput_type, text)
-                    print("降级使用 pynput 直接输入")
-                except Exception as e2:
-                    print(f"Linux 直接输入失败: {e2}")
+                if _linux_uses_clipboard_shortcut(mode):
+                    try:
+                        await asyncio.to_thread(_linux_pynput_type, text)
+                        print("降级：逐字键入（避免重复请勿再手动粘贴）")
+                    except Exception as e2:
+                        print(f"Linux 直接输入失败: {e2}")
         else:
             try:
                 if keyboard.is_pressed(Config.offline_translate_shortcut):
@@ -99,11 +120,14 @@ async def type_result(text):
                 keyboard.write(text)
                 print("降级使用直接写入方式")
 
-        # 还原剪贴板
-        print("还原剪贴板",temp)
-        if Config.restore_clipboard_after_paste:
-            await asyncio.sleep(0.1)
-            clipman.set(temp)
+        if use_clipboard:
+            print("还原剪贴板", temp)
+            if Config.restore_clipboard_after_paste and temp is not None:
+                await asyncio.sleep(0.1)
+                try:
+                    clipman.set(temp)
+                except clipman.exceptions.ClipmanBaseException as e:
+                    print(e)
 
     # 模拟打印
     else:
