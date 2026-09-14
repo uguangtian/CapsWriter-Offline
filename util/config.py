@@ -92,7 +92,7 @@ class ClientConfig:
     threshold: float = config.get("client").get("threshold")
     paste: bool = config.get("client").get("paste")
     restore_clipboard_after_paste: bool = config.get("client").get("restore_clipboard_after_paste")
-    # Linux：auto=逐字键入且不写剪贴板(plain shell+tmux 默认)；ctrl_v=GUI；ctrl_shift_v=终端粘贴一次
+    # Linux：auto/ctrl_shift_v=终端与 tmux(Ctrl+Shift+V)；ctrl_v/gui=本地 GUI 编辑器
     linux_paste_mode: str = config.get("client").get("linux_paste_mode", "auto")
     save_audio: bool = config.get("client").get("save_audio")
     save_markdown: bool = config.get("client").get("save_markdown")
